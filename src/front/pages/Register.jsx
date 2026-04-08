@@ -80,44 +80,41 @@ const Register = () => {
             <Toaster position="top-center" richColors />
             <div className="container d-flex justify-content-center">
                 <div className="auth-card w-100" style={{ maxWidth: '500px' }}>
-                    <div className="auth-header">
-                        <h2 style={{ color: 'var(--accent-gold)' }}>Mundial Elite</h2>
+                    <div className="auth-header text-center">
+                        <h2 style={{ color: 'var(--pitch-green)' }}>Mundial Elite</h2>
                         <p className="text-dim small mb-0">Crea tu cuenta de vaticinios</p>
                     </div>
 
                     <div className="p-4">
                         <form onSubmit={handleSubmit}>
-                            <div className="row g-3">
-                                <div className="col-md-6">
-                                    <label className="auth-label">Nombre</label>
-                                    <input type="text" name="name" className="form-input" placeholder="Ej. Lionel" value={user.name} onChange={handleChange} required />
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="auth-label">Apellido</label>
-                                    <input type="text" name="lastname" className="form-input" placeholder="Ej. Messi" value={user.lastname} onChange={handleChange} required />
-                                </div>
+                            <div className="mt-3">
+                                <label className="auth-label">Nombre</label>
+                                <input type="text" name="name" className="form-control auth-input" placeholder="Ej. Lionel" value={user.name} onChange={handleChange} required />
                             </div>
 
+                            <div className="mt-3">
+                                <label className="auth-label">Apellido</label>
+                                <input type="text" name="lastname" className="form-control auth-input" placeholder="Ej. Messi" value={user.lastname} onChange={handleChange} required />
+                            </div>
                             <div className="mt-3">
                                 <label className="auth-label">Correo Electrónico</label>
-                                <input type="email" name="email" className="form-input" placeholder="thegoat@ejemplo.com" value={user.email} onChange={handleChange} required />
+                                <input type="email" name="email" className="form-control auth-input" placeholder="thegoat@ejemplo.com" value={user.email} onChange={handleChange} required />
                             </div>
-
                             <div className="mt-3">
                                 <label className="auth-label">Contraseña</label>
-                                <div className="position-relative">
+                                <div className="input-group">
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
-                                        className={`form-input ${user.password.length > 0 && (isPasswordValid ?'border-success' : 'border-danger')}`}
+                                        className={`form-control auth-input ${user.password.length > 0 && (isPasswordValid ? 'border-success' : 'border-danger')}`}
                                         placeholder="******************"
                                         value={user.password}
                                         onChange={handleChange}
-                                        onFocus={() => setIsPasswordFocused(true)} 
-                                        onBlur={() => setIsPasswordFocused(false)} 
+                                        onFocus={() => setIsPasswordFocused(true)}
+                                        onBlur={() => setIsPasswordFocused(false)}
                                         required
                                     />
-                                    <button type="button" className="btn-icon-inside" onClick={() => setShowPassword(!showPassword)}>
+                                    <button type="button" className="btn-icon-inside border-0 rounded" onClick={() => setShowPassword(!showPassword)}>
                                         <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                     </button>
                                 </div>
@@ -137,17 +134,17 @@ const Register = () => {
 
                             <div className="mt-3 mb-4">
                                 <label className="auth-label">Confirmar Contraseña</label>
-                                <div className="position-relative">
+                                <div className="input-group">
                                     <input
-                                        type={showConfirmPassword ? "text" : "password"} 
+                                        type={showConfirmPassword ? "text" : "password"}
                                         name="confirmPassword"
-                                        className={`form-input ${user.confirmPassword.length > 0 && (user.password === user.confirmPassword ? 'border-success' : 'border-danger')}`}
-                                        placeholder="******************" 
+                                        className={`form-control auth-input ${user.confirmPassword.length > 0 && (user.password === user.confirmPassword ? 'border-success' : 'border-danger')}`}
+                                        placeholder="******************"
                                         value={user.confirmPassword}
                                         onChange={handleChange}
                                         required
                                     />
-                                    <button type="button" className="btn-icon-inside" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                    <button type="button" className="btn-icon-inside border-0 rounded" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                                         <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                     </button>
                                 </div>
@@ -158,7 +155,7 @@ const Register = () => {
                                 )}
                             </div>
 
-                            <button type="submit" className="btn-gold w-100" disabled={isFormIncomplete}>
+                            <button type="submit" className="btn-emerald w-100" disabled={isFormIncomplete}>
                                 Registrarme para el Mundial
                             </button>
 

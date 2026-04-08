@@ -29,8 +29,8 @@ class User(db.Model):
     total_points: Mapped[float] = mapped_column(Float, default=0.0)
     
     rol_id: Mapped[int] = mapped_column(ForeignKey('rol.id_rol'), nullable=False)
-    rol: Mapped["Rol"] = relationship(back_populates="users")
-    predictions: Mapped[List["Prediction"]] = relationship(back_populates="user")
+    rol: Mapped["Rol"] = relationship("Rol", back_populates="users")
+    predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
 
     def serialize(self):
         return {

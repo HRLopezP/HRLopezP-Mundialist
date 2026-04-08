@@ -1,36 +1,67 @@
+/* src/styles/auth.css */
 .auth-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, var(--primary-bg) 0%, #1a365d 100%);
+    justify-content: center;
     padding: 20px;
 }
 
 .auth-card {
-    background: var(--secondary-bg);
-    border: 1px solid rgba(255, 215, 0, 0.1);
-    border-radius: 20px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-    overflow: hidden;
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-.auth-header {
-    background: rgba(255, 215, 0, 0.05);
-    padding: 30px;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    background: rgba(7, 1, 59, 0.8) !important;
+    /* background: rgba(10, 25, 47, 0.7) !important; */
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 212, 255, 0.2) !important; 
+    border-radius: 24px !important;
+    box-shadow: 0 25px 50px rgb(0, 0, 0) !important;
+    width: 100%;
+    max-width: 500px;
+    padding: 2rem;
+    animation: slideUp 0.6s ease-out;
 }
 
 .auth-label {
-    color: var(--accent-gold);
-    font-size: 0.85rem;
-    font-weight: 600;
+    color: var(--neon-blue) !important; /* Etiquetas vibrantes */
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
     margin-bottom: 8px;
     display: block;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
+.auth-input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    height: 50px !important;
+    margin-bottom: 1.2rem !important;
+}
+
+.auth-input:focus {
+    border-color: var(--neon-blue) !important;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.3) !important;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+
+.auth-input::placeholder {
+    color: rgba(255, 255, 255, 0.7) !important; /* Blanco con un toque de transparencia */
+    opacity: 1; /* Firefox necesita esto */
+}
+
+/* Internet Explorer 10-11 */
+.auth-input:-ms-input-placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Microsoft Edge */
+.auth-input::-ms-input-placeholder {
+    color: rgba(255, 255, 255, 0.7) !important;
 }
