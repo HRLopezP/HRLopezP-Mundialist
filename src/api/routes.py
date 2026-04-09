@@ -3,7 +3,7 @@ from api.models import db, User, Rol
 from api.utils import generate_sitemap, APIException, val_email, val_password
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 from datetime import datetime, timedelta, date
 
 api = Blueprint('api', __name__)
@@ -49,9 +49,13 @@ def register_user():
         rol_to_find = "Participante"
         is_active_status = False
 
-    target_rol = Rol.query.filter_by(name_rol=rol_to_find).first()
+    target_rol = Rol.query.filter(Rol.name_rol.ilike(rol_to_find.strip())).first()
     if not target_rol:
-        return jsonify({"message": f"Error crítico: El rol '{rol_to_find}' no está configurado"}), 500
+        all_roles = [r.name_rol for r in Rol.query.all()]
+        return jsonify({
+            "message": f"Error crítico: El rol '{rol_to_find}' no coincide.",
+            "debug_roles_en_db": all_roles 
+        }), 500
 
     hashed_password = generate_password_hash(password)
     

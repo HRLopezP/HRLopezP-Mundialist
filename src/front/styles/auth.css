@@ -8,8 +8,8 @@
 }
 
 .auth-card {
-    background: rgba(7, 1, 59, 0.8) !important;
-    /* background: rgba(10, 25, 47, 0.7) !important; */
+    /* background: rgba(7, 1, 59, 0.8) !important; */
+    background: rgba(5, 5, 88, 0.7) !important;
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(0, 212, 255, 0.2) !important; 
@@ -37,7 +37,7 @@
     color: white !important;
     border-radius: 10px !important;
     height: 50px !important;
-    margin-bottom: 1.2rem !important;
+    /* margin-bottom: 1.2rem !important; */
 }
 
 .auth-input:focus {

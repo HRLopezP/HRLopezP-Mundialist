@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Toaster, toast } from "sonner";
 import "../styles/auth.css";
+import { apiFetch } from "../utils/api"
 
 const initialUserState = {
     name: "",
@@ -51,9 +52,8 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/register`, {
+            const res = await apiFetch("/register", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: user.name,
                     lastname: user.lastname,
@@ -64,11 +64,11 @@ const Register = () => {
 
             const data = await res.json();
 
-            if (res.ok) {
-                toast.success(data.message); // Usamos el mensaje dinámico del backend
-                setTimeout(() => navigate("/login"), 2000);
+            if (res && res.ok) {
+                toast.success(data.message || "¡Registro exitoso!");
+                setTimeout(() => navigate("/login"), 1500);
             } else {
-                toast.error(data.message || "Error al registrar");
+                toast.error(data?.message || "Error al registrar");
             }
         } catch (error) {
             toast.error("Error de conexión con el estadio");
