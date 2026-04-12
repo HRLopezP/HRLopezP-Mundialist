@@ -12,6 +12,8 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_jwt_extended import JWTManager
 from datetime import timedelta
+from flask_mail import Mail
+from api.extensions import mail
 
 # from models import Person
 
@@ -31,6 +33,7 @@ else:
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type=True)
+app.config['SECRET_KEY'] = os.getenv("FLASK_APP_KEY")
 db.init_app(app)
 
 
@@ -48,6 +51,18 @@ setup_commands(app)
 
 # Add all endpoints form the API with a "api" prefix
 app.register_blueprint(api, url_prefix='/api')
+
+app.config.update(
+    MAIL_SERVER=os.getenv('MAIL_SERVER'),
+    MAIL_PORT=int(os.getenv('MAIL_PORT') or 587),
+    MAIL_USE_TLS=os.getenv('MAIL_USE_TLS') == 'True',
+    MAIL_USERNAME=os.getenv('MAIL_USERNAME'),
+    MAIL_PASSWORD=os.getenv('MAIL_PASSWORD'),
+    MAIL_DEFAULT_SENDER=os.getenv('MAIL_DEFAULT_SENDER')
+)
+
+# Inicializamos el objeto mail importado de extensions
+mail.init_app(app)
 
 # Handle/serialize errors like a JSON object
 
