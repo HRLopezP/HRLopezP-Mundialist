@@ -11,6 +11,7 @@ from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_jwt_extended import JWTManager
+from datetime import timedelta
 
 # from models import Person
 
@@ -33,7 +34,9 @@ MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
 
-app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "tu_clave_secreta_aqui")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)
+
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
 
