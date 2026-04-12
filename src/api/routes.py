@@ -1,10 +1,12 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
 from api.models import db, User, Rol
-from api.utils import generate_sitemap, APIException, val_email, val_password
+from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 from datetime import datetime, timedelta, date
+import os
+from api.emails import send_password_reset_email
 
 api = Blueprint('api', __name__)
 
@@ -117,3 +119,69 @@ def login():
         "token": access_token,
         "user": user.serialize()
     }), 200
+
+
+@api.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # 1. Generamos el token seguro
+            token = generate_reset_token(email)
+            
+            # 2. Preparamos el nombre para el saludo
+            # Ajusta según tus campos (ej. user.name o user.username)
+            user_name = getattr(user, 'name', 'Usuario') 
+
+            # 3. Delegamos el envío al "Chef de correos"
+            email_sent = send_password_reset_email(email, user_name, token)
+
+            if email_sent:
+                return jsonify({"message": "Si el correo existe, se ha enviado un enlace de recuperación"}), 200
+            else:
+                return jsonify({"message": "Error al procesar el envío del correo"}), 500
+
+        # Por seguridad, a veces es mejor devolver 200 aunque no exista, 
+        # pero para desarrollo el 404 está bien.
+        return jsonify({"message": "Usuario no encontrado"}), 404
+
+    except Exception as e:
+        return jsonify({"message": "Error interno", "error": str(e)}), 500
+
+
+@api.route('/reset-password', methods=['POST'])
+def reset_password():
+    data = request.get_json()
+    token = data.get('token')
+    new_password = data.get('password')
+
+    # 1. Verificación básica de datos
+    if not token or not new_password:
+        return jsonify({"message": "Token y contraseña son requeridos"}), 400
+
+    # 2. Validar seguridad de la contraseña
+    if not val_password(new_password):
+        return jsonify({"message": "La contraseña no cumple con los requisitos mínimos (8+ caracteres, Mayúscula, Número y Símbolo)."}), 400
+
+    # 3. Validar si el token es real y no ha expirado (15 min)
+    email = confirm_reset_token(token)
+    if not email:
+        return jsonify({"message": "El enlace ha expirado o es inválido. Solicita uno nuevo."}), 400
+
+    # 4. Buscar al usuario y actualizar
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "Usuario no encontrado"}), 404
+
+    # 5. Encriptar y guardar
+    user.password = generate_password_hash(new_password)
+
+    try:
+        db.session.commit()
+        return jsonify({"message": "¡Golazo! Contraseña actualizada. Ya puedes iniciar sesión."}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"message": "Error al guardar la nueva contraseña"}), 500
