@@ -26,23 +26,37 @@ class User(db.Model):
     lastname: Mapped[str] = mapped_column(String(100), nullable=False) 
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default=None)
+    profile_public_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     total_points: Mapped[float] = mapped_column(Float, default=0.0)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     
     rol_id: Mapped[int] = mapped_column(ForeignKey('rol.id_rol'), nullable=False)
     rol: Mapped["Rol"] = relationship("Rol", back_populates="users")
     predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
 
+    def __repr__(self):
+        return f'<User {self.email}>'
+
     def serialize(self):
+        initials = f"{self.name[0]}{self.lastname[0]}".upper()
+        default_avatar = f"https://ui-avatars.com/api/?name={initials}&size=128&background=random&rounded=true"
         return {
             "id_user": self.id_user,
             "email": self.email,
             "name": self.name,
             "lastname": self.lastname,
             "is_active": self.is_active,
+            "image": self.profile if self.profile else default_avatar,
             "total_points": self.total_points,
-            "rol": self.rol.name_rol if self.rol else "Sin Rol"
+            "profile_public_id": self.profile_public_id,
+            "rol": self.rol.name_rol if self.rol else "Sin Rol",
+            "rol_id": self.rol_id
         }
-
+    
+    
 class Match(db.Model):
     __tablename__ = 'match'
     id_match: Mapped[int] = mapped_column(primary_key=True)
