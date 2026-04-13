@@ -20,13 +20,34 @@ const ResetPassword = () => {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [isPasswordFocused, setIsPasswordFocused] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const isPasswordValid = passwordRequirements.every(req => req.regex.test(password));
+    // Lógica de validación dinámica que mencionaste
+    const [passwordValidity, setPasswordValidity] = useState({
+        minLength: false, lowerCase: false, upperCase: false, number: false, specialChar: false,
+    });
+
+    const handlePasswordChange = (e) => {
+        const value = e.target.value;
+        setPassword(value);
+
+        const newValidity = {};
+        passwordRequirements.forEach(req => {
+            newValidity[req.key] = req.regex.test(value);
+        });
+        setPasswordValidity(newValidity);
+    };
+
+    const isPasswordValid = Object.values(passwordValidity).every(isValid => isValid);
+    const shouldShowRequirements = isPasswordFocused || password.length > 0;
+    const passwordsDoNotMatch = confirmPassword.length > 0 && password !== confirmPassword;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!isPasswordValid || password !== confirmPassword) return;
+        if (!isPasswordValid) return toast.error("La contraseña no es segura.");
+        if (password !== confirmPassword) return toast.error("Las contraseñas no coinciden.");
 
         setLoading(true);
         try {
@@ -36,13 +57,13 @@ const ResetPassword = () => {
             });
 
             if (response.ok) {
-                toast.success("¡GOL! Contraseña actualizada con éxito.");
+                toast.success("¡Contraseña actualizada! Entrando al campo de juego...");
                 setTimeout(() => navigate("/login"), 3000);
             } else {
-                toast.error(data.message || "El token expiró. Pide un nuevo pase.");
+                toast.error(data.message || "El pase ha expirado. Solicita uno nuevo.");
             }
         } catch (error) {
-            toast.error("Error en la conexión con el estadio.");
+            toast.error("Error de conexión. El VAR está revisando el sistema.");
         } finally {
             setLoading(false);
         }
@@ -56,53 +77,77 @@ const ResetPassword = () => {
                     <div className="col-12 col-md-6 col-lg-5">
                         <div className="auth-card">
                             <div className="auth-header">
-                                <h2 style={{color: 'var(--pitch-green)'}}>Nueva Contraseña</h2>
+                                <h2 style={{ color: 'var(--pitch-green)' }}>Nueva Contraseña</h2>
                                 <p className="text-white-50">Asegura tu cuenta para el próximo partido</p>
                             </div>
 
                             <div className="p-4">
                                 <form onSubmit={handleSubmit}>
                                     <div className="mb-3">
-                                        <label className="auth-label mb-2">Nueva Contraseña</label>
+                                        <label className="auth-label mb-2">Contraseña Nueva</label>
                                         <div className="input-group">
                                             <input
                                                 type={showPassword ? "text" : "password"}
-                                                className="form-control auth-input border-end-0"
+                                                className={`form-control auth-input ${password.length > 0 && (isPasswordValid ? 'border-success' : 'border-danger')}`}
                                                 value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
+                                                onFocus={() => setIsPasswordFocused(true)}
+                                                onBlur={() => setIsPasswordFocused(false)}
+                                                onChange={handlePasswordChange}
+                                                placeholder="Mínimo 8 caracteres"
                                                 required
                                             />
-                                            <button 
-                                                className="btn auth-input border-start-0" 
-                                                type="button" 
+                                            <button
+                                                className="btn auth-input border-start-0"
+                                                type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
                                             >
-                                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{color: 'var(--pitch-green)'}}></i>
+                                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--pitch-green)' }}></i>
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Requisitos Visuales */}
-                                    <div className="mb-3 p-3 rounded" style={{background: 'rgba(255,255,255,0.05)'}}>
-                                        {passwordRequirements.map(req => (
-                                            <div key={req.key} className="small mb-1">
-                                                <i className={`fas ${req.regex.test(password) ? 'fa-check-circle text-success' : 'fa-circle-xmark text-danger'} me-2`}></i>
-                                                <span className={req.regex.test(password) ? 'text-success' : 'text-white-50'}>{req.label}</span>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    {/* Requisitos visuales dinámicos */}
+                                    {shouldShowRequirements && (
+                                        <div className="mb-3 p-3 rounded" style={{ background: 'rgba(255,255,255,0.05)', animation: 'fadeIn 0.3s ease' }}>
+                                            <ul className="list-unstyled mb-0">
+                                                {passwordRequirements.map(req => {
+                                                    const isCompleted = passwordValidity[req.key];
+                                                    return (
+                                                        <li key={req.key} className="small mb-1 d-flex align-items-center">
+                                                            <i className={`fas ${passwordValidity[req.key] ? 'fa-check-circle text-success' : 'fa-circle-xmark text-danger'} me-2`} style={{ color: isCompleted ? 'var(--accent-color)' : '#e63946', fontSize: '0.8rem' }}></i>
+                                                            <span className={passwordValidity[req.key] ? 'text-success' : 'text-white-50'}>
+                                                                {req.label}
+                                                            </span>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        </div>
+                                    )}
 
                                     <div className="mb-4">
                                         <label className="auth-label mb-2">Confirmar Contraseña</label>
-                                        <input
-                                            type="password"
-                                            className={`form-control auth-input ${password !== confirmPassword && confirmPassword ? 'border-danger' : ''}`}
-                                            value={confirmPassword}
-                                            onChange={(e) => setConfirmPassword(e.target.value)}
-                                            required
-                                        />
+                                        <div className="input-group">
+                                            <input
+                                                type={showConfirmPassword ? "text" : "password"}
+                                                className={`form-control auth-input ${confirmPassword.length > 0 && (password === confirmPassword ? 'border-success' : 'border-danger')}`}
+                                                value={confirmPassword}
+                                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                                placeholder="Repite tu contraseña"
+                                                required
+                                            />
+                                            <button
+                                                className="btn auth-input border-start-0"
+                                                type="button"
+                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                            >
+                                                <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--text-primary)' }}></i>
+                                            </button>
+                                        </div>
+                                        {passwordsDoNotMatch && (
+                                            <small className="text-danger mt-1 d-block">Las contraseñas no coinciden</small>
+                                        )}
                                     </div>
-
                                     <button 
                                         type="submit" 
                                         className="btn-emerald w-100 py-3" 
