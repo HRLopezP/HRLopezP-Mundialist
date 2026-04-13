@@ -119,7 +119,7 @@ const Register = () => {
                                     </button>
                                 </div>
 
-                                {/* REINTEGRADO: Solo se muestra si el input tiene el foco o si ya hay texto */}
+                                {/* Solo se muestra si el input tiene el foco o si ya hay texto */}
                                 {(isPasswordFocused || user.password.length > 0) && (
                                     <div className="mt-2 p-2 rounded bg-dark-soft shadow-sm" style={{ border: '1px solid rgba(255,215,0,0.1)' }}>
                                         {passwordRequirements.map(req => (
