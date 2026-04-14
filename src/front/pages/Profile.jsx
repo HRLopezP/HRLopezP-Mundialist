@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "../utils/api";
 import { toast } from "sonner";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 import "../styles/profile.css";
 
 const passwordRequirements = [
@@ -12,11 +13,12 @@ const passwordRequirements = [
 ];
 
 const Profile = () => {
+    const { store, dispatch } = useGlobalReducer();
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: "", lastname: "" });
-    
+
     // Estados de Contraseña (Recuperados)
     const [showPassModal, setShowPassModal] = useState(false);
     const [passData, setPassData] = useState({ current: "", new: "", confirm: "" });
@@ -54,7 +56,7 @@ const Profile = () => {
     const handlePasswordChange = (field, value) => {
         const newData = { ...passData, [field]: value };
         setPassData(newData);
-        
+
         if (field === 'new') validatePassword(value);
         if (field === 'new' || field === 'confirm') {
             setPassMatch(newData.new === newData.confirm);
@@ -65,18 +67,39 @@ const Profile = () => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const form = new FormData();
-        form.append("file", file);
+        const formData = new FormData();
+        formData.append("file", file);
 
-        toast.promise(apiFetch("/user/update-photo", { method: "PATCH", body: form }), {
-            loading: 'Subiendo imagen al estadio...',
-            success: ({ data }) => {
-                setUser({ ...user, profile: data.image });
-                return '¡Foto actualizada!';
-            },
-            error: 'Error al subir la foto'
-        });
+        try {
+            toast.info("Subiendo imagen...");
+
+            // Cambiamos la forma de recibir los datos para que coincida con tu apiFetch
+            const { response, data } = await apiFetch("/user/update-photo", {
+                method: "PATCH",
+                body: formData,
+            });
+
+            if (response.ok) {
+                // 1. Actualizamos el estado local del componente
+                setUser({ ...user, profile: data.profile });
+
+                // 2. ¡IMPORTANTE! Actualizamos el Store Global
+                // Usamos data.profile que es la URL que viene del backend
+                dispatch({
+                    type: "SET_USER",
+                    payload: { ...store.user, profile: data.profile }
+                });
+
+                toast.success("¡Foto de perfil actualizada!");
+            } else {
+                toast.error(data.message || "Error al subir");
+            }
+        } catch (error) {
+            console.error("Error en la subida:", error);
+            toast.error("Error de conexión");
+        }
     };
+
 
     const updateInfo = async () => {
         const { response, data } = await apiFetch("/user/update-profile", {
@@ -124,14 +147,20 @@ const Profile = () => {
             <div className="profile-card">
                 <div className="profile-header">
                     <div className="avatar-wrapper">
-                        <img 
-                            src={user?.profile || `https://ui-avatars.com/api/?name=${user?.name}+${user?.lastname}&background=28c87d&color=fff`} 
-                            alt="Profile" 
+                        <img
+                            src={user?.profile || `https://ui-avatars.com/api/?name=${user?.name}+${user?.lastname}&background=28c87d&color=fff`}
+                            alt="Profile"
                             className="profile-img"
                         />
                         <label className="edit-photo-btn">
                             <i className="fa-solid fa-camera"></i>
-                            <input type="file" hidden onChange={handlePhotoChange} accept="image/*" />
+                            <input
+                                type="file"
+                                id="upload-photo"
+                                className="d-none"
+                                accept="image/*"
+                                onChange={handlePhotoChange}
+                            />
                         </label>
                     </div>
                     <h2 className="mt-3">{user?.name} {user?.lastname}</h2>
@@ -150,21 +179,21 @@ const Profile = () => {
                         <div className="row g-3">
                             <div className="col-md-6">
                                 <label className="form-label text-dim">Nombre</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     className={`form-control profile-input ${isEditing ? 'active' : ''}`}
                                     value={formData.name}
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
                             <div className="col-md-6">
                                 <label className="form-label text-dim">Apellido</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     className={`form-control profile-input ${isEditing ? 'active' : ''}`}
                                     value={formData.lastname}
-                                    onChange={(e) => setFormData({...formData, lastname: e.target.value})}
+                                    onChange={(e) => setFormData({ ...formData, lastname: e.target.value })}
                                     disabled={!isEditing}
                                 />
                             </div>
@@ -197,22 +226,22 @@ const Profile = () => {
                 <div className="custom-modal-overlay">
                     <div className="custom-modal animate__animated animate__zoomIn">
                         <h3>Actualizar Seguridad</h3>
-                        
+
                         <div className="mt-3">
                             {['current', 'new', 'confirm'].map((field) => (
                                 <div key={field} className="mb-3">
                                     <div className="input-group">
-                                        <input 
-                                            type={showPass[field] ? "text" : "password"} 
-                                            placeholder={field === 'current' ? "Contraseña Actual" : field === 'new' ? "Nueva Contraseña" : "Confirmar Nueva"} 
+                                        <input
+                                            type={showPass[field] ? "text" : "password"}
+                                            placeholder={field === 'current' ? "Contraseña Actual" : field === 'new' ? "Nueva Contraseña" : "Confirmar Nueva"}
                                             className={`form-control auth-input ${field === 'confirm' && !passMatch ? 'border-danger' : ''}`}
                                             value={passData[field]}
                                             onChange={(e) => handlePasswordChange(field, e.target.value)}
                                         />
-                                        <button 
-                                            className="btn btn-outline-secondary" 
+                                        <button
+                                            className="btn btn-outline-secondary"
                                             type="button"
-                                            onClick={() => setShowPass({...showPass, [field]: !showPass[field]})}
+                                            onClick={() => setShowPass({ ...showPass, [field]: !showPass[field] })}
                                         >
                                             <i className={`fa-solid ${showPass[field] ? 'fa-eye-slash' : 'fa-eye'}`}></i>
                                         </button>
@@ -233,8 +262,8 @@ const Profile = () => {
                         </div>
 
                         <div className="d-flex gap-2">
-                            <button 
-                                className="btn btn-emerald w-100" 
+                            <button
+                                className="btn btn-emerald w-100"
                                 onClick={updatePassword}
                                 disabled={!passMatch || !passwordRequirements.every(req => passwordValidity[req.key])}
                             >

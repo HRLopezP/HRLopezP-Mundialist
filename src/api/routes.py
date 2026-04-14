@@ -236,7 +236,7 @@ def update_user_photo():
             db.session.add(user) # <-- Aseguramos el objeto en la sesión
             db.session.commit()  # <-- Guardamos en la DB
             
-            return jsonify({"message": "Foto actualizada", "image": url}), 200
+            return jsonify({"message": "Foto actualizada", "profile": url}), 200
         
         return jsonify({"message": "No se pudo subir la imagen a la nube"}), 500
 
