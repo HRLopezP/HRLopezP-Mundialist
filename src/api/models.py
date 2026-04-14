@@ -49,7 +49,7 @@ class User(db.Model):
             "name": self.name,
             "lastname": self.lastname,
             "is_active": self.is_active,
-            "image": self.profile if self.profile else default_avatar,
+            "profile": self.profile if self.profile else default_avatar,
             "total_points": self.total_points,
             "profile_public_id": self.profile_public_id,
             "rol": self.rol.name_rol if self.rol else "Sin Rol",

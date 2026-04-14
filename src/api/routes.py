@@ -211,7 +211,6 @@ def update_user_photo():
     try:
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
-        print(f"DEBUG: Intentando subir foto para usuario {user_id}")
         
         if 'file' not in request.files:
             return jsonify({"message": "No se seleccionó ninguna imagen"}), 400
@@ -224,13 +223,20 @@ def update_user_photo():
         
         # 2. Subimos la nueva usando el PRESET (que ya tiene la carpeta configurada)
         url, public_id = CloudinaryService.upload_file(file)
-        print(f"DEBUG: Cloudinary respondió -> URL: {url}, ID: {public_id}")
         
         if url:
+            # Si tenía una foto vieja con ID, la borramos (esto ya lo tienes, está bien)
+            if user.profile_public_id:
+                CloudinaryService.delete_file(user.profile_public_id)
+            
+            # Asignamos los nuevos valores
             user.profile = url
             user.profile_public_id = public_id
-            db.session.commit()
-            return jsonify({"message": "Foto de perfil actualizada", "image": url}), 200
+            
+            db.session.add(user) # <-- Aseguramos el objeto en la sesión
+            db.session.commit()  # <-- Guardamos en la DB
+            
+            return jsonify({"message": "Foto actualizada", "image": url}), 200
         
         return jsonify({"message": "No se pudo subir la imagen a la nube"}), 500
 
