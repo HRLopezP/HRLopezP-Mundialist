@@ -51,8 +51,9 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
         try {
-            const res = await apiFetch("/register", {
+            const { response, data } = await apiFetch("/register", {
                 method: "POST",
                 body: JSON.stringify({
                     name: user.name,
@@ -62,16 +63,24 @@ const Register = () => {
                 })
             });
 
-            const data = await res.json();
+            // MODIFICACIÓN AQUÍ:
+            // Aceptamos tanto 200 como 201 como éxitos
+            if (response.ok) {
+                toast.success(data.message || "¡Registro exitoso! Bienvenido al Mundial");
+                setUser(initialUserState); // Limpiamos el formulario
 
-            if (res && res.ok) {
-                toast.success(data.message || "¡Registro exitoso!");
-                setTimeout(() => navigate("/login"), 1500);
+                // Redirigimos al login después de un momento
+                setTimeout(() => {
+                    navigate("/login");
+                }, 2000);
             } else {
-                toast.error(data?.message || "Error al registrar");
+                // Si el backend envió un error (como 400 o 422), mostramos el mensaje que viene de allá
+                toast.error(data.message || "Error al registrarse en el estadio");
             }
+
         } catch (error) {
-            toast.error("Error de conexión con el estadio");
+            console.error("Error en registro:", error);
+            toast.error("Error en la conexión con el estadio.");
         }
     };
 

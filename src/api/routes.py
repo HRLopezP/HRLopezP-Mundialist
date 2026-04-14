@@ -7,6 +7,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from datetime import datetime, timedelta, date
 import os
 from api.emails import send_password_reset_email
+from .cloudinary_service import CloudinaryService
 
 api = Blueprint('api', __name__)
 
@@ -185,3 +186,75 @@ def reset_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Error al guardar la nueva contraseña"}), 500
+
+
+@api.route('/user/profile', methods=['GET'])
+@jwt_required()
+def get_profile():
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+
+        if not user:
+            return jsonify({"message": "Usuario no encontrado"}), 404
+
+        return jsonify(user.serialize()), 200
+
+    except Exception as e:
+        print(f"DEBUG QUINIELA - Error en get_profile: {str(e)}")
+        return jsonify({"message": "Error interno del servidor"}), 500
+
+# 2. Actualizar Foto de Perfil (Cloudinary)
+@api.route('/user/update-photo', methods=['PATCH'])
+@jwt_required()
+def update_user_photo():
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        print(f"DEBUG: Intentando subir foto para usuario {user_id}")
+        
+        if 'file' not in request.files:
+            return jsonify({"message": "No se seleccionó ninguna imagen"}), 400
+        
+        file = request.files['file']
+        
+        # 1. Si ya tiene una foto, la borramos de Cloudinary para no gastar espacio
+        if user.profile_public_id:
+            CloudinaryService.delete_file(user.profile_public_id)
+        
+        # 2. Subimos la nueva usando el PRESET (que ya tiene la carpeta configurada)
+        url, public_id = CloudinaryService.upload_file(file)
+        print(f"DEBUG: Cloudinary respondió -> URL: {url}, ID: {public_id}")
+        
+        if url:
+            user.profile = url
+            user.profile_public_id = public_id
+            db.session.commit()
+            return jsonify({"message": "Foto de perfil actualizada", "image": url}), 200
+        
+        return jsonify({"message": "No se pudo subir la imagen a la nube"}), 500
+
+    except Exception as e:
+        print(f"DEBUG QUINIELA - Error en update_photo: {str(e)}")
+        return jsonify({"message": "Error al procesar la imagen"}), 500
+
+# 3. Actualizar datos (Nombre, Apellido, Contraseña)
+@api.route('/user/update-profile', methods=['PATCH'])
+@jwt_required()
+def update_profile():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
+    data = request.json
+    
+    # Actualizar nombres si vienen en el body
+    if 'name' in data: user.name = data['name']
+    if 'lastname' in data: user.lastname = data['lastname']
+    
+    # Lógica para cambio de contraseña
+    if 'current_password' in data and 'new_password' in data:
+        if not check_password_hash(user.password, data['current_password']):
+            return jsonify({"message": "La contraseña actual es incorrecta"}), 400
+        user.password = generate_password_hash(data['new_password'])
+    
+    db.session.commit()
+    return jsonify({"message": "Perfil actualizado correctamente", "user": user.serialize()}), 200
