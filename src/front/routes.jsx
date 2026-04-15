@@ -15,7 +15,7 @@ import Profile from "./pages/Profile";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-  
+
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
 
       {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
@@ -26,8 +26,15 @@ export const router = createBrowserRouter(
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/profile" element={< Profile />} />
 
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
 
     </Route>
   )

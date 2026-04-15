@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer"; // ¡Recuperado!
+import useGlobalReducer from "../hooks/useGlobalReducer"; 
+import { toast } from "sonner";
 import "../styles/navbar.css";
 
 export const Navbar = () => {
@@ -9,6 +10,7 @@ export const Navbar = () => {
 
 	const handleLogout = () => {
 		dispatch({ type: "LOGOUT" });
+		toast.success("¡Sesión cerrada! Vuelve pronto.");
 		navigate("/login");
 	};
 
