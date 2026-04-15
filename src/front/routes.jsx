@@ -12,6 +12,9 @@ import { Login } from "./pages/Login"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
+import ProtectedRoute from "./components/ProtectedRoute";
+import RolesAdmin from "./pages/RolesAdmin";
+import AdminRoute from "./components/AdminRoute";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -33,6 +36,15 @@ export const router = createBrowserRouter(
           <ProtectedRoute>
             <Profile />
           </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin/roles"
+        element={
+          <AdminRoute>
+            <RolesAdmin />
+          </AdminRoute>
         }
       />
 
