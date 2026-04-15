@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, date
 import os
 from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
+from .manager_decorator import manager_required
 
 api = Blueprint('api', __name__)
 
@@ -264,3 +265,67 @@ def update_profile():
     
     db.session.commit()
     return jsonify({"message": "Perfil actualizado correctamente", "user": user.serialize()}), 200
+
+
+@api.route('/roles', methods=['GET'])
+@jwt_required()
+@manager_required
+def get_all_roles():
+    roles = Rol.query.all()
+    return jsonify([rol.serialize() for rol in roles]), 200
+
+
+# 2. Crear un nuevo rol
+@api.route('/roles', methods=['POST'])
+@jwt_required()
+@manager_required
+def create_rol():
+    body = request.get_json()
+    
+    if not body or "name_rol" not in body:
+        return jsonify({"msg": "El nombre del rol es obligatorio"}), 400
+        
+    # Verificar si ya existe
+    exist = Rol.query.filter_by(name_rol=body["name_rol"]).first()
+    if exist:
+        return jsonify({"msg": "Este rol ya existe"}), 400
+
+    new_rol = Rol(name_rol=body["name_rol"])
+    db.session.add(new_rol)
+    db.session.commit()
+    
+    return jsonify({"msg": "Rol creado con éxito", "rol": new_rol.serialize()}), 201
+
+# 3. Editar un rol
+@api.route('/roles/<int:id>', methods=['PUT'])
+@jwt_required()
+@manager_required
+def update_rol(id):
+    rol = Rol.query.get(id)
+    if not rol:
+        return jsonify({"msg": "Rol no encontrado"}), 404
+        
+    body = request.get_json()
+    if "name_rol" in body:
+        rol.name_rol = body["name_rol"]
+        db.session.commit()
+        return jsonify({"msg": "Rol actualizado", "rol": rol.serialize()}), 200
+        
+    return jsonify({"msg": "Nada que actualizar"}), 400
+
+# 4. Eliminar un rol
+@api.route('/roles/<int:id>', methods=['DELETE'])
+@jwt_required()
+@manager_required
+def delete_rol(id):
+    rol = Rol.query.get(id)
+    if not rol:
+        return jsonify({"msg": "Rol no encontrado"}), 404
+        
+    # Validación importante: ¿Hay usuarios con este rol?
+    if len(rol.users) > 0:
+        return jsonify({"msg": "No se puede eliminar un rol que tiene usuarios asignados"}), 400
+
+    db.session.delete(rol)
+    db.session.commit()
+    return jsonify({"msg": "Rol eliminado correctamente"}), 200
