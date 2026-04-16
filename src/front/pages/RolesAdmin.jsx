@@ -1,0 +1,188 @@
+import React, { useState, useEffect } from "react";
+import { apiFetch } from "../utils/api";
+import { toast } from "sonner";
+import Swal from "sweetalert2";
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import "../styles/admin.css"; 
+
+const RolesAdmin = () => {
+    const [roles, setRoles] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [newRoleName, setNewRoleName] = useState("");
+    const [editingId, setEditingId] = useState(null); 
+    const [editName, setEditName] = useState("");
+
+    useEffect(() => {
+        getRoles();
+    }, []);
+
+    const getRoles = async () => {
+        try {
+            const { response, data } = await apiFetch("/roles");
+            if (response.ok) setRoles(data);
+        } catch (error) {
+            toast.error("Error al conectar con el servidor");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCreateRole = async (e) => {
+        e.preventDefault();
+        if (!newRoleName.trim()) return toast.warning("El nombre no puede estar vacío");
+
+        const { response, data } = await apiFetch("/roles", {
+            method: "POST",
+            body: JSON.stringify({ name_rol: newRoleName })
+        });
+
+        if (response.ok) {
+            toast.success("Rol creado correctamente");
+            setNewRoleName("");
+            getRoles();
+        } else {
+            toast.error(data.msg || "Error al crear");
+        }
+    };
+
+    const startEdit = (rol) => {
+        setEditingId(rol.id_rol);
+        setEditName(rol.name_rol);
+    };
+
+
+    const handleUpdateRole = async (id) => {
+        if (!editName.trim()) return toast.warning("El nombre no puede estar vacío");
+
+        const { response, data } = await apiFetch(`/roles/${id}`, {
+            method: "PUT",
+            body: JSON.stringify({ name_rol: editName })
+        });
+
+        if (response.ok) {
+            toast.success("Rol actualizado con éxito");
+            setEditingId(null);
+            getRoles();
+        } else {
+            toast.error(data.msg || "Error al actualizar");
+        }
+    };
+
+    const handleDeleteRole = (id, name) => {
+        Swal.fire({
+            title: `¿Eliminar el rol ${name}?`,
+            text: "Esta acción no se puede deshacer.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#28c87d",
+            cancelButtonColor: "#303030",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar",
+            background: "#051426",
+            color: "#fff"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { response, data } = await apiFetch(`/roles/${id}`, { method: "DELETE" });
+                if (response.ok) {
+                    toast.success("Rol eliminado");
+                    getRoles();
+                } else {
+                    Swal.fire("Error", data.msg, "error");
+                }
+            }
+        });
+    };
+
+    if (loading) return <div className="text-center mt-5"><div className="spinner-border text-emerald"></div></div>;
+
+    return (
+        <div className="admin-container animate__animated animate__fadeIn">
+            <div className="admin-card p-4">
+                <h2 className="mb-4 text-white"><i className="fa-solid fa-user-shield me-2 text-emerald"></i> Gestión de Roles</h2>
+
+                {/* Formulario de creación */}
+                <form onSubmit={handleCreateRole} className="mb-5">
+                    <label className="auth-label">Nuevo Rol</label>
+                    <div className="d-flex gap-2">
+                        <input
+                            type="text"
+                            className="form-control auth-input"
+                            placeholder="Ej: Auditor"
+                            value={newRoleName}
+                            onChange={(e) => setNewRoleName(e.target.value)}
+                        />
+                        <button className="btn btn-emerald px-4" type="submit">Crear</button>
+                    </div>
+                </form>
+
+                {/* Tabla Responsive */}
+                <div className="table-responsive">
+                    <table className="table table-dark table-hover align-middle">
+                        <thead className="table-oxford">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre del Rol</th>
+                                <th className="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {roles.map((rol) => (
+                                <tr key={rol.id_rol}>
+                                    <td>{rol.id_rol}</td>
+                                    <td>
+                                        {editingId === rol.id_rol ? (
+                                            <input
+                                                type="text"
+                                                className="form-control form-control-sm auth-input"
+                                                value={editName}
+                                                onChange={(e) => setEditName(e.target.value)}
+                                                autoFocus
+                                            />
+                                        ) : (
+                                            <span className="badge bg-dark-soft">{rol.name_rol}</span>
+                                        )}
+                                    </td>
+                                    <td className="text-end">
+                                        {editingId === rol.id_rol ? (
+                                            <div className="d-flex justify-content-end gap-2">
+                                                <button
+                                                    className="btn btn-emerald btn-sm rounded-pill"
+                                                    onClick={() => handleUpdateRole(rol.id_rol)}
+                                                >
+                                                    <i className="fa-solid fa-check"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline-light btn-sm rounded-pill"
+                                                    onClick={() => setEditingId(null)}
+                                                >
+                                                    <i className="fa-solid fa-xmark"></i>
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="d-flex justify-content-end gap-2">
+                                                <button
+                                                    className="btn btn-outline-info btn-sm rounded-pill"
+                                                    onClick={() => startEdit(rol)}
+                                                >
+                                                    <i className="fa-solid fa-pen-to-square"></i>
+                                                </button>
+                                                <button
+                                                    className="btn btn-outline-danger btn-sm rounded-pill"
+                                                    onClick={() => handleDeleteRole(rol.id_rol, rol.name_rol)}
+                                                >
+                                                    <i className="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default RolesAdmin;

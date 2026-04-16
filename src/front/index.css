@@ -1,0 +1,54 @@
+/* src/styles/index.css */
+:root {
+  /* Colores de Marca Inmersivos */
+  --accent-gold: #FFD700;      /* Oro para trofeos */
+  --neon-blue: #00D4FF;        /* Brillo de los focos */
+  --pitch-green: #28c87d;      /* Verde césped neón */
+  --deep-navy: #051426;        /* Azul noche profundo */
+  
+  /* Colores de Texto */
+  --text-main: #FFFFFF;
+  --text-dim: #A8B2D1;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  
+  /* --- EFECTO ESTADIO NOCTURNO TECNOLÓGICO --- */
+  /* 1. Definimos un degradado radial azul muy oscuro que se aclara ligeramente en el centro */
+  /* 2. Ponemos tu imagen del estadio debajo */
+  background: 
+    radial-gradient(circle at center, rgba(10, 20, 50, 0.85) 0%, rgba(5, 10, 30, 0.95) 100%),
+    url('https://img.freepik.com/vector-gratis/estadio-futbol_1284-22432.jpg?semt=ais_hybrid&w=740&q=80'); /* Imagen real de estadio */
+  
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Mantiene el estadio quieto al hacer scroll para más inmersión */
+  
+  /* Este truco mezcla el degradado azul con la foto, oscureciéndola y dándole el tono */
+  background-blend-mode: multiply; 
+}
+
+/* Botón Neón Mundialista */
+.btn-emerald {
+  background: var(--pitch-green) !important;
+  color: #000 !important; /* Texto negro para contraste */
+  font-weight: 800 !important;
+  border: none !important;
+  padding: 14px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 20px rgba(46, 242, 151, 0.3) !important; /* Brillo verde sutil */
+  transition: all 0.3s ease !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.btn-emerald:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 0 35px rgba(46, 242, 151, 0.6) !important; /* Brillo verde intenso al hover */
+  filter: brightness(1.1);
+}

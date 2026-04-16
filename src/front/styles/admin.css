@@ -1,0 +1,91 @@
+.admin-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-card {
+  background: rgba(5, 20, 38, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.table-oxford {
+  background-color: #343a40 !important;
+  color: white;
+}
+
+.bg-dark-soft {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--pitch-green);
+  border: 1px solid rgba(40, 200, 125, 0.2);
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+@media (max-width: 576px) {
+  .admin-container {
+    padding: 10px;
+  }
+  .admin-card {
+    padding: 15px !important;
+  }
+  .btn-emerald {
+    padding: 10px !important;
+    font-size: 0.8rem;
+  }
+}
+
+.custom-pagination .page-link {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+  padding: 8px 14px;
+  transition: all 0.3s;
+}
+
+.custom-pagination .page-item.active .page-link {
+  background: var(--pitch-green) !important;
+  color: #000 !important;
+  border-color: var(--pitch-green);
+}
+
+.custom-pagination .page-item.disabled .page-link {
+  background: transparent;
+  opacity: 0.3;
+}
+
+.user-mobile-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border-left: 4px solid var(--pitch-green);
+}
+
+.form-select.auth-input, .form-control.auth-input {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.form-select option {
+    background-color: var(--deep-navy);
+    color: white;
+}
+
+.custom-switch:checked {
+    background-color: var(--pitch-green) !important;
+    border-color: var(--pitch-green) !important;
+}
+
+
+.user-count-badge {
+    background: rgba(40, 200, 125, 0.1);
+    color: var(--pitch-green);
+    border: 1px solid var(--pitch-green);
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}

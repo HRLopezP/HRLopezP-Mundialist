@@ -1,4 +1,7 @@
-from flask import jsonify, url_for
+from flask import jsonify, url_for, request
+import re
+import os
+from itsdangerous import URLSafeTimedSerializer
 
 class APIException(Exception):
     status_code = 400
@@ -39,3 +42,53 @@ def generate_sitemap(app):
         <p>Start working on your project by following the <a href="https://start.4geeksacademy.com/starters/full-stack" target="_blank">Quick Start</a></p>
         <p>Remember to specify a real endpoint path like: </p>
         <ul style="text-align: left;">"""+links_html+"</ul></div>"
+
+
+def val_email(correo: str) -> bool:
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if re.fullmatch(pattern, correo):
+        return True
+    else:
+        return False
+
+
+PASSWORD_REGEX = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()\-_=+{};:,<.\>]).{8,}$"
+
+
+def val_password(password: str) -> bool:
+    """
+    Verifica si una contraseña cumple con los requisitos de seguridad principales
+    mediante una única expresión regular (regex).
+
+    Requisitos:
+    - Mínimo 8 caracteres.
+    - Al menos una letra minúscula.
+    - Al menos una letra mayúscula.
+    - Al menos un número.
+    - Al menos un carácter especial (!@#$%^&*()_-+=;:,<.>).
+    """
+    # Usamos re.fullmatch para asegurar que toda la cadena coincida con el patrón.
+    if re.fullmatch(PASSWORD_REGEX, password):
+        return True
+
+    return False
+
+
+def generate_reset_token(email):
+    # Usamos la clave secreta de tu app para "firmar" el token
+    serializer = URLSafeTimedSerializer(os.getenv("FLASK_APP_KEY"))
+    # El token llevará el email y una marca de tiempo
+    return serializer.dumps(email, salt="password-reset-salt")
+
+
+def confirm_reset_token(token, expiration=900):  # 900 segundos = 15 minutos
+    serializer = URLSafeTimedSerializer(os.getenv("FLASK_APP_KEY"))
+    try:
+        email = serializer.loads(
+            token,
+            salt="password-reset-salt",
+            max_age=expiration
+        )
+        return email
+    except:
+        return None
