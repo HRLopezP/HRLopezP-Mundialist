@@ -15,6 +15,19 @@ api = Blueprint('api', __name__)
 # Allow CORS requests to this API
 CORS(api)
 
+def paginate_query(query, model_name="items"):
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    
+    return {
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "per_page": per_page,
+        model_name: [item.serialize() for item in pagination.items]
+    }
 
 @api.route("/health-check", methods=["GET"])
 def health_check():
@@ -188,7 +201,7 @@ def reset_password():
         db.session.rollback()
         return jsonify({"message": "Error al guardar la nueva contraseña"}), 500
 
-
+#Ver Perfil
 @api.route('/user/profile', methods=['GET'])
 @jwt_required()
 def get_profile():
@@ -205,7 +218,7 @@ def get_profile():
         print(f"DEBUG QUINIELA - Error en get_profile: {str(e)}")
         return jsonify({"message": "Error interno del servidor"}), 500
 
-# 2. Actualizar Foto de Perfil (Cloudinary)
+# 2. Actualizar Foto de Perfil
 @api.route('/user/update-photo', methods=['PATCH'])
 @jwt_required()
 def update_user_photo():
@@ -245,7 +258,7 @@ def update_user_photo():
         print(f"DEBUG QUINIELA - Error en update_photo: {str(e)}")
         return jsonify({"message": "Error al procesar la imagen"}), 500
 
-# 3. Actualizar datos (Nombre, Apellido, Contraseña)
+# Actualizar datos (Nombre, Apellido, Contraseña)
 @api.route('/user/update-profile', methods=['PATCH'])
 @jwt_required()
 def update_profile():
@@ -266,7 +279,7 @@ def update_profile():
     db.session.commit()
     return jsonify({"message": "Perfil actualizado correctamente", "user": user.serialize()}), 200
 
-
+# Rol-ver
 @api.route('/roles', methods=['GET'])
 @jwt_required()
 @manager_required
@@ -275,7 +288,7 @@ def get_all_roles():
     return jsonify([rol.serialize() for rol in roles]), 200
 
 
-# 2. Crear un nuevo rol
+# Rol-crear
 @api.route('/roles', methods=['POST'])
 @jwt_required()
 @manager_required
@@ -296,7 +309,7 @@ def create_rol():
     
     return jsonify({"msg": "Rol creado con éxito", "rol": new_rol.serialize()}), 201
 
-# 3. Editar un rol
+# Rol-editar
 @api.route('/roles/<int:id>', methods=['PUT'])
 @jwt_required()
 @manager_required
@@ -313,7 +326,7 @@ def update_rol(id):
         
     return jsonify({"msg": "Nada que actualizar"}), 400
 
-# 4. Eliminar un rol
+# Rol-eliminar
 @api.route('/roles/<int:id>', methods=['DELETE'])
 @jwt_required()
 @manager_required
@@ -322,10 +335,96 @@ def delete_rol(id):
     if not rol:
         return jsonify({"msg": "Rol no encontrado"}), 404
         
-    # Validación importante: ¿Hay usuarios con este rol?
     if len(rol.users) > 0:
         return jsonify({"msg": "No se puede eliminar un rol que tiene usuarios asignados"}), 400
 
     db.session.delete(rol)
     db.session.commit()
     return jsonify({"msg": "Rol eliminado correctamente"}), 200
+
+
+#Usuarios- ver
+@api.route('/users', methods=['GET'])
+@jwt_required()
+@manager_required
+def get_users():
+    search = request.args.get('search', '')
+    status = request.args.get('status', 'all')
+    
+    query = User.query
+    
+    if search:
+        query = query.filter(
+            (User.name.ilike(f"%{search}%")) | 
+            (User.lastname.ilike(f"%{search}%")) | 
+            (User.email.ilike(f"%{search}%"))
+        )
+    
+    if status == 'active':
+        query = query.filter_by(is_active=True)
+    elif status == 'inactive':
+        query = query.filter_by(is_active=False)
+        
+    data = paginate_query(query, model_name="users")
+    return jsonify(data), 200
+
+# Cambiar estatus
+@api.route('/users/<int:id>/status', methods=['PATCH'])
+@jwt_required()
+@manager_required
+def toggle_user_status(id):
+    current_user_id = get_jwt_identity()
+    
+    if id == 1:
+        return jsonify({"msg": "El Administrador Principal es intocable"}), 403
+    if id == int(current_user_id):
+        return jsonify({"msg": "No puedes desactivar tu propia cuenta"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    
+    user.is_active = not user.is_active
+    db.session.commit()
+    return jsonify({"msg": "Estatus actualizado", "user": user.serialize()}), 200
+
+# Cambiar rol
+@api.route('/users/<int:id>/role', methods=['PATCH'])
+@jwt_required()
+@manager_required
+def change_user_role(id):
+    current_user_id = get_jwt_identity()
+    
+    if id == 1:
+        return jsonify({"msg": "No se puede cambiar el rol del Administrador Principal"}), 403
+    if id == int(current_user_id):
+        return jsonify({"msg": "No puedes cambiar tu propio rol"}), 403
+
+    body = request.get_json()
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+
+    user.rol_id = body.get("id_rol")
+    db.session.commit()
+    return jsonify({"msg": "Rol actualizado", "user": user.serialize()}), 200
+
+# Usuarios borrar
+@api.route('/users/<int:id>', methods=['DELETE'])
+@jwt_required()
+@manager_required
+def delete_user(id):
+    current_user_id = get_jwt_identity()
+    
+    if id == 1:
+        return jsonify({"msg": "Acción prohibida: El Administrador Principal no puede ser eliminado"}), 403
+    if id == int(current_user_id):
+        return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"msg": "Usuario no encontrado"}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"msg": "Usuario eliminado correctamente"}), 200
