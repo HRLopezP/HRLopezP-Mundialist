@@ -63,3 +63,29 @@
   border-radius: 12px;
   border-left: 4px solid var(--pitch-green);
 }
+
+.form-select.auth-input, .form-control.auth-input {
+    color: white !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.form-select option {
+    background-color: var(--deep-navy);
+    color: white;
+}
+
+.custom-switch:checked {
+    background-color: var(--pitch-green) !important;
+    border-color: var(--pitch-green) !important;
+}
+
+
+.user-count-badge {
+    background: rgba(40, 200, 125, 0.1);
+    color: var(--pitch-green);
+    border: 1px solid var(--pitch-green);
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}

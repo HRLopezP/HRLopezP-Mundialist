@@ -42,7 +42,10 @@ const UsersAdmin = () => {
     const handleToggleStatus = async (user) => {
         const { response, data } = await apiFetch(`/users/${user.id_user}/status`, { method: 'PATCH' });
         if (response.ok) {
-            toast.success(data.msg);
+            const accion = !user.is_active ? "activado" : "desactivado";
+            toast.success(`El usuario ${user.name} se ha ${accion} correctamente`, {
+                icon: !user.is_active ? '✅' : '🚫'
+            });
             setUsers(users.map(u => u.id_user === user.id_user ? { ...u, is_active: !u.is_active } : u));
         }
     };
@@ -68,27 +71,43 @@ const UsersAdmin = () => {
         });
     };
 
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            setPagination(prev => ({ ...prev, current: 1 }));
+            loadInitialData();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [filters.search]);
+
     return (
         <div className="admin-container animate__animated animate__fadeIn">
             <div className="admin-card p-3 p-md-4">
-                <h2 className="text-white mb-4">
-                    <i className="fa-solid fa-user-shield text-emerald me-2"></i> Gestión de Usuarios
-                </h2>
+                <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                    <h2 className="text-white mb-4">
+                        <i className="fa-solid fa-user-shield text-emerald me-2"></i> Gestión de Usuarios
+                    </h2>
+                    {/* 4. Contador de usuarios */}
+                    <div className="user-count-badge animate__animated animate__fadeIn">
+                        Total: {pagination.total} usuarios
+                    </div>
+                </div>
 
                 {/* Filtros */}
                 <div className="row g-2 mb-4">
                     <div className="col-12 col-md-7">
-                        <input 
-                            type="text" className="form-control auth-input" 
+                        <input
+                            type="text" className="form-control auth-input"
                             placeholder="Buscar por nombre o email..."
+                            value={filters.search}
                             onKeyUp={(e) => e.key === 'Enter' && loadInitialData()}
-                            onChange={(e) => setFilters({...filters, search: e.target.value})}
+                            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                         />
                     </div>
                     <div className="col-12 col-md-5">
-                        <select 
+                        <select
                             className="form-select auth-input"
-                            onChange={(e) => setFilters({...filters, status: e.target.value})}
+                            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                         >
                             <option value="all">Todos los estatus</option>
                             <option value="active">Activos</option>
@@ -117,7 +136,7 @@ const UsersAdmin = () => {
                                         <td>{u.name} {u.lastname}</td>
                                         <td className="small text-dim">{u.email}</td>
                                         <td>
-                                            <select 
+                                            <select
                                                 className="form-select form-select-sm bg-dark text-white border-secondary"
                                                 disabled={isRoot}
                                                 defaultValue={u.rol_id}
@@ -128,8 +147,8 @@ const UsersAdmin = () => {
                                         </td>
                                         <td>
                                             <div className="form-check form-switch">
-                                                <input 
-                                                    className="form-check-input custom-switch" type="checkbox" 
+                                                <input
+                                                    className="form-check-input custom-switch" type="checkbox"
                                                     checked={u.is_active} disabled={isRoot}
                                                     onChange={() => handleToggleStatus(u)}
                                                 />
@@ -149,7 +168,7 @@ const UsersAdmin = () => {
                     </table>
                 </div>
 
-                {/* Vista teléfono */}
+                {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => (
                         <div key={u.id_user} className={`user-mobile-card p-3 mb-2 ${u.id_user === 1 ? "opacity-50" : ""}`}>
@@ -160,7 +179,7 @@ const UsersAdmin = () => {
                             <div className="small text-dim mb-2">{u.email}</div>
                             <div className="row g-2 align-items-center">
                                 <div className="col-8">
-                                    <select 
+                                    <select
                                         className="form-select form-select-sm bg-dark text-white border-secondary"
                                         disabled={u.id_user === 1}
                                         defaultValue={u.rol_id}
@@ -171,8 +190,8 @@ const UsersAdmin = () => {
                                 </div>
                                 <div className="col-4 d-flex justify-content-end">
                                     <div className="form-check form-switch">
-                                        <input 
-                                            className="form-check-input custom-switch" type="checkbox" 
+                                        <input
+                                            className="form-check-input custom-switch" type="checkbox"
                                             checked={u.is_active} disabled={u.id_user === 1}
                                             onChange={() => handleToggleStatus(u)}
                                         />
@@ -183,12 +202,12 @@ const UsersAdmin = () => {
                     ))}
                 </div>
 
-                <Pagination 
+                <Pagination
                     total={pagination.total}
                     pages={pagination.pages}
                     currentPage={pagination.current}
                     itemsCount={users.length}
-                    onPageChange={(page) => setPagination({...pagination, current: page})}
+                    onPageChange={(page) => setPagination({ ...pagination, current: page })}
                 />
             </div>
         </div>
