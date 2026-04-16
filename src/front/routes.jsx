@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RolesAdmin from "./pages/RolesAdmin";
 import AdminRoute from "./components/AdminRoute";
+import UsersAdmin from "./pages/UsersAdmin";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -39,14 +40,24 @@ export const router = createBrowserRouter(
         }
       />
 
-      <Route
-        path="/admin/roles"
-        element={
-          <AdminRoute>
-            <RolesAdmin />
-          </AdminRoute>
-        }
-      />
+      <Route path="/admin">
+        <Route
+          path="users"
+          element={
+            <AdminRoute>
+              <UsersAdmin />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="roles"
+          element={
+            <AdminRoute>
+              <RolesAdmin />
+            </AdminRoute>
+          }
+        />
+      </Route>
 
     </Route>
   )
