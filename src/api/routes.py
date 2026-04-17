@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
-from api.models import db, User, Rol
+from api.models import db, User, Rol, Match, Prediction
+from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import os
 from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
@@ -428,3 +429,90 @@ def delete_user(id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+
+
+
+# ver todos los juegos
+@api.route('/matches', methods=['GET'])
+@jwt_required
+def get_matches():
+    user_id = get_jwt_identity()
+    
+    # Traemos los partidos con sus equipos cargados para que sea rápido
+    matches = Match.query.order_by(Match.match_date.asc()).all()
+    
+    results = []
+    for m in matches:
+        match_data = m.serialize()
+        
+        # Si el usuario está logueado, buscamos si tiene una predicción para este partido
+        if user_id:
+            pred = Prediction.query.filter_by(user_id=user_id, match_id=m.id_match).first()
+            if pred:
+                match_data["user_prediction"] = {
+                    "home_score": pred.predicted_home_score,
+                    "away_score": pred.predicted_away_score,
+                    "id_prediction": pred.id_prediction
+                }
+            else:
+                match_data["user_prediction"] = None
+        else:
+            match_data["user_prediction"] = None       
+        results.append(match_data)
+    return jsonify(results), 200
+
+
+# Crear-editar una predicción
+@api.route('/predict', methods=['POST'])
+@jwt_required() # Solo usuarios logueados
+def save_prediction():
+    user_id = get_jwt_identity()
+    body = request.get_json()
+
+    # Validamos que vengan los datos necesarios
+    match_id = body.get("match_id")
+    home_score = body.get("home_score")
+    away_score = body.get("away_score")
+
+    if None in [match_id, home_score, away_score]:
+        return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
+
+    # 1. Verificar si el partido existe
+    match = Match.query.get(match_id)
+    if not match:
+        return jsonify({"msg": "El partido no existe"}), 404
+
+    ahora = datetime.now(timezone.utc)
+    # El match_date ya está en UTC gracias a nuestro script de sincronización
+    limite_apuesta = match.match_date - timedelta(hours=24)
+
+    if ahora > limite_apuesta:
+        return jsonify({
+            "msg": "Tiempo agotado. Solo puedes predecir hasta 24 horas antes del inicio."
+        }), 403
+
+    # 3. Buscar si el usuario ya tiene una predicción para este juego
+    prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
+
+    if prediction:
+        # EDITAR: Si existe, actualizamos los goles
+        prediction.predicted_home_score = home_score
+        prediction.predicted_away_score = away_score
+        msg = "Predicción actualizada con éxito"
+    else:
+        # CREAR: Si no existe, creamos el nuevo registro
+        prediction = Prediction(
+            user_id=user_id,
+            match_id=match_id,
+            predicted_home_score=home_score,
+            predicted_away_score=away_score
+        )
+        db.session.add(prediction)
+        msg = "Predicción guardada con éxito"
+
+    try:
+        db.session.commit()
+        return jsonify({"msg": msg, "prediction": prediction.serialize()}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500

@@ -64,3 +64,5 @@ def sync_world_cup_data(app):
 
         db.session.commit()
         print(f"¡Proceso terminado! Datos guardados en tu base de datos.")
+
+
