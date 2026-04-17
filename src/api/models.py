@@ -57,17 +57,41 @@ class User(db.Model):
         }
     
     
+class Team(db.Model):
+    __tablename__ = 'team'
+    id_team: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    flag_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    group_name: Mapped[str] = mapped_column(String(10), nullable=False)
+
+    # Relaciones para acceder a los juegos desde el equipo
+    home_matches: Mapped[List["Match"]] = relationship("Match", foreign_keys="[Match.home_team_id]", back_populates="home_team")
+    away_matches: Mapped[List["Match"]] = relationship("Match", foreign_keys="[Match.away_team_id]", back_populates="away_team")
+
+    def serialize(self):
+        return {
+            "id_team": self.id_team,
+            "name": self.name,
+            "flag_url": self.flag_url,
+            "group_name": self.group_name
+        }
+
 class Match(db.Model):
     __tablename__ = 'match'
     id_match: Mapped[int] = mapped_column(primary_key=True)
-    home_team: Mapped[str] = mapped_column(String(100), nullable=False)
-    away_team: Mapped[str] = mapped_column(String(100), nullable=False)
+    
+    # Llaves foráneas a la tabla Team
+    home_team_id: Mapped[int] = mapped_column(ForeignKey('team.id_team'), nullable=False)
+    away_team_id: Mapped[int] = mapped_column(ForeignKey('team.id_team'), nullable=False)
+    
+    # Relaciones para obtener el objeto Team completo
+    home_team: Mapped["Team"] = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
+    away_team: Mapped["Team"] = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
+
     match_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    home_flag: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    away_flag: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    stadium: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     home_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     away_score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    
     status: Mapped[str] = mapped_column(String(20), default="Pendiente")
     
     predictions: Mapped[List["Prediction"]] = relationship(back_populates="match")
@@ -75,11 +99,10 @@ class Match(db.Model):
     def serialize(self):
         return {
             "id_match": self.id_match,
-            "home_team": self.home_team,
-            "away_team": self.away_team,
+            "home_team": self.home_team.serialize() if self.home_team else None,
+            "away_team": self.away_team.serialize() if self.away_team else None,
             "match_date": self.match_date.isoformat(),
-            "home_flag": self.home_flag,
-            "away_flag": self.away_flag,
+            "stadium": self.stadium,
             "home_score": self.home_score,
             "away_score": self.away_score,
             "status": self.status
@@ -91,6 +114,8 @@ class Prediction(db.Model):
     predicted_home_score: Mapped[int] = mapped_column(Integer, nullable=False)
     predicted_away_score: Mapped[int] = mapped_column(Integer, nullable=False)
     points_earned: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
     match_id: Mapped[int] = mapped_column(ForeignKey('match.id_match'), nullable=False)
     
@@ -103,6 +128,8 @@ class Prediction(db.Model):
             "predicted_home_score": self.predicted_home_score,
             "predicted_away_score": self.predicted_away_score,
             "points_earned": self.points_earned,
+            "created_at": self.created_at.isoformat(),
             "user_id": self.user_id,
-            "match_id": self.match_id
+            "match_id": self.match_id,
+            "match_details": f"{self.match.home_team.name} vs {self.match.away_team.name}" if self.match else None
         }
