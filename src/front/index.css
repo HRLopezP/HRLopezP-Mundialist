@@ -52,3 +52,20 @@ body {
   box-shadow: 0 0 35px rgba(46, 242, 151, 0.6) !important; /* Brillo verde intenso al hover */
   filter: brightness(1.1);
 }
+
+.score-input {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 2px solid var(--pitch-green) !important;
+    color: var(--accent-gold) !important; /* Goles en color oro */
+    font-size: 1.5rem !important;
+    font-weight: bold;
+    width: 60px;
+    height: 50px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.score-input:focus {
+    box-shadow: 0 0 15px var(--pitch-green);
+    background: rgba(40, 200, 125, 0.2) !important;
+}
