@@ -434,7 +434,7 @@ def delete_user(id):
 
 # ver todos los juegos
 @api.route('/matches', methods=['GET'])
-@jwt_required
+@jwt_required()
 def get_matches():
     user_id = get_jwt_identity()
     

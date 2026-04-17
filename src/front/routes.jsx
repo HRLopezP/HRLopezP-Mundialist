@@ -16,6 +16,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RolesAdmin from "./pages/RolesAdmin";
 import AdminRoute from "./components/AdminRoute";
 import UsersAdmin from "./pages/UsersAdmin";
+import { Predictions } from "./pages/Predictions";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -36,6 +37,15 @@ export const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/predictions"
+        element={
+          <ProtectedRoute>
+            <Predictions />
           </ProtectedRoute>
         }
       />
