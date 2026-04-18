@@ -7,7 +7,6 @@ export const MatchAdmin = () => {
     const [selectedGroup, setSelectedGroup] = useState("");
     const [loading, setLoading] = useState(true);
 
-    // 1. CARGA INICIAL DE DATOS
     useEffect(() => {
         loadMatches();
     }, []);
@@ -19,7 +18,6 @@ export const MatchAdmin = () => {
             if (response.ok && Array.isArray(data)) {
                 setMatches(data);
 
-                // Obtenemos los nombres de los grupos para las pestañas
                 const availableGroups = [...new Set(data.map(m => m.home_team?.group_name))].filter(Boolean).sort();
 
                 if (availableGroups.length > 0) {
@@ -57,14 +55,13 @@ export const MatchAdmin = () => {
 
             if (response.ok) {
                 toast.success("¡Resultado publicado con éxito!", { id: toastId });
-                loadMatches(); // Recargamos para confirmar los datos
+                loadMatches();
             }
         } catch (error) {
             toast.error("Error al conectar con el servidor", { id: toastId });
         }
     };
 
-    // Lógica para filtrar grupos (igual que en Predictions)
     const groups = [...new Set(matches.map(m => m.home_team?.group_name))].filter(Boolean).sort();
     const filteredMatches = matches.filter(m => m.home_team?.group_name === selectedGroup);
 
@@ -74,7 +71,7 @@ export const MatchAdmin = () => {
         <div className="container py-5 bg-dark-main min-vh-100">
             <h1 className="text-center text-white mb-5 mt-4">⚙️ GESTIÓN DE RESULTADOS</h1>
 
-            {/* Pestañas de Grupos (Reutilizando tu estilo de Predictions) */}
+            {/* Pestañas de Grupos*/}
             <div className="group-tabs-container mb-5 d-flex justify-content-start justify-content-md-center">
                 {groups.map((group, index) => (
                     <button

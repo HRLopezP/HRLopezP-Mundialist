@@ -1,12 +1,8 @@
-/* src/styles/index.css */
 :root {
-  /* Colores de Marca Inmersivos */
-  --accent-gold: #ffd700; /* Oro para trofeos */
-  --neon-blue: #00d4ff; /* Brillo de los focos */
-  --pitch-green: #28c87d; /* Verde césped neón */
-  --deep-navy: #051426; /* Azul noche profundo */
-
-  /* Colores de Texto */
+  --accent-gold: #ffd700; 
+  --neon-blue: #00d4ff; 
+  --pitch-green: #28c87d;
+  --deep-navy: #051426; 
   --text-main: #ffffff;
   --text-dim: #a8b2d1;
 }
@@ -18,9 +14,7 @@ body {
   color: var(--text-main);
   font-family: "Inter", sans-serif;
 
-  /* --- EFECTO ESTADIO NOCTURNO TECNOLÓGICO --- */
-  /* 1. Definimos un degradado radial azul muy oscuro que se aclara ligeramente en el centro */
-  /* 2. Ponemos tu imagen del estadio debajo */
+
   background:
     radial-gradient(
       circle at center,
@@ -31,21 +25,21 @@ body {
 
   background-size: cover;
   background-position: center;
-  background-attachment: fixed; /* Mantiene el estadio quieto al hacer scroll para más inmersión */
+  background-attachment: fixed; 
 
-  /* Este truco mezcla el degradado azul con la foto, oscureciéndola y dándole el tono */
+
   background-blend-mode: multiply;
 }
 
 /* Botón Neón Mundialista */
 .btn-emerald {
   background: var(--pitch-green) !important;
-  color: #000 !important; /* Texto negro para contraste */
+  color: #000 !important;
   font-weight: 800 !important;
   border: none !important;
   padding: 14px !important;
   border-radius: 12px !important;
-  box-shadow: 0 0 20px rgba(46, 242, 151, 0.3) !important; /* Brillo verde sutil */
+  box-shadow: 0 0 20px rgba(46, 242, 151, 0.3) !important; 
   transition: all 0.3s ease !important;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -53,7 +47,7 @@ body {
 
 .btn-emerald:hover:not(:disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 0 35px rgba(46, 242, 151, 0.6) !important; /* Brillo verde intenso al hover */
+  box-shadow: 0 0 35px rgba(46, 242, 151, 0.6) !important;
   filter: brightness(1.1);
 }
 
@@ -92,23 +86,23 @@ body {
   color: var(--accent-gold) !important;
 }
 
-/* Contenedor de pestañas con scroll horizontal para móvil */
+
 .group-tabs-container {
   display: flex;
   gap: 12px;
   padding: 15px 5px;
-  overflow-x: auto; /* Permite scroll horizontal */
+  overflow-x: auto; 
   white-space: nowrap;
-  scroll-behavior: smooth; /* Para que al moverlo sea suave */
-  -webkit-overflow-scrolling: touch; /* Suavidad en iPhone */
+  scroll-behavior: smooth; 
+  -webkit-overflow-scrolling: touch; 
 
-  /* Barra de scroll sutil para que el usuario sepa que hay más */
+ 
   scrollbar-width: thin;
   scrollbar-color: var(--pitch-green) rgba(255, 255, 255, 0.1);
 }
 
 .group-tabs-container::-webkit-scrollbar {
-  height: 6px; /* Barra delgadita */
+  height: 6px; 
 }
 
 .group-tabs-container::-webkit-scrollbar-track {
@@ -147,7 +141,6 @@ body {
   box-shadow: 0 0 15px rgba(40, 200, 125, 0.4);
 }
 
-/* Efecto de pulso para el botón de actualizar */
 .btn-update-pulse {
   border: 2px solid var(--accent-gold) !important;
   color: var(--accent-gold) !important;
@@ -160,8 +153,8 @@ body {
 }
 
 .gray-filter {
-    filter: grayscale(0.8); /* Le quita color a las banderas y elementos */
-    pointer-events: none; /* Evita cualquier interacción accidental */
+    filter: grayscale(0.8); 
+    pointer-events: none; 
 }
 
 .gray-filter .score-input {

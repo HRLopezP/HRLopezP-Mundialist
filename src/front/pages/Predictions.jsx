@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 
 const calculatePoints = (prediction, match) => {
-    // Si no hay predicción o el partido no tiene resultado real todavía, no hay puntos
     if (!prediction || match.home_score === null || match.away_score === null) return null;
 
     const pHome = parseInt(prediction.home_score);
@@ -16,7 +15,6 @@ const calculatePoints = (prediction, match) => {
     if (pHome === mHome && pAway === mAway) return 3;
 
     // 2. ACIERTO DE TENDENCIA: 1 Punto
-    // Determinamos quién ganó (o si fue empate) en la realidad y en la predicción
     const realResult = mHome > mAway ? "home" : mHome < mAway ? "away" : "draw";
     const predResult = pHome > pAway ? "home" : pHome < pAway ? "away" : "draw";
 

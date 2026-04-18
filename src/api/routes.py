@@ -438,14 +438,12 @@ def delete_user(id):
 def get_matches():
     user_id = get_jwt_identity()
     
-    # Traemos los partidos con sus equipos cargados para que sea rápido
     matches = Match.query.order_by(Match.match_date.asc()).all()
     
     results = []
     for m in matches:
         match_data = m.serialize()
         
-        # Si el usuario está logueado, buscamos si tiene una predicción para este partido
         if user_id:
             pred = Prediction.query.filter_by(user_id=user_id, match_id=m.id_match).first()
             if pred:
@@ -464,12 +462,11 @@ def get_matches():
 
 # Crear-editar una predicción
 @api.route('/predict', methods=['POST'])
-@jwt_required() # Solo usuarios logueados
+@jwt_required() 
 def save_prediction():
     user_id = get_jwt_identity()
     body = request.get_json()
 
-    # Validamos que vengan los datos necesarios
     match_id = body.get("match_id")
     home_score = body.get("home_score")
     away_score = body.get("away_score")
@@ -477,13 +474,11 @@ def save_prediction():
     if None in [match_id, home_score, away_score]:
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
 
-    # 1. Verificar si el partido existe
     match = Match.query.get(match_id)
     if not match:
         return jsonify({"msg": "El partido no existe"}), 404
 
     ahora = datetime.now(timezone.utc)
-    # El match_date ya está en UTC gracias a nuestro script de sincronización
     limite_apuesta = match.match_date - timedelta(hours=24)
 
     if ahora > limite_apuesta:
@@ -491,16 +486,13 @@ def save_prediction():
             "msg": "Tiempo agotado. Solo puedes predecir hasta 24 horas antes del inicio."
         }), 403
 
-    # 3. Buscar si el usuario ya tiene una predicción para este juego
     prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
 
     if prediction:
-        # EDITAR: Si existe, actualizamos los goles
         prediction.predicted_home_score = home_score
         prediction.predicted_away_score = away_score
         msg = "Predicción actualizada con éxito"
     else:
-        # CREAR: Si no existe, creamos el nuevo registro
         prediction = Prediction(
             user_id=user_id,
             match_id=match_id,
@@ -520,8 +512,8 @@ def save_prediction():
 
 @api.route('/match-results/<int:match_id>', methods=['PUT'])
 @jwt_required()
+@manager_required
 def update_match_result(match_id):
-    # Aquí deberías verificar si el usuario tiene rol de 'Gerente' o Administrador
     body = request.get_json()
     match = Match.query.get(match_id)
     

@@ -64,7 +64,6 @@ class Team(db.Model):
     flag_url: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     group_name: Mapped[str] = mapped_column(String(10), nullable=False)
 
-    # Relaciones para acceder a los juegos desde el equipo
     home_matches: Mapped[List["Match"]] = relationship("Match", foreign_keys="[Match.home_team_id]", back_populates="home_team")
     away_matches: Mapped[List["Match"]] = relationship("Match", foreign_keys="[Match.away_team_id]", back_populates="away_team")
 
@@ -80,11 +79,9 @@ class Match(db.Model):
     __tablename__ = 'match'
     id_match: Mapped[int] = mapped_column(primary_key=True)
     
-    # Llaves foráneas a la tabla Team
     home_team_id: Mapped[int] = mapped_column(ForeignKey('team.id_team'), nullable=False)
     away_team_id: Mapped[int] = mapped_column(ForeignKey('team.id_team'), nullable=False)
     
-    # Relaciones para obtener el objeto Team completo
     home_team: Mapped["Team"] = relationship("Team", foreign_keys=[home_team_id], back_populates="home_matches")
     away_team: Mapped["Team"] = relationship("Team", foreign_keys=[away_team_id], back_populates="away_matches")
 
