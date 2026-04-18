@@ -3,6 +3,29 @@ import { apiFetch } from "../utils/api.js";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 
+const calculatePoints = (prediction, match) => {
+    // Si no hay predicción o el partido no tiene resultado real todavía, no hay puntos
+    if (!prediction || match.home_score === null || match.away_score === null) return null;
+
+    const pHome = parseInt(prediction.home_score);
+    const pAway = parseInt(prediction.away_score);
+    const mHome = parseInt(match.home_score);
+    const mAway = parseInt(match.away_score);
+
+    // 1. ACIERTO EXACTO: 3 Puntos
+    if (pHome === mHome && pAway === mAway) return 3;
+
+    // 2. ACIERTO DE TENDENCIA: 1 Punto
+    // Determinamos quién ganó (o si fue empate) en la realidad y en la predicción
+    const realResult = mHome > mAway ? "home" : mHome < mAway ? "away" : "draw";
+    const predResult = pHome > pAway ? "home" : pHome < pAway ? "away" : "draw";
+
+    if (realResult === predResult) return 1;
+
+    // 3. FALLO TOTAL: 0 Puntos
+    return 0;
+};
+
 export const Predictions = () => {
     const [matches, setMatches] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState("");
@@ -19,7 +42,6 @@ export const Predictions = () => {
             if (response.ok && Array.isArray(data)) {
                 setMatches(data);
 
-                // BUSCAMOS EN home_team.group_name
                 const availableGroups = [...new Set(data.map(m => m.home_team?.group_name))].filter(Boolean).sort();
 
                 if (availableGroups.length > 0) {
@@ -95,7 +117,6 @@ export const Predictions = () => {
     }, [selectedGroup]);
 
     const safeMatches = Array.isArray(matches) ? matches : [];
-    // USAMOS home_team PARA AMBOS
     const groups = [...new Set(safeMatches.map(m => m.home_team?.group_name))].filter(Boolean).sort();
     const filteredMatches = safeMatches.filter(m => m.home_team?.group_name === selectedGroup);
 
@@ -129,59 +150,82 @@ export const Predictions = () => {
                         const hoursUntilMatch = (matchDate - now) / (1000 * 60 * 60);
                         const isEditable = hoursUntilMatch > 24;
                         const cardStyle = isEditable ? "admin-card p-4 border-0 shadow-lg" : "admin-card p-4 border-0 shadow-lg opacity-50 gray-filter";
+                        const isFinished = match.home_score !== null && match.away_score !== null;
+                        const points = calculatePoints(match.user_prediction, match);
                         return (
                             <div key={`match-card-${match.id_match}`} className="col-12 col-md-10 col-lg-8 mb-4">
                                 <div className="admin-card p-4 border-0 shadow-lg">
                                     <div className="d-flex justify-content-between text-dim small mb-3">
                                         <span>{new Date(match.match_date).toLocaleString()}</span>
                                         <span className="badge bg-dark-soft">{match.group_name}</span>
-                                        {!isEditable && <span className="badge bg-danger">🚫 CERRADO</span>}
+                                        {/* MOSTRAR PUNTOS SI EL JUEGO TERMINÓ */}
+                                        {isFinished ? (
+                                            <div className={`px-3 py-1 rounded-pill fw-bold ${points === 3 ? 'bg-emerald text-white' : 'bg-oxford-grey text-light'}`}
+                                                style={{ fontSize: "0.75rem", letterSpacing: "1px" }}>
+                                                {points} {points === 1 ? 'PUNTO' : 'PUNTOS'} OBTENIDOS
+                                            </div>
+                                        ) : (
+                                            !isEditable && <span className="badge bg-danger">🚫 CERRADO</span>
+                                        )}
                                     </div>
 
                                     <div className="row align-items-center mb-2">
+                                        {/* Equipo Local */}
                                         <div className="col-4 text-center">
                                             <img src={match.home_team.flag_url} className="img-fluid rounded mb-2 shadow" style={{ maxWidth: "55px", height: "35px", objectFit: "cover" }} alt="flag" />
                                             <h6 className="text-white text-truncate">{match.home_team.name}</h6>
+                                            {/* RESULTADO REAL LOCAL */}
+                                            {isFinished && <h2 className="text-emerald fw-bold mt-1">{match.home_score}</h2>}
                                         </div>
 
-                                        <div className="col-4 d-flex justify-content-center align-items-center gap-2">
-                                            <input
-                                                type="number"
-                                                disabled={!isEditable}
-                                                className="form-control score-input text-center bg-dark text-white border-secondary"
-                                                style={{ width: "50px" }}
-                                                value={match.user_prediction?.home_score ?? ""}
-                                                onChange={(e) => handleInputChange(match.id_match, 'home', e.target.value)}
-                                            />
-                                            <span className="h4 text-white mb-0">-</span>
-                                            <input
-                                                type="number"
-                                                disabled={!isEditable}
-                                                className="form-control score-input text-center bg-dark text-white border-secondary"
-                                                style={{ width: "50px" }}
-                                                value={match.user_prediction?.away_score ?? ""}
-                                                onChange={(e) => handleInputChange(match.id_match, 'away', e.target.value)}
-                                            />
+                                        {/* Marcadores de Predicción */}
+                                        <div className="col-4 text-center">
+                                            <div className="text-dim small mb-2" style={{ fontSize: '0.65rem' }}>TU PREDICCIÓN</div>
+                                            <div className="d-flex justify-content-center align-items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    disabled={!isEditable || isFinished}
+                                                    className={`form-control score-input text-center bg-dark text-white border-secondary ${isFinished ? 'opacity-75' : ''}`}
+                                                    style={{ width: "50px" }}
+                                                    value={match.user_prediction?.home_score ?? ""}
+                                                    onChange={(e) => handleInputChange(match.id_match, 'home', e.target.value)}
+                                                />
+                                                <span className="h4 text-white mb-0">-</span>
+                                                <input
+                                                    type="number"
+                                                    disabled={!isEditable || isFinished}
+                                                    className={`form-control score-input text-center bg-dark text-white border-secondary ${isFinished ? 'opacity-75' : ''}`}
+                                                    style={{ width: "50px" }}
+                                                    value={match.user_prediction?.away_score ?? ""}
+                                                    onChange={(e) => handleInputChange(match.id_match, 'away', e.target.value)}
+                                                />
+                                            </div>
+                                            {isFinished && <div className="mt-2 text-info fw-bold small">FINAL</div>}
                                         </div>
 
+                                        {/* Equipo Visitante */}
                                         <div className="col-4 text-center">
                                             <img src={match.away_team.flag_url} className="img-fluid rounded mb-2 shadow" style={{ maxWidth: "55px", height: "35px", objectFit: "cover" }} alt="flag" />
                                             <h6 className="text-white text-truncate">{match.away_team.name}</h6>
+                                            {/* RESULTADO REAL VISITANTE */}
+                                            {isFinished && <h2 className="text-emerald fw-bold mt-1">{match.away_score}</h2>}
                                         </div>
                                     </div>
 
-                                    {/* El botón solo aparece si es editable */}
-                                    {isEditable ? (
-                                        <button
-                                            className={`btn w-100 mt-3 py-2 fw-bold transition-all ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'}`}
-                                            onClick={() => savePrediction(match)}
-                                        >
-                                            {hasPrediction ? "🔄 ACTUALIZAR" : "⚽ GUARDAR"}
-                                        </button>
-                                    ) : (
-                                        <div className="text-center mt-3 text-warning small">
-                                            <i className="fas fa-lock me-2"></i> Predicciones cerradas para este encuentro
-                                        </div>
+                                    {/* BOTÓN O MENSAJE FINAL */}
+                                    {!isFinished && (
+                                        isEditable ? (
+                                            <button
+                                                className={`btn w-100 mt-3 py-2 fw-bold transition-all ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'}`}
+                                                onClick={() => savePrediction(match)}
+                                            >
+                                                {hasPrediction ? "🔄 ACTUALIZAR" : "⚽ GUARDAR"}
+                                            </button>
+                                        ) : (
+                                            <div className="text-center mt-3 text-warning small p-2 border border-warning rounded">
+                                                <i className="fas fa-lock me-2"></i> Tiempo agotado para predecir
+                                            </div>
+                                        )
                                     )}
                                 </div>
                             </div>

@@ -17,6 +17,7 @@ import RolesAdmin from "./pages/RolesAdmin";
 import AdminRoute from "./components/AdminRoute";
 import UsersAdmin from "./pages/UsersAdmin";
 import { Predictions } from "./pages/Predictions";
+import { MatchAdmin } from "./pages/MatchAdmin";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -64,6 +65,15 @@ export const router = createBrowserRouter(
           element={
             <AdminRoute>
               <RolesAdmin />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="matches"
+          element={
+            <AdminRoute>
+              <MatchAdmin />
             </AdminRoute>
           }
         />

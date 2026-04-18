@@ -516,3 +516,24 @@ def save_prediction():
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500
+
+
+@api.route('/match-results/<int:match_id>', methods=['PUT'])
+@jwt_required()
+def update_match_result(match_id):
+    # Aquí deberías verificar si el usuario tiene rol de 'Gerente' o Administrador
+    body = request.get_json()
+    match = Match.query.get(match_id)
+    
+    if not match:
+        return jsonify({"msg": "Partido no encontrado"}), 404
+
+    match.home_score = body.get("home_score")
+    match.away_score = body.get("away_score")
+    
+    try:
+        db.session.commit()
+        return jsonify({"msg": "Resultado actualizado y puntos calculados"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": str(e)}), 500
