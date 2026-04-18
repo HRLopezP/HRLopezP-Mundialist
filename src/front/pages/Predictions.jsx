@@ -124,12 +124,18 @@ export const Predictions = () => {
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match) => {
                         const hasPrediction = !!match.user_prediction?.id_prediction;
+                        const matchDate = new Date(match.match_date);
+                        const now = new Date();
+                        const hoursUntilMatch = (matchDate - now) / (1000 * 60 * 60);
+                        const isEditable = hoursUntilMatch > 24;
+                        const cardStyle = isEditable ? "admin-card p-4 border-0 shadow-lg" : "admin-card p-4 border-0 shadow-lg opacity-50 gray-filter";
                         return (
                             <div key={`match-card-${match.id_match}`} className="col-12 col-md-10 col-lg-8 mb-4">
                                 <div className="admin-card p-4 border-0 shadow-lg">
                                     <div className="d-flex justify-content-between text-dim small mb-3">
                                         <span>{new Date(match.match_date).toLocaleString()}</span>
                                         <span className="badge bg-dark-soft">{match.group_name}</span>
+                                        {!isEditable && <span className="badge bg-danger">🚫 CERRADO</span>}
                                     </div>
 
                                     <div className="row align-items-center mb-2">
@@ -141,6 +147,7 @@ export const Predictions = () => {
                                         <div className="col-4 d-flex justify-content-center align-items-center gap-2">
                                             <input
                                                 type="number"
+                                                disabled={!isEditable}
                                                 className="form-control score-input text-center bg-dark text-white border-secondary"
                                                 style={{ width: "50px" }}
                                                 value={match.user_prediction?.home_score ?? ""}
@@ -149,6 +156,7 @@ export const Predictions = () => {
                                             <span className="h4 text-white mb-0">-</span>
                                             <input
                                                 type="number"
+                                                disabled={!isEditable}
                                                 className="form-control score-input text-center bg-dark text-white border-secondary"
                                                 style={{ width: "50px" }}
                                                 value={match.user_prediction?.away_score ?? ""}
@@ -162,13 +170,19 @@ export const Predictions = () => {
                                         </div>
                                     </div>
 
-                                    <button
-                                        className={`btn w-100 mt-3 py-2 fw-bold transition-all ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'
-                                            }`}
-                                        onClick={() => savePrediction(match)}
-                                    >
-                                        {hasPrediction ? "🔄 ACTUALIZAR" : "⚽ GUARDAR"}
-                                    </button>
+                                    {/* El botón solo aparece si es editable */}
+                                    {isEditable ? (
+                                        <button
+                                            className={`btn w-100 mt-3 py-2 fw-bold transition-all ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'}`}
+                                            onClick={() => savePrediction(match)}
+                                        >
+                                            {hasPrediction ? "🔄 ACTUALIZAR" : "⚽ GUARDAR"}
+                                        </button>
+                                    ) : (
+                                        <div className="text-center mt-3 text-warning small">
+                                            <i className="fas fa-lock me-2"></i> Predicciones cerradas para este encuentro
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );

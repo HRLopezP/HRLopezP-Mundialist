@@ -158,3 +158,13 @@ body {
   background: var(--accent-gold) !important;
   color: black !important;
 }
+
+.gray-filter {
+    filter: grayscale(0.8); /* Le quita color a las banderas y elementos */
+    pointer-events: none; /* Evita cualquier interacción accidental */
+}
+
+.gray-filter .score-input {
+    background-color: #222 !important;
+    border-color: #444 !important;
+}
