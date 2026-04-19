@@ -520,12 +520,71 @@ def update_match_result(match_id):
     if not match:
         return jsonify({"msg": "Partido no encontrado"}), 404
 
-    match.home_score = body.get("home_score")
-    match.away_score = body.get("away_score")
+    # 1. Guardamos el resultado oficial en el partido
+    home_real = body.get("home_score")
+    away_real = body.get("away_score")
+    match.home_score = home_real
+    match.away_score = away_real
+
+    # 2. Buscamos todas las predicciones de este partido para actualizarlas
+    predictions = Prediction.query.filter_by(match_id=match_id).all()
     
+    for pred in predictions:
+        pts = 0
+        # ACIERTO EXACTO (3 puntos)
+        if pred.predicted_home_score == home_real and pred.predicted_away_score == away_real:
+            pts = 3
+        # ACIERTO TENDENCIA (1 punto): Ganador o Empate
+        elif (home_real > away_real and pred.predicted_home_score > pred.predicted_away_score) or \
+             (home_real < away_real and pred.predicted_home_score < pred.predicted_away_score) or \
+             (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
+            pts = 1
+        
+        pred.points_earned = pts # Guardamos el punto en la base de datos
+
     try:
         db.session.commit()
-        return jsonify({"msg": "Resultado actualizado y puntos calculados"}), 200
+        return jsonify({"msg": "Resultado y puntos actualizados"}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": str(e)}), 500
+        return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
+
+
+@api.route('/ranking', methods=['GET'])
+def get_ranking():
+    users = User.query.filter_by(is_active=True).all()
+    ranking_list = []
+    
+    for user in users:
+        # Sumamos todos los points_earned de las predicciones de este usuario
+        total = db.session.query(db.func.sum(Prediction.points_earned))\
+                  .filter(Prediction.user_id == user.id_user).scalar() or 0
+        
+        ranking_list.append({
+            "id_user": user.id_user,
+            "username": f"{user.name} {user.lastname}",
+            "total_points": int(total)
+        })
+    
+    # Ordenar por puntos (Mayor a menor)
+    ranking_list.sort(key=lambda x: x['total_points'], reverse=True)
+    return jsonify(ranking_list), 200
+
+
+@api.route('/predictions/user/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_user_predictions_detail(user_id):
+    # Traemos las predicciones junto con los datos del partido (joinedload para eficiencia)
+    predictions = Prediction.query.filter_by(user_id=user_id)\
+        .options(joinedload(Prediction.match)).all()
+    
+    results = []
+    for p in predictions:
+        results.append({
+            "match": f"{p.match.home_team} vs {p.match.away_team}",
+            "prediction": f"{p.predicted_home_score} - {p.predicted_away_score}",
+            "real_result": f"{p.match.home_score} - {p.match.away_score}" if p.match.home_score is not None else "Pendiente",
+            "points": p.points_earned or 0
+        })
+    
+    return jsonify(results), 200

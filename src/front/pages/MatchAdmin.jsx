@@ -39,28 +39,33 @@ export const MatchAdmin = () => {
     };
 
     const saveOfficialResult = async (match) => {
+        // Validamos que los campos no estén vacíos
         if (match.home_score === "" || match.away_score === "") {
-            return toast.error("Ingresa ambos marcadores antes de publicar");
+            toast.error("Por favor, ingresa ambos puntajes");
+            return;
         }
 
-        const toastId = toast.loading("Actualizando resultado oficial...");
         try {
-            const { response } = await apiFetch(`/match-results/${match.id_match}`, {
+            const { response, data } = await apiFetch(`/match-results/${match.id_match}`, {
                 method: "PUT",
                 body: JSON.stringify({
-                    home_score: match.home_score,
-                    away_score: match.away_score
+                    home_score: parseInt(match.home_score),
+                    away_score: parseInt(match.away_score)
                 })
             });
 
             if (response.ok) {
-                toast.success("¡Resultado publicado con éxito!", { id: toastId });
-                loadMatches();
+                toast.success("¡Resultado publicado y puntos repartidos!");
+                loadMatches(); // Recargamos para ver los cambios
+            } else {
+                toast.error(data.msg || "Error al guardar el resultado");
             }
         } catch (error) {
-            toast.error("Error al conectar con el servidor", { id: toastId });
+            console.error("Error:", error);
+            toast.error("Error de conexión con el servidor");
         }
     };
+
 
     const groups = [...new Set(matches.map(m => m.home_team?.group_name))].filter(Boolean).sort();
     const filteredMatches = matches.filter(m => m.home_team?.group_name === selectedGroup);
