@@ -18,7 +18,7 @@ import AdminRoute from "./components/AdminRoute";
 import UsersAdmin from "./pages/UsersAdmin";
 import { Predictions } from "./pages/Predictions";
 import { MatchAdmin } from "./pages/MatchAdmin";
-import Ranking from "./pages/Ranking";
+import { Ranking } from "./pages/Ranking";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(

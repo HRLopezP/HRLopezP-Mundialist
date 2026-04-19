@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { apiFetch } from "../utils/api.js";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import Pagination from "../components/Pagination.jsx";
 
 export const Ranking = () => {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Estados para la Auditoría Paginada
+    const [auditData, setAuditData] = useState({ predictions: [], total: 0, pages: 1, current_page: 1 });
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
         loadRanking();
@@ -17,66 +22,163 @@ export const Ranking = () => {
         setLoading(false);
     };
 
-    const verDetalleTransparencia = async (user) => {
-        const { response, data } = await apiFetch(`/predictions/user/${user.id_user}`);
-        if (response.ok) {
-            Swal.fire({
-                title: `Auditoría: ${user.username}`,
-                html: `<div class="text-start">${data.map(p => `
-                    <div class="border-bottom border-secondary mb-2 pb-1">
-                        <small class="text-success">${p.match}</small><br/>
-                        <b>Predijo: ${p.prediction}</b> | Puntos: ${p.points}
-                    </div>`).join('')}</div>`,
-                background: 'var(--deep-navy)',
-                color: '#fff',
-                confirmButtonColor: 'var(--pitch-green)'
-            });
+    // Función para cargar la auditoría con paginación
+    const loadUserAudit = async (userId, page = 1) => {
+        // 1. Buscamos al usuario en nuestra lista local para tener su nombre
+        const user = ranking.find(u => u.id_user === userId);
+        if (!user) return;
+
+        try {
+            // 2. Traemos los datos de la API
+            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=8`);
+
+            if (response.ok) {
+                // Actualizamos el estado para la paginación interna si la usas
+                setAuditData(data);
+                setSelectedUser(user);
+
+                // 3. ¡AQUÍ ESTÁ EL TRUCO! 
+                // Lanzamos el modal usando 'data' (lo recién llegado), no 'auditData' (lo viejo)
+                mostrarModalAuditoria(user, data);
+            }
+        } catch (error) {
+            toast.error("Error al cargar la auditoría");
         }
     };
 
-    if (loading) return <div className="text-center text-white mt-5">Calculando posiciones...</div>;
+    const mostrarModalAuditoria = (user, currentData) => {
+        Swal.fire({
+            title: `Historial de ${user.username}`,
+            html: `
+            <div class="table-responsive">
+                <table class="table table-dark table-sm small">
+                    <thead>
+                        <tr class="text-dim">
+                            <th>Partido</th>
+                            <th>Pred.</th>
+                            <th>Real</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentData.predictions.map(p => `
+                            <tr>
+                                <td class="text-start">${p.match}</td>
+                                <td class="fw-bold">${p.prediction}</td>
+                                <td class="text-emerald">${p.real_result}</td>
+                                <td>
+                                    <span class="badge ${p.points === 3 ? 'bg-success' : p.points === 1 ? 'bg-warning text-dark' : 'bg-secondary'}">
+                                        ${p.points}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${currentData.pages > 1 ? `<div class="text-center mt-2 small text-dim">Página ${currentData.current_page} de ${currentData.pages}</div>` : ''}
+        `,
+            showConfirmButton: true,
+            confirmButtonText: "Cerrar",
+            confirmButtonColor: "var(--pitch-green)",
+            background: 'var(--deep-navy)',
+            color: '#fff',
+            width: '600px'
+        });
+    };
+
+    // Esta función renderiza el contenido dentro del modal (o puedes usar un Modal de Bootstrap para más control)
+    const renderAuditContent = () => {
+        const container = document.getElementById('audit-container');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-dark table-sm small">
+                    <thead>
+                        <tr>
+                            <th>Partido</th>
+                            <th>Pred.</th>
+                            <th>Real</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${auditData.predictions.map(p => `
+                            <tr>
+                                <td class="text-dim">${p.match}</td>
+                                <td class="fw-bold">${p.prediction}</td>
+                                <td class="text-success">${p.real_result}</td>
+                                <td><span class="badge ${p.points === 3 ? 'bg-success' : 'bg-warning text-dark'}">${p.points}</span></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    };
+
+    if (loading) return <div className="text-center mt-5"><div className="spinner-border text-emerald"></div></div>;
 
     return (
-        <div className="admin-container">
-            <div className="admin-card p-3 p-md-4">
-                <h3 className="text-center mb-4" style={{ color: 'var(--pitch-green)' }}>🏆 RANKING</h3>
+        <div className="admin-container animate__animated animate__fadeIn">
+            <div className="admin-card p-4">
+                <h3 className="text-white mb-4 text-center">🏆 Ranking Mundialista</h3>
 
-                {/* Tabla para Desktop */}
-                <div className="d-none d-md-block">
-                    <table className="table table-dark table-hover text-center">
-                        <thead className="table-oxford">
-                            <tr>
-                                <th>#</th>
-                                <th>Participante</th>
-                                <th>Puntos</th>
-                                <th>Ver</th>
+                <div className="table-responsive d-none d-md-block">
+                    <table className="table table-hover table-dark custom-table">
+                        <thead>
+                            <tr className="text-dim small uppercase">
+                                <th>Pos</th>
+                                <th>Usuario</th>
+                                <th className="text-center">Exactos (3pts)</th>
+                                <th className="text-center">Tendencia (1pt)</th>
+                                <th className="text-center">Total</th>
+                                <th>Auditoría</th>
                             </tr>
                         </thead>
                         <tbody>
                             {ranking.map((u, i) => (
-                                <tr key={u.id_user}>
-                                    <td>{i + 1}</td>
+                                <tr key={u.id_user} className="align-middle">
+                                    <td className="fw-bold text-dim">#{i + 1}</td>
                                     <td>{u.username}</td>
-                                    <td className="fw-bold text-warning">{u.total_points}</td>
-                                    <td><button onClick={() => verDetalleTransparencia(u)} className="btn btn-sm btn-outline-light">🔍</button></td>
+                                    <td className="text-center text-success">{u.exact_hits}</td>
+                                    <td className="text-center text-warning">{u.trend_hits}</td>
+                                    <td className="fw-bold text-white fs-5">{u.total_points}</td>
+                                    <td>
+                                        <button
+                                            onClick={() => loadUserAudit(u.id_user)}
+                                            className="btn btn-sm btn-outline-light border-0"
+                                        >
+                                            <i className="fa-solid fa-magnifying-glass-chart"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                {/* Tarjetas para Móvil */}
+                {/* Vista Móvil Optimizado */}
                 <div className="d-md-none">
                     {ranking.map((u, i) => (
-                        <div key={u.id_user} className="user-mobile-card p-3 mb-2 d-flex justify-content-between align-items-center">
-                            <div>
-                                <span className="user-count-badge me-2">{i + 1}</span>
-                                <strong>{u.username}</strong>
+                        <div key={u.id_user} className="user-mobile-card p-3 mb-2">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span className="badge bg-dark-soft me-2">#{i + 1}</span>
+                                    <span className="fw-bold">{u.username}</span>
+                                </div>
+                                <div className="text-end">
+                                    <span className="d-block fw-bold text-pitch-green fs-5">{u.total_points} pts</span>
+                                    <small className="text-dim">{u.exact_hits} Exactos</small>
+                                </div>
                             </div>
-                            <div className="text-end">
-                                <span className="d-block fw-bold text-warning">{u.total_points} pts</span>
-                                <button onClick={() => verDetalleTransparencia(u)} className="btn btn-sm btn-emerald mt-1">Detalles</button>
-                            </div>
+                            <button
+                                onClick={() => loadUserAudit(u.id_user)}
+                                className="btn btn-emerald w-100 mt-2 py-1 btn-sm"
+                            >
+                                Ver Transparencia
+                            </button>
                         </div>
                     ))}
                 </div>
@@ -84,5 +186,3 @@ export const Ranking = () => {
         </div>
     );
 };
-
-export default Ranking;

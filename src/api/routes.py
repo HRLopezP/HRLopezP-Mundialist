@@ -551,40 +551,65 @@ def update_match_result(match_id):
 
 
 @api.route('/ranking', methods=['GET'])
+@jwt_required()
+# Lo dejamos sin jwt_required para que sea un imán de usuarios, 
+# pero si prefieres privacidad, puedes agregarlo.
 def get_ranking():
     users = User.query.filter_by(is_active=True).all()
     ranking_list = []
     
     for user in users:
-        # Sumamos todos los points_earned de las predicciones de este usuario
-        total = db.session.query(db.func.sum(Prediction.points_earned))\
-                  .filter(Prediction.user_id == user.id_user).scalar() or 0
+        # Buscamos predicciones que ya tengan puntos (juegos terminados)
+        preds = Prediction.query.filter(
+            Prediction.user_id == user.id_user,
+            Prediction.points_earned != None
+        ).all()
+        
+        total_points = sum(p.points_earned for p in preds)
+        exact_hits = sum(1 for p in preds if p.points_earned == 3)
+        trend_hits = sum(1 for p in preds if p.points_earned == 1)
         
         ranking_list.append({
             "id_user": user.id_user,
             "username": f"{user.name} {user.lastname}",
-            "total_points": int(total)
+            "total_points": total_points,
+            "exact_hits": exact_hits,
+            "trend_hits": trend_hits
         })
     
-    # Ordenar por puntos (Mayor a menor)
-    ranking_list.sort(key=lambda x: x['total_points'], reverse=True)
+    # Ordenamos por: 1. Puntos, 2. Marcadores Exactos, 3. Tendencias
+    ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
+    
     return jsonify(ranking_list), 200
 
 
 @api.route('/predictions/user/<int:user_id>', methods=['GET'])
-@jwt_required()
+@jwt_required() # La auditoría SI es privada
 def get_user_predictions_detail(user_id):
-    # Traemos las predicciones junto con los datos del partido (joinedload para eficiencia)
-    predictions = Prediction.query.filter_by(user_id=user_id)\
-        .options(joinedload(Prediction.match)).all()
+    # 1. Filtramos: Solo predicciones de partidos con resultado oficial
+    query = Prediction.query.join(Match).filter(
+        Prediction.user_id == user_id,
+        Match.home_score != None
+    ).options(joinedload(Prediction.match))
+
+    # 2. USAMOS TU FUNCIÓN DE PAGINACIÓN
+    # Pasamos la query y le decimos que el nombre del grupo sea "predictions"
+    paginated_results = paginate_query(query, model_name="predictions")
     
-    results = []
-    for p in predictions:
-        results.append({
-            "match": f"{p.match.home_team} vs {p.match.away_team}",
+    # 3. Formateamos los datos para que el frontend los lea fácil
+    # Reemplazamos la lista de objetos serializados por una con los nombres de equipos
+    formatted_preds = []
+    for p_serial in paginated_results["predictions"]:
+        # Recuperamos el objeto original para acceder a la relación 'match'
+        p = Prediction.query.get(p_serial["id_prediction"]) 
+        formatted_preds.append({
+            "match": f"{p.match.home_team.name} vs {p.match.away_team.name}",
+            "real_result": f"{p.match.home_score} - {p.match.away_score}",
             "prediction": f"{p.predicted_home_score} - {p.predicted_away_score}",
-            "real_result": f"{p.match.home_score} - {p.match.away_score}" if p.match.home_score is not None else "Pendiente",
-            "points": p.points_earned or 0
+            "points": p.points_earned
         })
     
-    return jsonify(results), 200
+    # Sobrescribimos la lista con el formato que queremos para la tabla
+    paginated_results["predictions"] = formatted_preds
+
+    return jsonify(paginated_results), 200
