@@ -29,7 +29,7 @@ export const Ranking = () => {
 
         try {
             // CAMBIO: per_page=10 para mostrar más partidos
-            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=6`);
+            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=12`);
 
             if (response.ok) {
                 setAuditData(data);

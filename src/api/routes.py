@@ -613,3 +613,43 @@ def get_user_predictions_detail(user_id):
     paginated_results["predictions"] = formatted_preds
 
     return jsonify(paginated_results), 200
+
+
+@api.route('/transparency-wall', methods=['GET'])
+@jwt_required()
+def get_transparency_wall():
+    ahora = datetime.now(timezone.utc)
+    limite_24h = ahora + timedelta(hours=24)
+
+    # 1. Buscamos partidos que empiezan en menos de 24h O que ya empezaron 
+    # pero no tienen resultado cargado aún.
+    matches = Match.query.filter(
+        Match.match_date <= limite_24h,
+        Match.home_score == None
+    ).order_by(Match.match_date.asc()).all()
+
+    results = []
+    for m in matches:
+        # 2. Para cada partido, obtenemos las predicciones de TODOS los usuarios
+        # Nota: Aquí podrías usar tu función paginate_query si esperas cientos de usuarios,
+        # pero por ahora, traeremos la lista completa de predicciones para ese juego.
+        preds = Prediction.query.filter_by(match_id=m.id_match).all()
+        
+        results.append({
+            "id_match": m.id_match,
+            "home_team": m.home_team.name,
+            "away_team": m.away_team.name,
+            "home_flag": m.home_team.flag_url,
+            "away_flag": m.away_team.flag_url,
+            "match_date": m.match_date.isoformat(),
+            "predictions": [
+                {
+                    "user": f"{p.user.name} {p.user.lastname}",
+                    "user_id": p.user_id,
+                    "h_score": p.predicted_home_score,
+                    "a_score": p.predicted_away_score
+                } for p in preds
+            ]
+        })
+
+    return jsonify(results), 200
