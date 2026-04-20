@@ -24,21 +24,19 @@ export const Ranking = () => {
 
     // Función para cargar la auditoría con paginación
     const loadUserAudit = async (userId, page = 1) => {
-        // 1. Buscamos al usuario en nuestra lista local para tener su nombre
         const user = ranking.find(u => u.id_user === userId);
         if (!user) return;
 
         try {
-            // 2. Traemos los datos de la API
-            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=8`);
+            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=6`);
 
             if (response.ok) {
-                // Actualizamos el estado para la paginación interna si la usas
+                // Guardamos en el estado por si acaso, pero usamos 'data' para el modal
                 setAuditData(data);
                 setSelectedUser(user);
 
-                // 3. ¡AQUÍ ESTÁ EL TRUCO! 
-                // Lanzamos el modal usando 'data' (lo recién llegado), no 'auditData' (lo viejo)
+                // Si es la primera vez (page 1), abrimos el modal
+                // Si ya está abierto, SweetAlert2 permite actualizar el contenido sin cerrarse
                 mostrarModalAuditoria(user, data);
             }
         } catch (error) {
@@ -48,45 +46,80 @@ export const Ranking = () => {
 
     const mostrarModalAuditoria = (user, currentData) => {
         Swal.fire({
-            title: `Historial de ${user.username}`,
+            title: `Auditoría: ${user.username}`,
             html: `
-            <div class="table-responsive">
-                <table class="table table-dark table-sm small">
-                    <thead>
-                        <tr class="text-dim">
-                            <th>Partido</th>
-                            <th>Pred.</th>
-                            <th>Real</th>
-                            <th>Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${currentData.predictions.map(p => `
-                            <tr>
-                                <td class="text-start">${p.match}</td>
-                                <td class="fw-bold">${p.prediction}</td>
-                                <td class="text-emerald">${p.real_result}</td>
-                                <td>
-                                    <span class="badge ${p.points === 3 ? 'bg-success' : p.points === 1 ? 'bg-warning text-dark' : 'bg-secondary'}">
-                                        ${p.points}
-                                    </span>
-                                </td>
+            <div id="audit-content">
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm small">
+                        <thead>
+                            <tr class="text-dim">
+                                <th>Partido</th>
+                                <th>Pred.</th>
+                                <th>Real</th>
+                                <th>Pts</th>
                             </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            ${currentData.predictions.map(p => `
+                                <tr>
+                                    <td class="text-start">${p.match}</td>
+                                    <td>${p.prediction}</td>
+                                    <td class="text-emerald">${p.real_result}</td>
+                                    <td><span class="badge ${p.points === 3 ? 'bg-success' : 'bg-warning text-dark'}">${p.points}</span></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div id="audit-pagination" class="d-flex justify-content-center gap-2 mt-3"></div>
             </div>
-            ${currentData.pages > 1 ? `<div class="text-center mt-2 small text-dim">Página ${currentData.current_page} de ${currentData.pages}</div>` : ''}
         `,
-            showConfirmButton: true,
-            confirmButtonText: "Cerrar",
-            confirmButtonColor: "var(--pitch-green)",
+            showConfirmButton: false,
             background: 'var(--deep-navy)',
             color: '#fff',
-            width: '600px'
+            width: '600px',
+            didOpen: () => {
+                renderPaginationButtons(user.id_user, currentData);
+            }
         });
     };
 
+    // Función para renderizar botones de paginación manuales dentro de SweetAlert
+    const renderPaginationButtons = (userId, data) => {
+        const container = document.getElementById('audit-pagination');
+        if (!container || data.pages <= 1) return;
+
+        let buttonsHtml = '';
+
+        // Botón Anterior
+        buttonsHtml += `
+        <button id="prevAudit" class="btn btn-sm btn-outline-light" ${data.current_page === 1 ? 'disabled' : ''}>
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+    `;
+
+        // Indicador de página
+        buttonsHtml += `<span class="mx-3 align-self-center small text-dim">Pág ${data.current_page} de ${data.pages}</span>`;
+
+        // Botón Siguiente
+        buttonsHtml += `
+        <button id="nextAudit" class="btn btn-sm btn-outline-light" ${data.current_page === data.pages ? 'disabled' : ''}>
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    `;
+
+        container.innerHTML = buttonsHtml;
+
+        // Asignar eventos a los botones manuales
+        document.getElementById('prevAudit')?.addEventListener('click', () => {
+            loadUserAudit(userId, data.current_page - 1);
+        });
+        document.getElementById('nextAudit')?.addEventListener('click', () => {
+            loadUserAudit(userId, data.current_page + 1);
+        });
+    };
+
+    
     // Esta función renderiza el contenido dentro del modal (o puedes usar un Modal de Bootstrap para más control)
     const renderAuditContent = () => {
         const container = document.getElementById('audit-container');
