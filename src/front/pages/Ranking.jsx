@@ -28,56 +28,72 @@ export const Ranking = () => {
         if (!user) return;
 
         try {
+            // CAMBIO: per_page=10 para mostrar más partidos
             const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=6`);
 
             if (response.ok) {
-                // Guardamos en el estado por si acaso, pero usamos 'data' para el modal
                 setAuditData(data);
                 setSelectedUser(user);
 
-                // Si es la primera vez (page 1), abrimos el modal
-                // Si ya está abierto, SweetAlert2 permite actualizar el contenido sin cerrarse
-                mostrarModalAuditoria(user, data);
+                // Si el modal ya existe, solo lo actualizamos para evitar el pestañeo
+                if (Swal.isVisible()) {
+                    Swal.update({
+                        html: getAuditHTML(user, data)
+                    });
+                    // Re-vinculamos los eventos de los botones después de actualizar el HTML
+                    renderPaginationButtons(user.id_user, data);
+                } else {
+                    // Si es la primera vez que se abre
+                    mostrarModalAuditoria(user, data);
+                }
             }
         } catch (error) {
             toast.error("Error al cargar la auditoría");
         }
     };
 
+    const getAuditHTML = (user, currentData) => {
+        return `
+        <div id="audit-content">
+            <div class="table-responsive">
+                <table class="table table-dark table-sm small align-middle">
+                    <thead>
+                        <tr class="text-dim border-bottom border-secondary">
+                            <th class="text-start pb-2">Partido</th>
+                            <th class="pb-2 text-center">Pred.</th>
+                            <th class="pb-2 text-center">Real</th>
+                            <th class="pb-2 text-center">Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentData.predictions.map(p => `
+                            <tr class="border-bottom border-secondary-subtle">
+                                <td class="text-start py-2 text-white-50">${p.match}</td>
+                                <td class="fw-bold text-center">${p.prediction}</td>
+                                <td class="text-emerald text-center">${p.real_result}</td>
+                                <td class="text-center">
+                                    <span class="badge ${p.points === 3 ? 'bg-success' : p.points === 1 ? 'bg-warning text-dark' : 'bg-secondary text-white-50'}">
+                                        ${p.points}
+                                    </span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div id="audit-pagination" class="d-flex justify-content-center gap-2 mt-3"></div>
+        </div>
+    `;
+    };
+
     const mostrarModalAuditoria = (user, currentData) => {
         Swal.fire({
-            title: `Auditoría: ${user.username}`,
-            html: `
-            <div id="audit-content">
-                <div class="table-responsive">
-                    <table class="table table-dark table-sm small">
-                        <thead>
-                            <tr class="text-dim">
-                                <th>Partido</th>
-                                <th>Pred.</th>
-                                <th>Real</th>
-                                <th>Pts</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${currentData.predictions.map(p => `
-                                <tr>
-                                    <td class="text-start">${p.match}</td>
-                                    <td>${p.prediction}</td>
-                                    <td class="text-emerald">${p.real_result}</td>
-                                    <td><span class="badge ${p.points === 3 ? 'bg-success' : 'bg-warning text-dark'}">${p.points}</span></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div id="audit-pagination" class="d-flex justify-content-center gap-2 mt-3"></div>
-            </div>
-        `,
+            title: `Historial: ${user.username}`,
+            html: getAuditHTML(user, currentData),
             showConfirmButton: false,
             background: 'var(--deep-navy)',
             color: '#fff',
-            width: '600px',
+            width: '620px',
             didOpen: () => {
                 renderPaginationButtons(user.id_user, currentData);
             }
@@ -119,7 +135,7 @@ export const Ranking = () => {
         });
     };
 
-    
+
     // Esta función renderiza el contenido dentro del modal (o puedes usar un Modal de Bootstrap para más control)
     const renderAuditContent = () => {
         const container = document.getElementById('audit-container');
