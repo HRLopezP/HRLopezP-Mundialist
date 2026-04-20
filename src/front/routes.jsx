@@ -19,6 +19,7 @@ import UsersAdmin from "./pages/UsersAdmin";
 import { Predictions } from "./pages/Predictions";
 import { MatchAdmin } from "./pages/MatchAdmin";
 import { Ranking } from "./pages/Ranking";
+import { TransparencyWall } from "./pages/TransparencyWall";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -48,6 +49,15 @@ export const router = createBrowserRouter(
         element={
           <ProtectedRoute>
             <Predictions />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/transparency-wall"
+        element={
+          <ProtectedRoute>
+            <TransparencyWall />
           </ProtectedRoute>
         }
       />
