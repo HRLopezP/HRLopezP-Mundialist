@@ -154,3 +154,25 @@
     box-shadow: 0 6px 20px rgba(40, 200, 125, 0.4) !important;
     filter: brightness(1.1);
 }
+
+@media (min-width: 992px) {
+    .ms-lg-3 {
+        margin-left: 1rem !important;
+    }
+}
+
+/* Ajuste fino para que los botones de móvil no sean gigantes */
+@media (max-width: 991px) {
+    .btn-login-custom, .btn-register-custom {
+        padding: 5px 12px !important;
+        font-size: 0.75rem !important;
+    }
+    
+    /* Si el nombre "Registrarme" es muy largo para móvil, 
+       puedes usar "Unirse" o "Registro" en el HTML de arriba */
+}
+
+/* El logo siempre debe tener su espacio */
+.navbar-brand {
+    margin-right: 2rem;
+}

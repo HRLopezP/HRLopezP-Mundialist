@@ -28,8 +28,19 @@ export const Navbar = () => {
             <div className="container">
                 <Link className="navbar-brand d-flex align-items-center" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
-                    <span className="fw-bold tracking-tight">MUNDIAL <span className="text-emerald">ELITE</span></span>
+                    <span className="fw-bold tracking-tight text-white">MUNDIAL <span className="text-emerald">ELITE</span></span>
                 </Link>
+
+                {!store.user && (
+                    <div className="d-flex d-lg-none ms-auto me-2">
+                        <Link to="/login" className="btn btn-login-custom rounded-pill me-1">
+                            Ingresar
+                        </Link>
+                        <Link to="/register" className="btn btn-register-custom rounded-pill">
+                            Unirse
+                        </Link>
+                    </div>
+                )}
 
                 <button
                     className="navbar-toggler border-0"
@@ -42,6 +53,7 @@ export const Navbar = () => {
                 >
                     <i className="fa-solid fa-bars-staggered text-white"></i>
                 </button>
+
 
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto align-items-center gap-2">
