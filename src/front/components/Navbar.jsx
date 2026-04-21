@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import useGlobalReducer from "../hooks/useGlobalReducer"; 
+import useGlobalReducer from "../hooks/useGlobalReducer";
 import { toast } from "sonner";
 import "../styles/navbar.css";
 
@@ -31,13 +31,13 @@ export const Navbar = () => {
                     <span className="fw-bold tracking-tight">MUNDIAL <span className="text-emerald">ELITE</span></span>
                 </Link>
 
-                <button 
-                    className="navbar-toggler border-0" 
-                    type="button" 
-                    data-bs-toggle="collapse" 
-                    data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav" 
-                    aria-expanded="false" 
+                <button
+                    className="navbar-toggler border-0"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
                     aria-label="Toggle navigation"
                 >
                     <i className="fa-solid fa-bars-staggered text-white"></i>
@@ -45,7 +45,7 @@ export const Navbar = () => {
 
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto align-items-center gap-2">
-                        
+
                         {/* --- RUTAS PARA TODOS LOS LOGUEADOS --- */}
                         {store.user && (
                             <>
@@ -68,10 +68,10 @@ export const Navbar = () => {
                                 {/* --- RUTAS DE ADMINISTRADOR --- */}
                                 {store.user?.rol === "Administrador" && (
                                     <li className="nav-item dropdown w-100">
-                                        <a 
-                                            className="nav-link dropdown-toggle px-3 py-2 rounded-pill btn-admin-hover" 
-                                            href="#" 
-                                            role="button" 
+                                        <a
+                                            className="nav-link dropdown-toggle px-3 py-2 rounded-pill btn-admin-hover"
+                                            href="#"
+                                            role="button"
                                             data-bs-toggle="dropdown"
                                         >
                                             <i className="fa-solid fa-gears me-2 text-warning"></i> Gestión
@@ -119,9 +119,13 @@ export const Navbar = () => {
                                 </ul>
                             </li>
                         ) : (
-                            <div className="d-flex gap-2 ms-lg-3">
-                                <Link to="/login" className="btn btn-outline-light btn-sm rounded-pill px-3">Entrar</Link>
-                                <Link to="/register" className="btn btn-emerald btn-sm rounded-pill px-3 text-white">Registrarme</Link>
+                            <div className="auth-buttons-container ms-lg-3">
+                                <Link to="/login" className="btn btn-login-custom rounded-pill">
+                                    Ingresar
+                                </Link>
+                                <Link to="/register" className="btn btn-register-custom rounded-pill">
+                                    Registrarme
+                                </Link>
                             </div>
                         )}
                     </ul>

@@ -1,9 +1,29 @@
 .custom-navbar {
-    background: rgba(10, 20, 50, 0.8) !important; /* Azul muy oscuro profundo */
+    background: rgba(10, 20, 50, 0.9) !important; 
     backdrop-filter: blur(15px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 5px 0; 
     z-index: 1050;
+}
+
+.custom-navbar .nav-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.custom-navbar .nav-link:hover {
+    color: #28c87d !important;
+}
+
+.custom-navbar .nav-link:hover i {
+    transform: scale(1.1);
+}
+
+
+.custom-navbar .dropdown-toggle::after {
+    color: white !important;
 }
 
 .brand-text {
@@ -16,7 +36,6 @@
     color: #28c87d !important;
 }
 
-/* Dropdown del Usuario */
 .user-dropdown {
     padding: 5px 15px;
     border-radius: 50px;
@@ -48,7 +67,6 @@
     font-size: 0.9rem;
 }
 
-/* Menú Desplegable */
 .custom-dropdown {
     background: #0D1B2A !important; /* Oxford Grey muy oscuro */
     border: 1px solid rgba(40, 200, 125, 0.2) !important;
@@ -72,4 +90,67 @@
 .dropdown-item.text-danger:hover {
     background: rgba(220, 53, 69, 0.1) !important;
     color: #ff4d4d !important;
+}
+
+
+.user-profile-pill {
+    padding: 4px 12px !important;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-profile-pill:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-avatar-wrapper {
+    width: 35px; 
+    height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid #28c87d;
+}
+
+
+.auth-buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Mejora para el botón "Ingresar" (Outline con estilo) */
+.btn-login-custom {
+    color: var(--text-main) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    background: transparent !important;
+    padding: 6px 20px !important; /* Padding controlado */
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-login-custom:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-color: var(--neon-blue) !important;
+    color: var(--neon-blue) !important;
+}
+
+/* Ajuste para el botón "Registro" (Reducir padding en Y) */
+.btn-register-custom {
+    background: var(--pitch-green) !important;
+    color: #000 !important;
+    border: none !important;
+    padding: 6px 20px !important; /* Igualamos el padding al de ingresar */
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 4px 15px rgba(40, 200, 125, 0.2) !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-register-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 200, 125, 0.4) !important;
+    filter: brightness(1.1);
 }
