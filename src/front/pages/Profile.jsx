@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "../utils/api";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import "../styles/profile.css";
 
@@ -112,27 +112,56 @@ const Profile = () => {
         }
     };
 
+    const closeAndResetModal = () => {
+        setPassData({ current: "", new: "", confirm: "" }); // Limpia los inputs
+        setPasswordValidity({}); // Reinicia los iconos de validación
+        setPassMatch(true); // Reinicia el error de coincidencia
+        setShowPassModal(false); // Cierra el modal
+    };
+
     const updatePassword = async () => {
+        // 1. Validación local (Frontend)
         const isAllValid = passwordRequirements.every(req => passwordValidity[req.key]);
-        if (!isAllValid || !passMatch) {
-            toast.error("Revisa los requisitos de seguridad");
+
+        if (!passData.current) {
+            toast.error("Debes ingresar tu contraseña actual");
             return;
         }
 
-        const { response, data } = await apiFetch("/user/update-profile", {
-            method: "PATCH",
-            body: JSON.stringify({
-                current_password: passData.current,
-                new_password: passData.new
-            })
-        });
+        if (!isAllValid || !passMatch) {
+            toast.error("La nueva contraseña no cumple los requisitos o no coincide");
+            return;
+        }
 
-        if (response.ok) {
-            toast.success("Contraseña actualizada con éxito");
-            setShowPassModal(false);
-            setPassData({ current: "", new: "", confirm: "" });
-        } else {
-            toast.error(data.message);
+        // Definimos el ID del toast para poder manipularlo (dismiss/update)
+        const toastId = toast.loading("Procesando cambio de contraseña...");
+
+        try {
+            const { response, data } = await apiFetch("/user/update-profile", {
+                method: "PATCH",
+                body: JSON.stringify({
+                    current_password: passData.current,
+                    new_password: passData.new
+                })
+            });
+
+            // 2. Manejo de respuesta Exitosa (Status 200-299)
+            if (response.ok) {
+                toast.success("¡Contraseña actualizada correctamente!", { id: toastId });
+                closeAndResetModal(); // Cerramos y limpiamos solo si fue exitoso
+            }
+            // 3. Manejo de errores controlados (Status 400, 401, 500, etc.)
+            else {
+                // Si el backend envía un mensaje (ej: "Contraseña actual incorrecta"), lo mostramos
+                // Si no, enviamos un mensaje genérico
+                const errorMessage = data?.message || "Error al actualizar. Verifica tus datos.";
+                toast.error(errorMessage, { id: toastId });
+            }
+
+        } catch (error) {
+            // 4. Manejo de errores de red o excepciones del código
+            console.error("Error crítico en updatePassword:", error);
+            toast.error("Error de conexión con el servidor", { id: toastId });
         }
     };
 
@@ -140,6 +169,7 @@ const Profile = () => {
 
     return (
         <div className="profile-container animate__animated animate__fadeIn">
+            <Toaster position="top-center" richColors />
             <div className="profile-card">
                 <div className="profile-header">
                     <div className="avatar-wrapper">
@@ -194,7 +224,7 @@ const Profile = () => {
                                 />
                             </div>
                             <div className="col-12">
-                                <label className="form-label text-dim">Correo Electrónico</label>
+                                <label className="form-label text-dim">Correo Electrónico (no es editable)</label>
                                 <input type="text" className="form-control profile-input" value={user?.email} disabled />
                             </div>
                         </div>
@@ -209,7 +239,7 @@ const Profile = () => {
                     <hr className="my-4 opacity-10" />
 
                     <div className="security-section">
-                        <h4 className="section-title">Seguridad</h4>
+                        <h4 className="section-title"><i className="fas fa-key me-2"></i>Seguridad</h4>
                         <button className="btn btn-outline-light w-100 mt-2" onClick={() => setShowPassModal(true)}>
                             Cambiar Contraseña
                         </button>
@@ -221,11 +251,11 @@ const Profile = () => {
             {showPassModal && (
                 <div className="custom-modal-overlay">
                     <div className="custom-modal animate__animated animate__zoomIn">
-                        <h3>Actualizar Seguridad</h3>
+                        <h3 className="section-title text-center mb-4"><i className="fas fa-key me-2"></i>Actualizar Seguridad</h3>
 
                         <div className="mt-3">
                             {['current', 'new', 'confirm'].map((field) => (
-                                <div key={field} className="mb-3">
+                                <div key={field} className="mb-4">
                                     <div className="input-group">
                                         <input
                                             type={showPass[field] ? "text" : "password"}
@@ -235,7 +265,7 @@ const Profile = () => {
                                             onChange={(e) => handlePasswordChange(field, e.target.value)}
                                         />
                                         <button
-                                            className="btn btn-outline-secondary"
+                                            className="btn-icon-inside border-0 rounded"
                                             type="button"
                                             onClick={() => setShowPass({ ...showPass, [field]: !showPass[field] })}
                                         >
@@ -261,11 +291,17 @@ const Profile = () => {
                             <button
                                 className="btn btn-emerald w-100"
                                 onClick={updatePassword}
-                                disabled={!passMatch || !passwordRequirements.every(req => passwordValidity[req.key])}
+                                // Deshabilitar si no cumple requisitos O si el modal ya se está enviando
+                                disabled={!passMatch || !passwordRequirements.every(req => passwordValidity[req.key]) || !passData.current}
                             >
                                 Actualizar
                             </button>
-                            <button className="btn btn-dark w-100" onClick={() => setShowPassModal(false)}>Cancelar</button>
+                            <button
+                                className="btn btn-dark w-100"
+                                onClick={closeAndResetModal} // <-- Usar la función de reset
+                            >
+                                Cancelar
+                            </button>
                         </div>
                     </div>
                 </div>

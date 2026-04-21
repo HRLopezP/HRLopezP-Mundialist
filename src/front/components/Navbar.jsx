@@ -131,8 +131,8 @@ export const Navbar = () => {
                                 </a>
                                 <ul className="dropdown-menu dropdown-menu-end dropdown-menu-dark custom-dropdown animate__animated animate__fadeIn">
                                     <li className="px-3 py-2 border-bottom border-secondary mb-2">
-                                        <p className="small text-muted mb-0">Cuenta de:</p>
-                                        <p className="small fw-bold mb-0 text-white">{store.user?.email}</p>
+                                        <p className="small text-white mb-0">Cuenta de:</p>
+                                        <p className="small fw-bold mb-0 text-emerald">{store.user?.email}</p>
                                     </li>
                                     <li><Link className="dropdown-item py-2" to="/profile"><i className="fa-solid fa-id-card me-2"></i> Perfil</Link></li>
                                     <li><hr className="dropdown-divider opacity-10" /></li>
