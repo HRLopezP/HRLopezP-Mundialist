@@ -63,18 +63,15 @@ const Register = () => {
                 })
             });
 
-            // MODIFICACIÓN AQUÍ:
-            // Aceptamos tanto 200 como 201 como éxitos
+
             if (response.ok) {
                 toast.success(data.message || "¡Registro exitoso! Bienvenido al Mundial");
-                setUser(initialUserState); // Limpiamos el formulario
+                setUser(initialUserState);
 
-                // Redirigimos al login después de un momento
                 setTimeout(() => {
                     navigate("/login");
                 }, 2000);
             } else {
-                // Si el backend envió un error (como 400 o 422), mostramos el mensaje que viene de allá
                 toast.error(data.message || "Error al registrarse en el estadio");
             }
 

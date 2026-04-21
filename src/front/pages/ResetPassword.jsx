@@ -24,7 +24,6 @@ const ResetPassword = () => {
     const [isPasswordFocused, setIsPasswordFocused] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Lógica de validación dinámica que mencionaste
     const [passwordValidity, setPasswordValidity] = useState({
         minLength: false, lowerCase: false, upperCase: false, number: false, specialChar: false,
     });

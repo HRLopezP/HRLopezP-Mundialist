@@ -520,27 +520,23 @@ def update_match_result(match_id):
     if not match:
         return jsonify({"msg": "Partido no encontrado"}), 404
 
-    # 1. Guardamos el resultado oficial en el partido
     home_real = body.get("home_score")
     away_real = body.get("away_score")
     match.home_score = home_real
     match.away_score = away_real
 
-    # 2. Buscamos todas las predicciones de este partido para actualizarlas
     predictions = Prediction.query.filter_by(match_id=match_id).all()
     
     for pred in predictions:
         pts = 0
-        # ACIERTO EXACTO (3 puntos)
         if pred.predicted_home_score == home_real and pred.predicted_away_score == away_real:
             pts = 3
-        # ACIERTO TENDENCIA (1 punto): Ganador o Empate
         elif (home_real > away_real and pred.predicted_home_score > pred.predicted_away_score) or \
              (home_real < away_real and pred.predicted_home_score < pred.predicted_away_score) or \
              (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
             pts = 1
         
-        pred.points_earned = pts # Guardamos el punto en la base de datos
+        pred.points_earned = pts 
 
     try:
         db.session.commit()
@@ -550,16 +546,14 @@ def update_match_result(match_id):
         return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
 
 
+# Ver el ranking actualizado
 @api.route('/ranking', methods=['GET'])
 @jwt_required()
-# Lo dejamos sin jwt_required para que sea un imán de usuarios, 
-# pero si prefieres privacidad, puedes agregarlo.
 def get_ranking():
     users = User.query.filter_by(is_active=True).all()
     ranking_list = []
     
     for user in users:
-        # Buscamos predicciones que ya tengan puntos (juegos terminados)
         preds = Prediction.query.filter(
             Prediction.user_id == user.id_user,
             Prediction.points_earned != None
@@ -577,30 +571,23 @@ def get_ranking():
             "trend_hits": trend_hits
         })
     
-    # Ordenamos por: 1. Puntos, 2. Marcadores Exactos, 3. Tendencias
     ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
     
     return jsonify(ranking_list), 200
 
-
+# Ver las predicciones finalizadas
 @api.route('/predictions/user/<int:user_id>', methods=['GET'])
-@jwt_required() # La auditoría SI es privada
+@jwt_required()
 def get_user_predictions_detail(user_id):
-    # 1. Filtramos: Solo predicciones de partidos con resultado oficial
     query = Prediction.query.join(Match).filter(
         Prediction.user_id == user_id,
         Match.home_score != None
     ).options(joinedload(Prediction.match))
 
-    # 2. USAMOS TU FUNCIÓN DE PAGINACIÓN
-    # Pasamos la query y le decimos que el nombre del grupo sea "predictions"
     paginated_results = paginate_query(query, model_name="predictions")
     
-    # 3. Formateamos los datos para que el frontend los lea fácil
-    # Reemplazamos la lista de objetos serializados por una con los nombres de equipos
     formatted_preds = []
     for p_serial in paginated_results["predictions"]:
-        # Recuperamos el objeto original para acceder a la relación 'match'
         p = Prediction.query.get(p_serial["id_prediction"]) 
         formatted_preds.append({
             "match": f"{p.match.home_team.name} vs {p.match.away_team.name}",
@@ -609,20 +596,18 @@ def get_user_predictions_detail(user_id):
             "points": p.points_earned
         })
     
-    # Sobrescribimos la lista con el formato que queremos para la tabla
     paginated_results["predictions"] = formatted_preds
 
     return jsonify(paginated_results), 200
 
 
+#Ver las predicciones de menos 24 horas y sin finalizar
 @api.route('/transparency-wall', methods=['GET'])
 @jwt_required()
 def get_transparency_wall():
     ahora = datetime.now(timezone.utc)
     limite_24h = ahora + timedelta(hours=24)
 
-    # 1. Buscamos partidos que empiezan en menos de 24h O que ya empezaron 
-    # pero no tienen resultado cargado aún.
     matches = Match.query.filter(
         Match.match_date <= limite_24h,
         Match.home_score == None
@@ -630,9 +615,6 @@ def get_transparency_wall():
 
     results = []
     for m in matches:
-        # 2. Para cada partido, obtenemos las predicciones de TODOS los usuarios
-        # Nota: Aquí podrías usar tu función paginate_query si esperas cientos de usuarios,
-        # pero por ahora, traeremos la lista completa de predicciones para ese juego.
         preds = Prediction.query.filter_by(match_id=m.id_match).all()
         
         results.append({

@@ -20,7 +20,6 @@ const calculatePoints = (prediction, match) => {
 
     if (realResult === predResult) return 1;
 
-    // 3. FALLO TOTAL: 0 Puntos
     return 0;
 };
 

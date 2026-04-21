@@ -8,7 +8,6 @@ export const Ranking = () => {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Estados para la Auditoría Paginada
     const [auditData, setAuditData] = useState({ predictions: [], total: 0, pages: 1, current_page: 1 });
     const [selectedUser, setSelectedUser] = useState(null);
 
@@ -22,28 +21,23 @@ export const Ranking = () => {
         setLoading(false);
     };
 
-    // Función para cargar la auditoría con paginación
     const loadUserAudit = async (userId, page = 1) => {
         const user = ranking.find(u => u.id_user === userId);
         if (!user) return;
 
         try {
-            // CAMBIO: per_page=10 para mostrar más partidos
             const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=12`);
 
             if (response.ok) {
                 setAuditData(data);
                 setSelectedUser(user);
 
-                // Si el modal ya existe, solo lo actualizamos para evitar el pestañeo
                 if (Swal.isVisible()) {
                     Swal.update({
                         html: getAuditHTML(user, data)
                     });
-                    // Re-vinculamos los eventos de los botones después de actualizar el HTML
                     renderPaginationButtons(user.id_user, data);
                 } else {
-                    // Si es la primera vez que se abre
                     mostrarModalAuditoria(user, data);
                 }
             }
@@ -100,24 +94,20 @@ export const Ranking = () => {
         });
     };
 
-    // Función para renderizar botones de paginación manuales dentro de SweetAlert
     const renderPaginationButtons = (userId, data) => {
         const container = document.getElementById('audit-pagination');
         if (!container || data.pages <= 1) return;
 
         let buttonsHtml = '';
 
-        // Botón Anterior
         buttonsHtml += `
         <button id="prevAudit" class="btn btn-sm btn-outline-light" ${data.current_page === 1 ? 'disabled' : ''}>
             <i class="fa-solid fa-chevron-left"></i>
         </button>
     `;
 
-        // Indicador de página
         buttonsHtml += `<span class="mx-3 align-self-center small text-dim">Pág ${data.current_page} de ${data.pages}</span>`;
 
-        // Botón Siguiente
         buttonsHtml += `
         <button id="nextAudit" class="btn btn-sm btn-outline-light" ${data.current_page === data.pages ? 'disabled' : ''}>
             <i class="fa-solid fa-chevron-right"></i>
@@ -126,7 +116,6 @@ export const Ranking = () => {
 
         container.innerHTML = buttonsHtml;
 
-        // Asignar eventos a los botones manuales
         document.getElementById('prevAudit')?.addEventListener('click', () => {
             loadUserAudit(userId, data.current_page - 1);
         });
@@ -136,7 +125,6 @@ export const Ranking = () => {
     };
 
 
-    // Esta función renderiza el contenido dentro del modal (o puedes usar un Modal de Bootstrap para más control)
     const renderAuditContent = () => {
         const container = document.getElementById('audit-container');
         if (!container) return;

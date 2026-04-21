@@ -4,8 +4,8 @@ import autoTable from "jspdf-autotable";
 export const generateTransparencyReport = (matches) => {
   const doc = new jsPDF("p", "mm", "a4");
   const colors = {
-    oxford: [44, 62, 80],   // Tu color de seriedad/gestión
-    emerald: [16, 185, 129] // Color de éxito/completado
+    oxford: [44, 62, 80],   
+    emerald: [16, 185, 129] 
   };
 
   // --- Encabezado ---

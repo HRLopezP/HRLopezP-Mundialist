@@ -12,7 +12,7 @@ export const GameMatchCard = ({ match, index }) => {
           type="button"
           data-bs-toggle="collapse"
           data-bs-target={`#collapse${index}`}
-          style={{ backgroundColor: "#2c3e50", color: "white" }} // Oxford Grey
+          style={{ backgroundColor: "#2c3e50", color: "white" }} 
         >
           <div className="d-flex justify-content-between align-items-center w-100 me-3">
             <div className="d-flex align-items-center">

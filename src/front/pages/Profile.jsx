@@ -73,18 +73,14 @@ const Profile = () => {
         try {
             toast.info("Subiendo imagen...");
 
-            // Cambiamos la forma de recibir los datos para que coincida con tu apiFetch
             const { response, data } = await apiFetch("/user/update-photo", {
                 method: "PATCH",
                 body: formData,
             });
 
             if (response.ok) {
-                // 1. Actualizamos el estado local del componente
                 setUser({ ...user, profile: data.profile });
 
-                // 2. ¡IMPORTANTE! Actualizamos el Store Global
-                // Usamos data.profile que es la URL que viene del backend
                 dispatch({
                     type: "SET_USER",
                     payload: { ...store.user, profile: data.profile }

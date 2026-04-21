@@ -39,7 +39,6 @@ export const MatchAdmin = () => {
     };
 
     const saveOfficialResult = async (match) => {
-        // Validamos que los campos no estén vacíos
         if (match.home_score === "" || match.away_score === "") {
             toast.error("Por favor, ingresa ambos puntajes");
             return;
@@ -56,7 +55,7 @@ export const MatchAdmin = () => {
 
             if (response.ok) {
                 toast.success("¡Resultado publicado y puntos repartidos!");
-                loadMatches(); // Recargamos para ver los cambios
+                loadMatches(); 
             } else {
                 toast.error(data.msg || "Error al guardar el resultado");
             }
