@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
+import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { toast } from "sonner";
 
 export const TransparencyWall = () => {
@@ -42,6 +43,14 @@ export const TransparencyWall = () => {
             <div className="text-center mb-4">
                 <h2 className="fw-bold" style={{ color: "#2c3e50" }}>Muro de Transparencia</h2>
                 <p className="text-muted">Predicciones visibles 24h antes del pitazo inicial.</p>
+                {!loading && matches.length > 0 && (
+                    <button
+                        className="btn btn-outline-success btn-sm shadow-sm mt-2"
+                        onClick={() => generateTransparencyReport(filteredMatches)}
+                    >
+                        📥 Descargar PDF de Transparencia
+                    </button>
+                )}
             </div>
 
             <div className="mb-4">
