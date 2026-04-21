@@ -26,13 +26,14 @@ export const Navbar = () => {
     return (
         <nav className="navbar navbar-expand-lg custom-navbar sticky-top shadow-sm">
             <div className="container">
-                <Link className="navbar-brand d-flex align-items-center" to="/">
+                <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
-                    <span className="fw-bold tracking-tight text-white">MUNDIAL <span className="text-emerald">ELITE</span></span>
+                    {/* Ocultamos "ELITE" en pantallas muy pequeñas para ganar espacio */}
+                    <span className="brand-text">MUNDIAL <span className="text-emerald d-none d-sm-inline">ELITE</span></span>
                 </Link>
 
                 {!store.user && (
-                    <div className="d-flex d-lg-none ms-auto me-2">
+                    <div className="d-flex d-lg-none ms-auto me-2 align-items-center">
                         <Link to="/login" className="btn btn-login-custom rounded-pill me-1">
                             Ingresar
                         </Link>

@@ -162,14 +162,29 @@
 }
 
 /* Ajuste fino para que los botones de móvil no sean gigantes */
-@media (max-width: 991px) {
+@media (max-width: 420px) {
+    /* Hacemos el texto del logo un poco más pequeño */
+    .brand-text {
+        font-size: 0.9rem !important;
+    }
+
+    /* Botones más compactos para que quepan todos en una línea */
     .btn-login-custom, .btn-register-custom {
-        padding: 5px 12px !important;
-        font-size: 0.75rem !important;
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
+        letter-spacing: 0px !important;
     }
     
-    /* Si el nombre "Registrarme" es muy largo para móvil, 
-       puedes usar "Unirse" o "Registro" en el HTML de arriba */
+    /* Reducimos el espacio del icono del trofeo */
+    .navbar-brand i {
+        font-size: 0.9rem;
+        margin-right: 4px !important;
+    }
+}
+
+/* Evita que el contenedor colapsable empuje cosas hacia abajo antes de tiempo */
+.navbar-toggler {
+    padding: 0.25rem 0.5rem !important;
 }
 
 /* El logo siempre debe tener su espacio */
