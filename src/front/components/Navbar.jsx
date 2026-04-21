@@ -111,8 +111,16 @@ export const Navbar = () => {
                             </>
                         )}
 
-                        {/* --- PERFIL / LOGIN --- */}
-                        {store.user ? (
+                        {!store.user ? (
+                            <div className="d-none d-lg-flex gap-2 ms-lg-3">
+                                <Link to="/login" className="btn btn-login-custom rounded-pill">
+                                    Ingresar
+                                </Link>
+                                <Link to="/register" className="btn btn-register-custom rounded-pill">
+                                    Registrarme
+                                </Link>
+                            </div>
+                        ) : (
                             <li className="nav-item dropdown ms-lg-3 w-100">
                                 <a className="nav-link d-flex align-items-center user-profile-pill px-2" href="#" role="button" data-bs-toggle="dropdown">
                                     <div className="nav-avatar-wrapper me-2">
@@ -131,15 +139,6 @@ export const Navbar = () => {
                                     <li><button className="dropdown-item text-danger py-2" onClick={handleLogout}><i className="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button></li>
                                 </ul>
                             </li>
-                        ) : (
-                            <div className="auth-buttons-container ms-lg-3">
-                                <Link to="/login" className="btn btn-login-custom rounded-pill">
-                                    Ingresar
-                                </Link>
-                                <Link to="/register" className="btn btn-register-custom rounded-pill">
-                                    Registrarme
-                                </Link>
-                            </div>
                         )}
                     </ul>
                 </div>

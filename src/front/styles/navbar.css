@@ -68,7 +68,7 @@
 }
 
 .custom-dropdown {
-    background: #0D1B2A !important; /* Oxford Grey muy oscuro */
+    background: #0D1B2A !important; 
     border: 1px solid rgba(40, 200, 125, 0.2) !important;
     border-radius: 12px !important;
     padding: 10px 0 !important;
@@ -118,12 +118,12 @@
     gap: 12px;
 }
 
-/* Mejora para el botón "Ingresar" (Outline con estilo) */
+
 .btn-login-custom {
     color: var(--text-main) !important;
     border: 1px solid rgba(255, 255, 255, 0.3) !important;
     background: transparent !important;
-    padding: 6px 20px !important; /* Padding controlado */
+    padding: 6px 20px !important; 
     font-size: 0.85rem !important;
     font-weight: 600 !important;
     transition: all 0.3s ease !important;
@@ -135,12 +135,12 @@
     color: var(--neon-blue) !important;
 }
 
-/* Ajuste para el botón "Registro" (Reducir padding en Y) */
+
 .btn-register-custom {
     background: var(--pitch-green) !important;
     color: #000 !important;
     border: none !important;
-    padding: 6px 20px !important; /* Igualamos el padding al de ingresar */
+    padding: 6px 20px !important; 
     font-size: 0.85rem !important;
     font-weight: 800 !important;
     text-transform: uppercase;
@@ -155,39 +155,55 @@
     filter: brightness(1.1);
 }
 
+.auth-buttons-mobile {
+    display: flex;
+    align-items: center;
+    gap: 5px; 
+    margin-left: auto; 
+    margin-right: 10px; 
+}
+
 @media (min-width: 992px) {
     .ms-lg-3 {
         margin-left: 1rem !important;
     }
 }
 
-/* Ajuste fino para que los botones de móvil no sean gigantes */
+
 @media (max-width: 420px) {
-    /* Hacemos el texto del logo un poco más pequeño */
     .brand-text {
         font-size: 0.9rem !important;
     }
 
-    /* Botones más compactos para que quepan todos en una línea */
     .btn-login-custom, .btn-register-custom {
         padding: 4px 8px !important;
         font-size: 0.7rem !important;
         letter-spacing: 0px !important;
     }
     
-    /* Reducimos el espacio del icono del trofeo */
     .navbar-brand i {
         font-size: 0.9rem;
         margin-right: 4px !important;
     }
 }
 
-/* Evita que el contenedor colapsable empuje cosas hacia abajo antes de tiempo */
+@media (max-width: 420px) {
+    .auth-buttons-mobile {
+        gap: 3px;
+        margin-right: 5px;
+    }
+    
+    .navbar-brand {
+        margin-right: 0 !important;
+        flex-shrink: 1;
+    }
+}
+
+
 .navbar-toggler {
     padding: 0.25rem 0.5rem !important;
 }
 
-/* El logo siempre debe tener su espacio */
 .navbar-brand {
     margin-right: 2rem;
 }
