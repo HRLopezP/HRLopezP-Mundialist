@@ -93,21 +93,21 @@ const Register = () => {
 
                     <div className="p-4">
                         <form onSubmit={handleSubmit}>
-                            <div className="mt-3">
-                                <label className="auth-label">Nombre</label>
+                            <div className="mt-3 mb-4">
+                                <label className="auth-label mb-0">Nombre</label>
                                 <input type="text" name="name" className="form-control auth-input" placeholder="Ej. Lionel" value={user.name} onChange={handleChange} required />
                             </div>
 
-                            <div className="mt-3">
-                                <label className="auth-label">Apellido</label>
+                            <div className="mt-3 mb-4">
+                                <label className="auth-label mb-0">Apellido</label>
                                 <input type="text" name="lastname" className="form-control auth-input" placeholder="Ej. Messi" value={user.lastname} onChange={handleChange} required />
                             </div>
-                            <div className="mt-3">
-                                <label className="auth-label">Correo Electrónico</label>
+                            <div className="mt-3 mb-4 ">
+                                <label className="auth-label mb-0">Correo Electrónico</label>
                                 <input type="email" name="email" className="form-control auth-input" placeholder="thegoat@ejemplo.com" value={user.email} onChange={handleChange} required />
                             </div>
-                            <div className="mt-3">
-                                <label className="auth-label">Contraseña</label>
+                            <div className="mt-3 mb-4">
+                                <label className="auth-label mb-0">Contraseña</label>
                                 <div className="input-group">
                                     <input
                                         type={showPassword ? "text" : "password"}
@@ -139,7 +139,7 @@ const Register = () => {
                             </div>
 
                             <div className="mt-3 mb-4">
-                                <label className="auth-label">Confirmar Contraseña</label>
+                                <label className="auth-label mb-0">Confirmar Contraseña</label>
                                 <div className="input-group">
                                     <input
                                         type={showConfirmPassword ? "text" : "password"}
