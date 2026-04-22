@@ -3,6 +3,7 @@ import { apiFetch } from "../utils/api.js";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import Pagination from "../components/Pagination.jsx";
+import { generateRankingReport } from "../utils/transparencyPdf.js";
 
 export const Ranking = () => {
     const [ranking, setRanking] = useState([]);
@@ -163,6 +164,12 @@ export const Ranking = () => {
                 <h3 className="text-white mb-4 text-center">🏆 Ranking Mundialista</h3>
 
                 <div className="table-responsive d-none d-md-block">
+                    <button
+                        className="btn btn-primary"
+                        onClick={() => generateRankingReport(ranking)}
+                    >
+                        📥 Descargar Ranking PDF
+                    </button>
                     <table className="table table-hover table-dark custom-table">
                         <thead>
                             <tr className="text-dim small uppercase">

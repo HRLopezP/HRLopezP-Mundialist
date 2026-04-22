@@ -57,3 +57,54 @@ export const generateTransparencyReport = (matches) => {
 
   doc.save("muro_transparencia_quiniela.pdf");
 };
+
+
+export const generateRankingReport = (rankingData) => {
+  const doc = new jsPDF("p", "mm", "a4");
+  const colors = {
+    oxford: [44, 62, 80],
+    emerald: [16, 185, 129]
+  };
+
+  // --- Encabezado ---
+  doc.setFillColor(...colors.oxford);
+  doc.rect(0, 0, 210, 40, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(22);
+  doc.setFont("helvetica", "bold");
+  doc.text("MUNDIAL ELITE PREDICTOR", 14, 20);
+  doc.setFontSize(10);
+  doc.text("RANKING OFICIAL DE POSICIONES", 14, 28);
+  // Indicamos la fecha de descarga del reporte como solicitaste
+  doc.text(`Fecha de descarga: ${new Date().toLocaleString()}`, 14, 34);
+
+  // --- Tabla de Ranking ---
+  autoTable(doc, {
+    startY: 50,
+    head: [["Pos", "Usuario", "Exactos", "Tendencia", "Total Pts"]],
+    body: rankingData.map((item, index) => [
+      index + 1,                   // Posición
+      item.username.toUpperCase(), // Usuario
+      item.exact_hits || 0,    // Exactos
+      item.trend_hits || 0,           // Tendencia (acierto ganador sin marcador exacto)
+      `${item.total_points} pts`   // Total
+    ]),
+    theme: "striped",
+    headStyles: { fillColor: colors.oxford, halign: 'center' },
+    styles: { fontSize: 10, cellPadding: 4 },
+    columnStyles: { 
+      0: { halign: 'center', fontStyle: 'bold', cellWidth: 15 },
+      2: { halign: 'center' },
+      3: { halign: 'center' },
+      4: { halign: 'center', fontStyle: 'bold' }
+    },
+    // Resaltamos visualmente al líder del ranking
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.row.index === 0) {
+        data.cell.styles.textColor = colors.emerald;
+      }
+    }
+  });
+
+  doc.save(`Ranking_Elite_${new Date().toLocaleDateString()}.pdf`);
+};
