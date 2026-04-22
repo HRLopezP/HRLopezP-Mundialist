@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { apiFetch } from "../utils/api.js";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import "../styles/Predictions.css";
 
@@ -70,6 +70,18 @@ export const Predictions = () => {
         }));
     };
 
+
+    const loadMatchesSilently = async () => {
+        try {
+            const { response, data } = await apiFetch("/matches");
+            if (response.ok && Array.isArray(data)) {
+                setMatches(data);
+            }
+        } catch (error) {
+            console.error("Error silencioso:", error);
+        }
+    };
+
     const savePrediction = async (match) => {
         const home_score = match.user_prediction?.home_score;
         const away_score = match.user_prediction?.away_score;
@@ -92,8 +104,12 @@ export const Predictions = () => {
             });
 
             if (response.ok) {
-                toast.success("¡Guardado!", { id: toastId });
-                loadMatches();
+                const successMsg = hasPrediction
+                    ? "⚽ Predicción actualizada con éxito"
+                    : "🎉 ¡Predicción guardada correctamente!";
+
+                toast.success(successMsg, { id: toastId });
+                loadMatchesSilently();
             } else {
                 toast.dismiss(toastId);
                 Swal.fire("Atención", data.msg, "warning");
@@ -123,6 +139,7 @@ export const Predictions = () => {
 
     return (
         <div className="container py-5">
+            <Toaster position="top-center" richColors />
             <h1 className="text-center text-white mb-5 mt-4" style={{ textShadow: "0 0 10px var(--pitch-green)" }}>
                 MIS PREDICCIONES
             </h1>
