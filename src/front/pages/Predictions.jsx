@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../utils/api.js";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
+import "../styles/Predictions.css";
+
 
 const calculatePoints = (prediction, match) => {
     if (!prediction || match.home_score === null || match.away_score === null) return null;
@@ -42,7 +44,7 @@ export const Predictions = () => {
                 const availableGroups = [...new Set(data.map(m => m.home_team?.group_name))].filter(Boolean).sort();
 
                 if (availableGroups.length > 0) {
-                    setSelectedGroup(availableGroups[0]);
+                    setSelectedGroup(current => current || availableGroups[0]);
                 }
             }
         } catch (error) {
@@ -150,17 +152,23 @@ export const Predictions = () => {
                         const isFinished = match.home_score !== null && match.away_score !== null;
                         const points = calculatePoints(match.user_prediction, match);
                         return (
-                            <div key={`match-card-${match.id_match}`} className="col-12 col-md-10 col-lg-8 mb-4">
+                            <div key={`match-card-${match.id_match}`} className="col-12 col-md-10 col-lg-8 col-xl-6 mb-5">
                                 <div className="admin-card p-4 border-0 shadow-lg">
                                     <div className="d-flex justify-content-between text-dim small mb-3">
                                         <span>{new Date(match.match_date).toLocaleString()}</span>
                                         <span className="badge bg-dark-soft">{match.group_name}</span>
                                         {/* MOSTRAR PUNTOS SI EL JUEGO TERMINÓ */}
                                         {isFinished ? (
-                                            <div className={`px-3 py-1 rounded-pill fw-bold ${points === 3 ? 'bg-emerald text-white' : 'bg-oxford-grey text-light'}`}
-                                                style={{ fontSize: "0.75rem", letterSpacing: "1px" }}>
-                                                {points} {points === 1 ? 'PUNTO' : 'PUNTOS'} OBTENIDOS
-                                            </div>
+                                            <div className={`px-3 py-1 rounded-pill fw-bold 
+                                                ${points === 3 ? 'bg-emerald-pr text-dark' :
+                                                    points === 1 ? 'bg-gold-pts text-dark' :
+                                                        'bg-light text-dark'}`}
+                                                style={{
+                                                    fontSize: "0.75rem",
+                                                    letterSpacing: "1px",
+                                                    boxShadow: points > 0 ? "0 0 10px rgba(255,255,255,0.2)" : "none"
+                                                }}>
+                                                {points} {points === 1 ? 'PUNTO OBTENIDO' : 'PUNTOS OBTENIDOS'}                                             </div>
                                         ) : (
                                             !isEditable && <span className="badge bg-danger">🚫 CERRADO</span>
                                         )}
@@ -213,7 +221,9 @@ export const Predictions = () => {
                                     {!isFinished && (
                                         isEditable ? (
                                             <button
-                                                className={`btn w-100 mt-3 py-2 fw-bold transition-all ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'}`}
+                                                className={`btn mt-3 py-1 fw-bold transition-all mx-auto d-block 
+        ${hasPrediction ? 'btn-outline-warning btn-update-pulse' : 'btn-emerald'}`}
+                                                style={{ width: "75%", maxWidth: "300px" }}
                                                 onClick={() => savePrediction(match)}
                                             >
                                                 {hasPrediction ? "🔄 ACTUALIZAR" : "⚽ GUARDAR"}

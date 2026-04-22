@@ -1,0 +1,51 @@
+/* src/styles/Predictions.css */
+
+.group-tabs-container {
+    display: flex;
+    gap: 12px;
+    padding: 15px 10px;
+    overflow-x: auto;
+    /* Asegura que en desktop se vea centrado y en móvil permita scroll */
+    justify-content: flex-start; 
+}
+
+@media (min-width: 768px) {
+    .group-tabs-container {
+        justify-content: center; /* Centrado solo en pantallas grandes */
+        overflow-x: hidden; /* Evitamos scroll innecesario si caben todos */
+        flex-wrap: wrap; /* Si son muchos grupos, que bajen a la siguiente línea */
+    }
+}
+
+/* Evitar que se corten los bordes al hacer scroll en móvil */
+.tab-btn {
+    flex-shrink: 0;
+}
+
+
+.bg-gold-pts {
+    background-color: var(--accent-gold) !important;
+}
+
+.bg-emerald-pr {
+    background-color: var(--pitch-green) !important;
+}
+
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Eliminar flechas en Firefox */
+.score-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Mejora adicional: Asegurar que el número esté bien centrado y visible */
+.score-input {
+    padding: 0 !important; /* Evita que el padding desplace el número */
+    line-height: 1 !important;
+    text-align: center !important;
+}
