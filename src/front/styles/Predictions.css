@@ -49,3 +49,33 @@
     line-height: 1 !important;
     text-align: center !important;
 }
+
+
+.admin-card {
+    background: rgba(18, 18, 18, 0.95) !important; /* Gris grafito profundo */
+    border-left: 5px solid var(--neon-blue) !important; /* Borde cian distintivo */
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.admin-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.text-neon {
+    color: var(--neon-blue) !important;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+
+.admin-card-gold {
+    background: rgba(18, 18, 18, 0.95) !important;
+    border-left: 5px solid var(--accent-gold) !important; /* CAMBIO A GOLD */
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.text-gold-admin {
+    color: var(--accent-gold) !important;
+}

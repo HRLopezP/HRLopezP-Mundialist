@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "../utils/api.js";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
+import Swal from "sweetalert2";
+import "../styles/Predictions.css"; // Reutilizamos tu CSS central
 
 export const MatchAdmin = () => {
     const [matches, setMatches] = useState([]);
@@ -11,90 +13,128 @@ export const MatchAdmin = () => {
         loadMatches();
     }, []);
 
+    // Carga inicial con spinner
     const loadMatches = async () => {
         setLoading(true);
         try {
             const { response, data } = await apiFetch("/matches");
             if (response.ok && Array.isArray(data)) {
                 setMatches(data);
-
-                const availableGroups = [...new Set(data.map(m => m.home_team?.group_name))].filter(Boolean).sort();
-
-                if (availableGroups.length > 0) {
-                    setSelectedGroup(availableGroups[0]);
-                }
+                const groups = [...new Set(data.map(m => m.home_team?.group_name))].filter(Boolean).sort();
+                if (groups.length > 0) setSelectedGroup(current => current || groups[0]);
             }
         } catch (error) {
-            console.error("Error al cargar partidos:", error);
-            toast.error("No se pudieron cargar los partidos");
+            toast.error("Error al cargar partidos");
         } finally {
             setLoading(false);
         }
     };
 
+    // CARGA SILENCIOSA: Evita el pestañeo al guardar
+    const loadMatchesSilently = async () => {
+        try {
+            const { response, data } = await apiFetch("/matches");
+            if (response.ok && Array.isArray(data)) {
+                setMatches(data);
+            }
+        } catch (error) {
+            console.error("Error en actualización silenciosa", error);
+        }
+    };
+
     const handleResultChange = (matchId, team, value) => {
         setMatches(prev => prev.map(m =>
-            m.id_match === matchId ? { ...m, [team]: value === "" ? "" : parseInt(value) } : m
+            m.id_match === matchId ? { ...m, [team]: value === "" ? null : value } : m
         ));
     };
 
     const saveOfficialResult = async (match) => {
-        if (match.home_score === "" || match.away_score === "") {
+        if (match.home_score === null || match.away_score === null) {
             toast.error("Por favor, ingresa ambos puntajes");
             return;
         }
 
-        try {
-            const { response, data } = await apiFetch(`/match-results/${match.id_match}`, {
-                method: "PUT",
-                body: JSON.stringify({
-                    home_score: parseInt(match.home_score),
-                    away_score: parseInt(match.away_score)
-                })
-            });
+        const isUpdate = match.home_score !== null && match.away_score !== null; // Determina si es modif.
 
-            if (response.ok) {
-                toast.success("¡Resultado publicado y puntos repartidos!");
-                loadMatches(); 
-            } else {
-                toast.error(data.msg || "Error al guardar el resultado");
+        // PREGUNTA DE SEGURIDAD CON SWEETALERT2
+        const confirm = await Swal.fire({
+            title: '¿Confirmar resultado oficial?',
+            text: "Se recalcularán los puntos de todos los usuarios registrados.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: 'var(--pitch-green)',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, publicar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (confirm.isConfirmed) {
+            const toastId = toast.loading("Actualizando marcadores...");
+            try {
+                const { response } = await apiFetch(`/match-results/${match.id_match}`, {
+                    method: "PUT",
+                    body: JSON.stringify({
+                        home_score: parseInt(match.home_score),
+                        away_score: parseInt(match.away_score)
+                    })
+                });
+
+                if (response.ok) {
+                    // SONNER DINÁMICO SEGÚN ACCIÓN
+                    toast.success(isUpdate ? "📝 Resultado modificado correctamente" : "🏆 ¡Resultado publicado con éxito!", { id: toastId });
+                    loadMatchesSilently();
+                } else {
+                    toast.dismiss(toastId);
+                    toast.error("Error al procesar la solicitud");
+                }
+            } catch (error) {
+                toast.dismiss(toastId);
+                toast.error("Error de conexión");
             }
-        } catch (error) {
-            console.error("Error:", error);
-            toast.error("Error de conexión con el servidor");
         }
     };
 
-
-    const groups = [...new Set(matches.map(m => m.home_team?.group_name))].filter(Boolean).sort();
-    const filteredMatches = matches.filter(m => m.home_team?.group_name === selectedGroup);
-
-    if (loading) return <div className="text-center mt-5 text-white"><h3>⚙️ Cargando panel de administración...</h3></div>;
+    if (loading) return (
+        <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-white">
+            <div className="spinner-border text-info mb-3" role="status"></div>
+            <h5>Accediendo al Panel de Control...</h5>
+        </div>
+    );
 
     return (
-        <div className="container py-5 bg-dark-main min-vh-100">
-            <h1 className="text-center text-white mb-5 mt-4">⚙️ GESTIÓN DE RESULTADOS</h1>
+        <div className="container py-5">
+            <Toaster position="top-center" richColors />
+            <h1 className="text-center mb-5 mt-4 text-gold-admin">⚙️ ADMINISTRACIÓN DE RESULTADOS</h1>
 
-            {/* Pestañas de Grupos*/}
-            <div className="group-tabs-container mb-5 d-flex justify-content-start justify-content-md-center">
-                {groups.map((group, index) => (
+            {/* Selector de Grupos reutilizando el CSS de Predictions */}
+            <div className="group-tabs-container mb-4">
+                {[...new Set(matches.map(m => m.home_team?.group_name))].filter(Boolean).sort().map(group => (
                     <button
-                        key={`group-btn-${index}`}
-                        className={`tab-btn ${selectedGroup === group ? 'active' : ''}`}
+                        key={group}
+                        className={`tab-btn ${selectedGroup === group ? "active" : ""}`}
                         onClick={() => setSelectedGroup(group)}
                     >
-                        {group.replace("_", " ")}
+                        Grupo {group.toString().replace(/Group_/i, "").trim()}
                     </button>
                 ))}
             </div>
 
             <div className="row justify-content-center">
-                {filteredMatches.length > 0 ? (
-                    filteredMatches.map((match) => (
-                        <div key={`admin-match-${match.id_match}`} className="col-12 col-md-10 col-lg-8 mb-4">
-                            <div className="admin-card p-4 border-0 shadow-lg" style={{ backgroundColor: "#1a1a1a" }}>
-                                <div className="text-dim small mb-3 text-center">
-                                    {new Date(match.match_date).toLocaleString()}
+                {matches.filter(m => m.home_team?.group_name === selectedGroup).map((match) => {
+                    const hasResult = match.home_score !== null && match.away_score !== null;
+
+                    return (
+                        <div key={match.id_match} className="col-12 col-md-10 col-lg-8 col-xl-6 mb-5">
+                            <div className="admin-card-gold p-4 shadow-lg">
+                                <div className="text-center mb-3">
+                                    <span className="badge bg-dark text-info border border-info px-3">
+                                        PARTIDO: #{match.id_match}
+                                    </span>
+                                    <div className="text-dim small mt-1" style={{ fontSize: "0.8rem" }}>
+                                        📅 {new Date(match.match_date).toLocaleDateString('es-ES', {
+                                            day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit'
+                                        })}
+                                    </div>
                                 </div>
 
                                 <div className="row align-items-center">
@@ -106,15 +146,15 @@ export const MatchAdmin = () => {
                                     <div className="col-4 d-flex justify-content-center align-items-center gap-2">
                                         <input
                                             type="number"
-                                            className="form-control bg-dark text-white text-center border-secondary"
+                                            className="form-control score-input text-center border-secondary"
                                             value={match.home_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'home_score', e.target.value)}
                                             style={{ width: "60px" }}
                                         />
-                                        <span className="text-white h4 mb-0">-</span>
+                                        <span className="text-white fw-bold">-</span>
                                         <input
                                             type="number"
-                                            className="form-control bg-dark text-white text-center border-secondary"
+                                            className="form-control score-input text-center border-secondary"
                                             value={match.away_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'away_score', e.target.value)}
                                             style={{ width: "60px" }}
@@ -127,20 +167,18 @@ export const MatchAdmin = () => {
                                     </div>
                                 </div>
 
+                                {/* BOTÓN DINÁMICO Y AJUSTADO */}
                                 <button
-                                    className="btn btn-emerald w-100 mt-4 py-2 fw-bold"
+                                    className={`btn mt-4 py-2 fw-bold transition-all mx-auto d-block ${hasResult ? 'btn-outline-info' : 'btn-emerald'}`}
+                                    style={{ width: "75%", maxWidth: "280px" }}
                                     onClick={() => saveOfficialResult(match)}
                                 >
-                                    ✅ PUBLICAR RESULTADO FINAL
+                                    {hasResult ? "📝 MODIFICAR RESULTADO" : "✅ PUBLICAR FINAL"}
                                 </button>
                             </div>
                         </div>
-                    ))
-                ) : (
-                    <div className="text-center text-white mt-5">
-                        <p>No hay partidos en este grupo.</p>
-                    </div>
-                )}
+                    );
+                })}
             </div>
         </div>
     );

@@ -181,7 +181,7 @@ export const Predictions = () => {
                                                     points === 1 ? 'bg-gold-pts text-dark' :
                                                         'bg-light text-dark'}`}
                                                 style={{
-                                                    fontSize: "0.75rem",
+                                                    fontSize: "0.6rem",
                                                     letterSpacing: "1px",
                                                     boxShadow: points > 0 ? "0 0 10px rgba(255,255,255,0.2)" : "none"
                                                 }}>
