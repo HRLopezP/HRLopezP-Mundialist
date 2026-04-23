@@ -1,0 +1,157 @@
+/* src/styles/Home.css */
+
+.home-container {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}
+
+.banner-wrapper {
+    width: 100%;
+    /* En PC usará 9 de 12 columnas (aprox 75%) */
+    max-width: 75%; 
+    margin: 0 auto;
+}
+
+.banner-img {
+    width: 100%;
+    height: auto; /* Esto evita que la imagen se corte y mantiene la proporción */
+    display: block;
+    border-radius: 15px; /* Un toque redondeado para que combine con tus cards */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra para darle profundidad */
+}
+
+/* Ajuste para móviles: que ocupe más espacio */
+@media (max-width: 768px) {
+    .banner-wrapper {
+        max-width: 95%;
+    }
+}
+
+.banner-container {
+    position: relative; /* Importante para que los textos floten dentro */
+    width: 100%;
+    overflow: hidden;
+    border-radius: 20px;
+}
+
+.banner-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Título Principal Dorado */
+.banner-title {
+    position: absolute;
+    top: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    text-align: center;
+}
+
+.title-main {
+    font-size: clamp(2rem, 5vw, 4.5rem); /* Se ajusta solo al tamaño de pantalla */
+    font-weight: 900;
+    color: #fff9d1;
+    text-transform: uppercase;
+    margin: 0;
+    line-height: 1;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    font-family: 'serif'; /* O una fuente tipo cinzel si tienes */
+}
+
+.title-sub {
+    font-size: clamp(0.8rem, 2vw, 1.8rem);
+    color: var(--accent-gold);
+    letter-spacing: 4px;
+    margin-top: 5px;
+}
+
+/* Textos Laterales */
+.banner-overlay-left {
+    position: absolute;
+    top: 25%;
+    left: 5%;
+    max-width: 250px;
+    text-align: left;
+}
+
+.text-elite {
+    font-size: clamp(1rem, 2.5vw, 2.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    color: white;
+}
+
+.text-elite span {
+    color: var(--pitch-green);
+}
+
+.text-description {
+    font-size: clamp(0.7rem, 1.2vw, 1rem);
+    color: rgba(255, 255, 255, 0.8);
+    margin: 15px 0;
+}
+
+/* Botones sobre la imagen */
+.banner-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-predict {
+    background: linear-gradient(90deg, #28c87d, #1a8a56);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    color: black;
+    font-weight: 800;
+    font-size: clamp(0.6rem, 1vw, 0.9rem);
+    text-transform: uppercase;
+}
+
+.link-rules {
+    color: var(--neon-blue);
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding-left: 10px;
+}
+
+
+@media (max-width: 768px) {
+    .banner-container {
+        display: flex;
+        flex-direction: column; /* Apila la imagen y luego el texto */
+        border-radius: 15px;
+        background: rgba(5, 20, 38, 0.5); /* Fondo sutil para el área de texto */
+    }
+
+    .banner-overlay-left {
+        position: relative; /* Deja de flotar sobre la imagen */
+        top: 0;
+        left: 0;
+        max-width: 100%;
+        padding: 20px;
+        text-align: center;
+        display: block !important; /* Forzamos que se vea en móvil */
+    }
+
+    .banner-title {
+        top: 2%; /* Subimos un poco el título principal para que no tape caras */
+    }
+
+    .banner-buttons {
+        align-items: center;
+    }
+}
+
+/* Estilo para el nuevo icono de reglamento */
+.reglamento-icon {
+    font-size: 1.2rem;
+    vertical-align: middle;
+    margin-right: 8px;
+    color: var(--neon-blue);
+}
