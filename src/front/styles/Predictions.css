@@ -187,3 +187,16 @@
         width: 100%; /* En móvil sí usa todo el ancho */
     }
 }
+
+.modal-title-responsive {
+    font-size: 1.8rem; /* Tamaño normal para PC */
+    display: block;
+    line-height: 1.2;
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 576px) {
+    .modal-title-responsive {
+        font-size: 1.2rem !important; /* Tamaño reducido para móvil */
+    }
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiFetch } from "../utils/api.js";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import Pagination from "../components/Pagination.jsx";
 import { generateRankingReport } from "../utils/transparencyPdf.js";
@@ -27,7 +27,7 @@ export const Ranking = () => {
         if (!user) return;
 
         try {
-            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=12`);
+            const { response, data } = await apiFetch(`/predictions/user/${userId}?page=${page}&per_page=8`);
 
             if (response.ok) {
                 setAuditData(data);
@@ -49,43 +49,51 @@ export const Ranking = () => {
 
     const getAuditHTML = (user, currentData) => {
         return `
-        <div id="audit-content">
-            <div class="table-responsive">
-                <table class="table table-dark table-sm small align-middle">
-                    <thead>
-                        <tr class="text-dim border-bottom border-secondary">
-                            <th class="text-start pb-2">Partido</th>
-                            <th class="pb-2 text-center">Pred.</th>
-                            <th class="pb-2 text-center">Real</th>
-                            <th class="pb-2 text-center">Pts</th>
+    <div id="audit-content">
+        <div class="table-responsive">
+            <table class="table table-dark table-sm align-middle" style="table-layout: fixed; width: 100%;">
+                <thead>
+                    <tr class="text-dim border-bottom border-secondary" style="font-size: 0.75rem;">
+                        <th class="text-start pb-2" style="width: 45%;">Partido</th>
+                        <th class="pb-2 text-center" style="width: 18%;">Pred.</th>
+                        <th class="pb-2 text-center" style="width: 18%;">Real</th>
+                        <th class="pb-2 text-center" style="width: 19%;">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${currentData.predictions.map(p => `
+                        <tr class="border-bottom border-secondary-subtle">
+                            <td class="text-start py-2 text-white-50" 
+                                style="font-size: 0.9rem; line-height: 1.1; word-wrap: break-word;">
+                                ${p.match}
+                            </td>
+                            <td class="fw-bold text-center small">${p.prediction}</td>
+                            <td class="text-emerald text-center small">${p.real_result}</td>
+                            <td class="text-center">
+                                <span class="badge ${p.points === 3 ? 'bg-success' : p.points === 1 ? 'bg-warning text-dark' : 'bg-secondary text-white-50'}" 
+                                      style="font-size: 0.65rem;">
+                                    ${p.points}
+                                </span>
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        ${currentData.predictions.map(p => `
-                            <tr class="border-bottom border-secondary-subtle">
-                                <td class="text-start py-2 text-white-50">${p.match}</td>
-                                <td class="fw-bold text-center">${p.prediction}</td>
-                                <td class="text-emerald text-center">${p.real_result}</td>
-                                <td class="text-center">
-                                    <span class="badge ${p.points === 3 ? 'bg-success' : p.points === 1 ? 'bg-warning text-dark' : 'bg-secondary text-white-50'}">
-                                        ${p.points}
-                                    </span>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-            <div id="audit-pagination" class="d-flex justify-content-center gap-2 mt-3"></div>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
-    `;
+        <div id="audit-pagination" class="d-flex justify-content-center gap-2 mt-3"></div>
+    </div>
+`;
     };
 
     const mostrarModalAuditoria = (user, currentData) => {
         Swal.fire({
-            title: `Historial: ${user.username}`,
+            title: `<span class="modal-title-responsive">Historial: ${user.username}</span>`,
             html: getAuditHTML(user, currentData),
-            showConfirmButton: false,
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            confirmButtonColor: '#6c757d',
+            showCloseButton: true,
+            focusConfirm: false,
             background: 'var(--deep-navy)',
             color: '#fff',
             width: '620px',
@@ -159,17 +167,24 @@ export const Ranking = () => {
     if (loading) return <div className="text-center mt-5"><div className="spinner-border text-emerald"></div></div>;
 
     return (
-        <div className="admin-container animate__animated animate__fadeIn">
+        <div className="admin-container animate__animated animate__fadeIn mt-4">
+            <Toaster position="top-center" richColors />
+
+            <div className="text-center mb-4">
+                <h2 className="fw-bold text-white">🏆 Ranking Mundialista</h2>
+                <p className="text-dim">Revisa quién lidera y audita sus predicciones.</p>
+
+                {/* BOTÓN PDF PARA MÓVIL Y PC: Lo ponemos aquí arriba para que siempre sea visible */}
+                <button
+                    className="btn btn-sm btn-primary rounded-pill px-4 mt-2"
+                    onClick={() => generateRankingReport(ranking)}
+                >
+                    <i className="fas fa-file-pdf me-2"></i> DESCARGAR RANKING
+                </button>
+            </div>
             <div className="admin-card p-4">
-                <h3 className="text-white mb-4 text-center">🏆 Ranking Mundialista</h3>
 
                 <div className="table-responsive d-none d-md-block">
-                    <button
-                        className="btn btn-primary"
-                        onClick={() => generateRankingReport(ranking)}
-                    >
-                        📥 Descargar Ranking PDF
-                    </button>
                     <table className="table table-hover table-dark custom-table">
                         <thead>
                             <tr className="text-dim small uppercase">
@@ -203,26 +218,35 @@ export const Ranking = () => {
                     </table>
                 </div>
 
-                {/* Vista Móvil Optimizado */}
+                {/* Vista Móvil Optimizado con Grilla */}
                 <div className="d-md-none">
                     {ranking.map((u, i) => (
-                        <div key={u.id_user} className="user-mobile-card p-3 mb-2">
-                            <div className="d-flex justify-content-between align-items-center">
-                                <div>
+                        <div key={u.id_user} className="user-mobile-card p-3 mb-4 border-0">
+                            <div className="row align-items-center">
+                                {/* Columna Izquierda: Posición y Nombre */}
+                                <div className="col-7 d-flex align-items-center">
                                     <span className="badge bg-dark-soft me-2">#{i + 1}</span>
-                                    <span className="fw-bold">{u.username}</span>
+                                    <span className="fw-bold text-white text-truncate" style={{ maxWidth: '150px' }}>
+                                        {u.username}
+                                    </span>
                                 </div>
-                                <div className="text-end">
-                                    <span className="d-block fw-bold text-pitch-green fs-5">{u.total_points} pts</span>
+
+                                {/* Columna Derecha: Puntos totales */}
+                                <div className="col-5 text-end">
+                                    <span className="fw-bold text-pitch-green fs-5">{u.total_points} pts</span>
+                                </div>
+
+                                {/* Línea inferior: Info extra y Botón */}
+                                <div className="col-12 mt-3 d-flex justify-content-between align-items-center border-top border-secondary pt-2">
                                     <small className="text-dim">{u.exact_hits} Exactos</small>
+                                    <button
+                                        onClick={() => loadUserAudit(u.id_user)}
+                                        className="btn btn-emerald btn-audit-sm"
+                                    >
+                                        <i className="fas fa-eye me-1"></i> Auditoría
+                                    </button>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => loadUserAudit(u.id_user)}
-                                className="btn btn-emerald w-100 mt-2 py-1 btn-sm"
-                            >
-                                Ver Transparencia
-                            </button>
                         </div>
                     ))}
                 </div>
