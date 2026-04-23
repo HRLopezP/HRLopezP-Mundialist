@@ -89,3 +89,11 @@
     font-size: 0.9rem;
     font-weight: bold;
 }
+
+
+.user-mobile-card .auth-input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    font-size: 0.85rem;
+}
+
+
