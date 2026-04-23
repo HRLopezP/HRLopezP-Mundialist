@@ -1,14 +1,25 @@
 import React from "react";
+import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import "../styles/navbar.css";
 
 export const Navbar = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
+    const navbarTogglerRef = useRef(null);
+
+    const closeMenu = () => {
+        // Verificamos si el botón es visible (estamos en móvil) 
+        // y si el menú está desplegado (no tiene la clase 'collapsed')
+        if (window.innerWidth < 992 && navbarTogglerRef.current && !navbarTogglerRef.current.classList.contains('collapsed')) {
+            navbarTogglerRef.current.click();
+        }
+    };
 
     const handleLogout = () => {
+        closeMenu();
         dispatch({ type: "LOGOUT" });
         toast.success("¡Sesión cerrada! Vuelve pronto.");
         navigate("/login");
@@ -25,6 +36,7 @@ export const Navbar = () => {
 
     return (
         <nav className="navbar navbar-expand-lg custom-navbar sticky-top shadow-sm">
+            <Toaster position="top-center" richColors />
             <div className="container">
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
@@ -44,6 +56,7 @@ export const Navbar = () => {
                 )}
 
                 <button
+                    ref={navbarTogglerRef}
                     className="navbar-toggler border-0"
                     type="button"
                     data-bs-toggle="collapse"
@@ -63,17 +76,17 @@ export const Navbar = () => {
                         {store.user && (
                             <>
                                 <li className="nav-item w-100">
-                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/predictions">
+                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/predictions" onClick={closeMenu}>
                                         <i className="fa-solid fa-futbol me-2 text-emerald"></i> Mis Predicciones
                                     </Link>
                                 </li>
                                 <li className="nav-item w-100">
-                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/transparency-wall">
+                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/transparency-wall" onClick={closeMenu}>
                                         <i className="fa-solid fa-shield-halved me-2 text-emerald"></i> Transparencia
                                     </Link>
                                 </li>
                                 <li className="nav-item w-100">
-                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/ranking">
+                                    <Link className="nav-link px-3 py-2 rounded-pill transition-all" to="/ranking" onClick={closeMenu}>
                                         <i className="fa-solid fa-chart-line me-2 text-emerald"></i> Ranking
                                     </Link>
                                 </li>
@@ -91,17 +104,17 @@ export const Navbar = () => {
                                         </a>
                                         <ul className="dropdown-menu dropdown-menu-dark border-secondary shadow-lg">
                                             <li>
-                                                <Link className="dropdown-item py-2" to="/admin/users">
+                                                <Link className="dropdown-item py-2" to="/admin/users" onClick={closeMenu}>
                                                     <i className="fa-solid fa-users-gear me-2"></i> Usuarios
                                                 </Link>
                                             </li>
                                             <li>
-                                                <Link className="dropdown-item py-2" to="/admin/roles">
+                                                <Link className="dropdown-item py-2" to="/admin/roles" onClick={closeMenu}>
                                                     <i className="fa-solid fa-user-shield me-2"></i> Roles
                                                 </Link>
                                             </li>
                                             <li>
-                                                <Link className="dropdown-item py-2" to="/admin/matches">
+                                                <Link className="dropdown-item py-2" to="/admin/matches"onClick={closeMenu}>
                                                     <i className="fa-solid fa-calendar-check me-2"></i> Partidos
                                                 </Link>
                                             </li>
@@ -134,7 +147,7 @@ export const Navbar = () => {
                                         <p className="small text-white mb-0">Cuenta de:</p>
                                         <p className="small fw-bold mb-0 text-emerald">{store.user?.email}</p>
                                     </li>
-                                    <li><Link className="dropdown-item py-2" to="/profile"><i className="fa-solid fa-id-card me-2"></i> Perfil</Link></li>
+                                    <li><Link className="dropdown-item py-2" to="/profile" onClick={closeMenu}><i className="fa-solid fa-id-card me-2"></i> Perfil</Link></li>
                                     <li><hr className="dropdown-divider opacity-10" /></li>
                                     <li><button className="dropdown-item text-danger py-2" onClick={handleLogout}><i className="fa-solid fa-power-off me-2"></i> Cerrar Sesión</button></li>
                                 </ul>

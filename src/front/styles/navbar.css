@@ -207,3 +207,52 @@
 .navbar-brand {
     margin-right: 2rem;
 }
+
+
+.navbar-collapse {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* Movimiento más natural */
+}
+
+/* 2. Mejora en el menú desplegable móvil */
+@media (max-width: 991.98px) {
+    .navbar-collapse {
+        background: rgba(5, 20, 38, 0.98); /* Fondo un poco más sólido para leer mejor */
+        backdrop-filter: blur(20px);
+        margin-top: 10px;
+        border-radius: 15px;
+        padding: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-item {
+        width: 100%;
+        text-align: left; /* Centramos los enlaces en móvil para que sea más fácil tocar */
+        padding: 5px 0;
+    }
+
+    .nav-link {
+        font-size: 1.1rem !important; /* Un poco más grande para dedos */
+        padding: 12px !important;
+    }
+    
+    /* Animación de entrada para los items del menú */
+    .navbar-nav .nav-item {
+        opacity: 0;
+        transform: translateY(-10px);
+        animation: fadeInMenu 0.3s forwards;
+    }
+
+    /* Retraso para que aparezcan uno tras otro */
+    .nav-item:nth-child(1) { animation-delay: 0.1s; }
+    .nav-item:nth-child(2) { animation-delay: 0.15s; }
+    .nav-item:nth-child(3) { animation-delay: 0.2s; }
+    .nav-item:nth-child(4) { animation-delay: 0.25s; }
+}
+
+@keyframes fadeInMenu {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
