@@ -20,6 +20,7 @@ import { Predictions } from "./pages/Predictions";
 import { MatchAdmin } from "./pages/MatchAdmin";
 import { Ranking } from "./pages/Ranking";
 import { TransparencyWall } from "./pages/TransparencyWall";
+import Rules from "./pages/Rules";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -98,6 +99,8 @@ export const router = createBrowserRouter(
           }
         />
       </Route>
+
+      <Route path="/rules" element={<Rules />} />
 
     </Route>
   )

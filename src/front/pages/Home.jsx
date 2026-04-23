@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom"; // Importante para la navegación
+import { Link } from "react-router-dom"; 
 import "../styles/home.css";
 
 export const Home = () => {
@@ -21,7 +21,7 @@ export const Home = () => {
 
                         <div className="banner-overlay-left d-none d-md-block">
                             <h2 className="text-elite">
-                                ¡DEMUESTRA<br />que eres el<br /><span>ÉLITE!</span>
+                                ¡DEMUESTRA<br />que eres el<br /><span>Mejor!</span>
                             </h2>
                             <p className="text-description">
                                 Participa, Predice y Conquista la Gloria Mundial.
@@ -29,14 +29,14 @@ export const Home = () => {
 
                             <div className="banner-buttons">
                                 {/* Ahora el botón es un enlace real */}
-                                <Link to="/ranking" className="btn btn-predict">
+                                <Link to="/predictions" className="btn btn-predict">
                                     ¡HACER MIS PREDICCIONES!
                                 </Link>
                                 
-                                <button className="btn btn-link text-info text-decoration-none p-0 mt-2">
-                                    <i className="fas fa-gavel me-2"></i>
+                                <Link to="/rules" className="btn btn-outline-info rounded-pill px-4 mt-1 border-0">
+                                    <i className="fas fa-gavel reglamento-icon"></i>
                                     Ver Reglamento ÉLITE
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>

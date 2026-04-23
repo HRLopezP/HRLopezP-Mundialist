@@ -1,4 +1,5 @@
 import React from "react";
+
 import "../styles/rules.css";
 
 const Rules = () => {
@@ -24,12 +25,12 @@ const Rules = () => {
                                 <div className="accordion-body">
                                     <ul className="list-unstyled">
                                         <li className="mb-3">
-                                            <span className="badge bg-emerald-pr me-2">1 PT</span> 
+                                            <span className="badge bg-emerald-pr me-2">1 PT</span>
                                             <strong>Tendencia:</strong> Si aciertas al ganador o si el partido termina en empate.
                                         </li>
                                         <li className="mb-3">
-                                            <span className="badge bg-gold-pts me-2">2 PTS</span> 
-                                            <strong>Marcador Exacto:</strong> Si aciertas el resultado final exacto (Tendencia + Precisión).
+                                            <span className="badge bg-gold-pts me-2">3 PTS</span>
+                                            <strong>Marcador Exacto:</strong> Si aciertas el resultado final exacto.
                                         </li>
                                         <li>
                                             <i className="fa-solid fa-circle-info text-info me-2"></i>
@@ -67,9 +68,9 @@ const Rules = () => {
                             </h2>
                             <div id="collapseThree" className="accordion-collapse collapse" data-bs-parent="#rulesAccordion">
                                 <div className="accordion-body">
-                                    <p><i className="fa-solid fa-id-card me-2"></i> Registro obligatorio con <strong>Nombre y Apellido</strong> reales para validar premios.</p>
-                                    <p><i className="fa-solid fa-whatsapp me-2 text-success"></i> Tras registrarte, contacta al administrador para activar tu acceso.</p>
-                                    <p><i className="fa-solid fa-receipt me-2"></i> El 10% de la quiniela se reserva para gastos operativos y mantenimiento de la plataforma.</p>
+                                    <p><i className="fa-solid fa-id-card me-2 text-info"></i> Registro obligatorio con <strong>Nombre y Apellido</strong> reales para validar premios.</p>
+                                    <p><i className="fa-solid fa-person-circle-check text-emerald"></i> Tras registrarte, contacta al administrador para activar tu acceso.</p>
+                                    <p><i className="fa-solid fa-receipt me-2 text-warning"></i> El 10% de la quiniela se reserva para gastos operativos y mantenimiento de la plataforma.</p>
                                 </div>
                             </div>
                         </div>
@@ -83,15 +84,20 @@ const Rules = () => {
                             </h2>
                             <div id="collapseFour" className="accordion-collapse collapse" data-bs-parent="#rulesAccordion">
                                 <div className="accordion-body bg-dark-transparent">
-                                    <div className="alert alert-info border-0 bg-opacity-10 text-white">
-                                        <strong>⚠️ Tip de guardado:</strong> Primero modifica los valores del marcador y LUEGO presiona "Actualizar".
+                                    <div className="custom-tip-alert mb-3">
+                                        <div className="d-flex alert alert-warning align-items-center">
+                                            <i className="fa-solid fa-lightbulb me-3 fa-lg text-warning"></i>
+                                            <div>
+                                                <strong>⚠️ Tip de guardado:</strong> Primero modifica los valores del marcador y LUEGO presiona "Actualizar". Así garantizas que se guardan los resultados.
+                                            </div>
+                                        </div>
                                     </div>
                                     <ul className="list-group list-group-flush">
                                         <li className="list-group-item bg-transparent text-white border-secondary">
-                                            <i className="fa-solid fa-magnifying-glass-chart me-2"></i> Audita a otros jugadores desde la sección de <strong>Transparencia</strong>.
+                                            <i className="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> Audita a otros jugadores desde la sección de <strong>Transparencia</strong>.
                                         </li>
                                         <li className="list-group-item bg-transparent text-white border-0">
-                                            <i className="fa-solid fa-calendar-check me-2"></i> Predice todos los juegos pronto para evitar olvidos por la regla de las 24h.
+                                            <i className="fa-solid fa-calendar-check me-2 text-emerald"></i> Predice todos los juegos pronto para evitar olvidos por la regla de las 24h.
                                         </li>
                                     </ul>
                                 </div>

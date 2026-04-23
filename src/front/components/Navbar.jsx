@@ -22,7 +22,7 @@ export const Navbar = () => {
         closeMenu();
         dispatch({ type: "LOGOUT" });
         toast.success("¡Sesión cerrada! Vuelve pronto.");
-        navigate("/login");
+        navigate("/");
     };
 
     const getShortName = () => {
