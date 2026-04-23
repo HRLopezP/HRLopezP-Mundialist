@@ -3,13 +3,13 @@ import { apiFetch } from "../utils/api";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-import "../styles/admin.css"; 
+import "../styles/admin.css";
 
 const RolesAdmin = () => {
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newRoleName, setNewRoleName] = useState("");
-    const [editingId, setEditingId] = useState(null); 
+    const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState("");
 
     useEffect(() => {
@@ -126,57 +126,79 @@ const RolesAdmin = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {roles.map((rol) => (
-                                <tr key={rol.id_rol}>
-                                    <td>{rol.id_rol}</td>
-                                    <td>
-                                        {editingId === rol.id_rol ? (
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm auth-input"
-                                                value={editName}
-                                                onChange={(e) => setEditName(e.target.value)}
-                                                autoFocus
-                                            />
-                                        ) : (
-                                            <span className="badge bg-dark-soft">{rol.name_rol}</span>
-                                        )}
-                                    </td>
-                                    <td className="text-end">
-                                        {editingId === rol.id_rol ? (
-                                            <div className="d-flex justify-content-end gap-2">
-                                                <button
-                                                    className="btn btn-emerald btn-sm rounded-pill"
-                                                    onClick={() => handleUpdateRole(rol.id_rol)}
-                                                >
-                                                    <i className="fa-solid fa-check"></i>
-                                                </button>
-                                                <button
-                                                    className="btn btn-outline-light btn-sm rounded-pill"
-                                                    onClick={() => setEditingId(null)}
-                                                >
-                                                    <i className="fa-solid fa-xmark"></i>
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <div className="d-flex justify-content-end gap-2">
-                                                <button
-                                                    className="btn btn-outline-info btn-sm rounded-pill"
-                                                    onClick={() => startEdit(rol)}
-                                                >
-                                                    <i className="fa-solid fa-pen-to-square"></i>
-                                                </button>
-                                                <button
-                                                    className="btn btn-outline-danger btn-sm rounded-pill"
-                                                    onClick={() => handleDeleteRole(rol.id_rol, rol.name_rol)}
-                                                >
-                                                    <i className="fa-solid fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
+                            {roles.map((rol) => {
+                                // Bloqueamos edición/borrado de roles base (ej: ID 1 y 2)
+                                const isSystemRole = rol.id_rol === 1 || rol.id_rol === 2;
+
+                                return (
+                                    <tr key={rol.id_rol} className={isSystemRole ? "text-muted" : ""}>
+                                        <td className="small text-dim">#{rol.id_rol}</td>
+                                        <td>
+                                            {editingId === rol.id_rol ? (
+                                                <div className="animate__animated animate__fadeIn">
+                                                    <input
+                                                        type="text"
+                                                        className="form-control form-control-sm auth-input border-emerald"
+                                                        value={editName}
+                                                        onChange={(e) => setEditName(e.target.value)}
+                                                        autoFocus
+                                                    />
+                                                    <small className="text-emerald" style={{ fontSize: '0.6rem' }}>
+                                                        Presiona Enter para guardar
+                                                    </small>
+                                                </div>
+                                            ) : (
+                                                <div className="d-flex align-items-center">
+                                                    <span className={`badge ${isSystemRole ? 'bg-secondary' : 'bg-dark-soft'} px-3 py-2`}>
+                                                        {rol.name_rol} {isSystemRole && <i className="fa-solid fa-lock ms-2 small"></i>}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="text-end">
+                                            {editingId === rol.id_rol ? (
+                                                <div className="d-flex justify-content-end gap-2">
+                                                    <button
+                                                        className="btn btn-emerald btn-sm rounded-pill px-3"
+                                                        onClick={() => handleUpdateRole(rol.id_rol)}
+                                                    >
+                                                        <i className="fa-solid fa-check me-1"></i>
+                                                    </button>
+                                                    <button
+                                                        className="btn btn-outline-light btn-sm rounded-pill"
+                                                        onClick={() => setEditingId(null)}
+                                                    >
+                                                        <i className="fa-solid fa-xmark"></i>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <div className="d-flex justify-content-end gap-1">
+                                                    {!isSystemRole ? (
+                                                        <>
+                                                            <button
+                                                                className="btn btn-outline-info btn-sm rounded-pill me-3"
+                                                                onClick={() => startEdit(rol)}
+                                                                title="Editar nombre"
+                                                            >
+                                                                <i className="fa-solid fa-pen-to-square"></i>
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-outline-danger btn-sm rounded-pill"
+                                                                onClick={() => handleDeleteRole(rol.id_rol, rol.name_rol)}
+                                                                title="Eliminar rol"
+                                                            >
+                                                                <i className="fa-solid fa-trash"></i>
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <small className="text-dim pe-2" style={{ fontSize: '0.7rem italic' }}>Protegido</small>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
