@@ -94,7 +94,10 @@ const Rules = () => {
                                     </div>
                                     <ul className="list-group list-group-flush">
                                         <li className="list-group-item bg-transparent text-white border-secondary">
-                                            <i className="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> Audita a otros jugadores desde la sección de <strong>Transparencia</strong>.
+                                            <i className="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> Revisa las predicciones de otros jugadores desde la sección de <strong>Transparencia</strong>. Pero solo puedes verlas cuando falten menos de 24 horas.
+                                        </li>
+                                        <li className="list-group-item bg-transparent text-white border-secondary">
+                                            <i className="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> También puedes ver los resultados de otros jugadores desde el <strong>Ranking</strong> en el botón de <strong>Auditoría</strong>.
                                         </li>
                                         <li className="list-group-item bg-transparent text-white border-0">
                                             <i className="fa-solid fa-calendar-check me-2 text-emerald"></i> Predice todos los juegos pronto para evitar olvidos por la regla de las 24h.
