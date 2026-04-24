@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
-from api.models import db, User, Rol
+from api.models import db, User, Rol, Match, Prediction
+from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 import os
 from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
@@ -428,3 +429,209 @@ def delete_user(id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+
+
+
+# ver todos los juegos
+@api.route('/matches', methods=['GET'])
+@jwt_required()
+def get_matches():
+    user_id = get_jwt_identity()
+    
+    matches = Match.query.order_by(Match.match_date.asc()).all()
+    
+    results = []
+    for m in matches:
+        match_data = m.serialize()
+        
+        if user_id:
+            pred = Prediction.query.filter_by(user_id=user_id, match_id=m.id_match).first()
+            if pred:
+                match_data["user_prediction"] = {
+                    "home_score": pred.predicted_home_score,
+                    "away_score": pred.predicted_away_score,
+                    "id_prediction": pred.id_prediction
+                }
+            else:
+                match_data["user_prediction"] = None
+        else:
+            match_data["user_prediction"] = None       
+        results.append(match_data)
+    return jsonify(results), 200
+
+
+# Crear-editar una predicción
+@api.route('/predict', methods=['POST'])
+@jwt_required() 
+def save_prediction():
+    user_id = get_jwt_identity()
+    body = request.get_json()
+
+    match_id = body.get("match_id")
+    home_score = body.get("home_score")
+    away_score = body.get("away_score")
+
+    if None in [match_id, home_score, away_score]:
+        return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
+
+    match = Match.query.get(match_id)
+    if not match:
+        return jsonify({"msg": "El partido no existe"}), 404
+
+    ahora = datetime.now(timezone.utc)
+    limite_apuesta = match.match_date - timedelta(hours=24)
+
+    if ahora > limite_apuesta:
+        return jsonify({
+            "msg": "Tiempo agotado. Solo puedes predecir hasta 24 horas antes del inicio."
+        }), 403
+
+    prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
+
+    if prediction:
+        prediction.predicted_home_score = home_score
+        prediction.predicted_away_score = away_score
+        msg = "Predicción actualizada con éxito"
+    else:
+        prediction = Prediction(
+            user_id=user_id,
+            match_id=match_id,
+            predicted_home_score=home_score,
+            predicted_away_score=away_score
+        )
+        db.session.add(prediction)
+        msg = "Predicción guardada con éxito"
+
+    try:
+        db.session.commit()
+        return jsonify({"msg": msg, "prediction": prediction.serialize()}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500
+
+
+@api.route('/match-results/<int:match_id>', methods=['PUT'])
+@jwt_required()
+@manager_required
+def update_match_result(match_id):
+    body = request.get_json()
+    match = Match.query.get(match_id)
+    
+    if not match:
+        return jsonify({"msg": "Partido no encontrado"}), 404
+
+    home_real = body.get("home_score")
+    away_real = body.get("away_score")
+    match.home_score = home_real
+    match.away_score = away_real
+
+    predictions = Prediction.query.filter_by(match_id=match_id).all()
+    
+    for pred in predictions:
+        pts = 0
+        if pred.predicted_home_score == home_real and pred.predicted_away_score == away_real:
+            pts = 3
+        elif (home_real > away_real and pred.predicted_home_score > pred.predicted_away_score) or \
+             (home_real < away_real and pred.predicted_home_score < pred.predicted_away_score) or \
+             (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
+            pts = 1
+        
+        pred.points_earned = pts 
+
+    try:
+        db.session.commit()
+        return jsonify({"msg": "Resultado y puntos actualizados"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
+
+
+# Ver el ranking actualizado
+@api.route('/ranking', methods=['GET'])
+@jwt_required()
+def get_ranking():
+    users = User.query.filter_by(is_active=True).all()
+    ranking_list = []
+    
+    for user in users:
+        preds = Prediction.query.filter(
+            Prediction.user_id == user.id_user,
+            Prediction.points_earned != None
+        ).all()
+        
+        total_points = sum(p.points_earned for p in preds)
+        exact_hits = sum(1 for p in preds if p.points_earned == 3)
+        trend_hits = sum(1 for p in preds if p.points_earned == 1)
+        
+        ranking_list.append({
+            "id_user": user.id_user,
+            "username": f"{user.name} {user.lastname}",
+            "total_points": total_points,
+            "exact_hits": exact_hits,
+            "trend_hits": trend_hits
+        })
+    
+    ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
+    
+    return jsonify(ranking_list), 200
+
+# Ver las predicciones finalizadas
+@api.route('/predictions/user/<int:user_id>', methods=['GET'])
+@jwt_required()
+def get_user_predictions_detail(user_id):
+    query = Prediction.query.join(Match).filter(
+        Prediction.user_id == user_id,
+        Match.home_score != None
+    ).options(joinedload(Prediction.match))
+
+    paginated_results = paginate_query(query, model_name="predictions")
+    
+    formatted_preds = []
+    for p_serial in paginated_results["predictions"]:
+        p = Prediction.query.get(p_serial["id_prediction"]) 
+        formatted_preds.append({
+            "match": f"{p.match.home_team.name} vs {p.match.away_team.name}",
+            "real_result": f"{p.match.home_score} - {p.match.away_score}",
+            "prediction": f"{p.predicted_home_score} - {p.predicted_away_score}",
+            "points": p.points_earned
+        })
+    
+    paginated_results["predictions"] = formatted_preds
+
+    return jsonify(paginated_results), 200
+
+
+#Ver las predicciones de menos 24 horas y sin finalizar
+@api.route('/transparency-wall', methods=['GET'])
+@jwt_required()
+def get_transparency_wall():
+    ahora = datetime.now(timezone.utc)
+    limite_24h = ahora + timedelta(hours=24)
+
+    matches = Match.query.filter(
+        Match.match_date <= limite_24h,
+        Match.home_score == None
+    ).order_by(Match.match_date.asc()).all()
+
+    results = []
+    for m in matches:
+        preds = Prediction.query.filter_by(match_id=m.id_match).all()
+        
+        results.append({
+            "id_match": m.id_match,
+            "home_team": m.home_team.name,
+            "away_team": m.away_team.name,
+            "home_flag": m.home_team.flag_url,
+            "away_flag": m.away_team.flag_url,
+            "match_date": m.match_date.isoformat(),
+            "predictions": [
+                {
+                    "user": f"{p.user.name} {p.user.lastname}",
+                    "user_id": p.user_id,
+                    "h_score": p.predicted_home_score,
+                    "a_score": p.predicted_away_score
+                } for p in preds
+            ]
+        })
+
+    return jsonify(results), 200

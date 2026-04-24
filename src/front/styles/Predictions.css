@@ -1,0 +1,209 @@
+.group-tabs-container {
+    display: flex;
+    gap: 12px;
+    padding: 15px 10px;
+    overflow-x: auto;
+    /* Asegura que en desktop se vea centrado y en móvil permita scroll */
+    justify-content: flex-start; 
+}
+
+@media (min-width: 768px) {
+    .group-tabs-container {
+        justify-content: center; /* Centrado solo en pantallas grandes */
+        overflow-x: hidden; /* Evitamos scroll innecesario si caben todos */
+        flex-wrap: wrap; /* Si son muchos grupos, que bajen a la siguiente línea */
+    }
+}
+
+/* Evitar que se corten los bordes al hacer scroll en móvil */
+.tab-btn {
+    flex-shrink: 0;
+}
+
+
+.bg-gold-pts {
+    background-color: var(--accent-gold2) !important;
+    color: black;
+}
+
+.bg-emerald-pr {
+    background-color: var(--pitch-green2) !important;
+    color: black;
+}
+
+
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Eliminar flechas en Firefox */
+.score-input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Mejora adicional: Asegurar que el número esté bien centrado y visible */
+.score-input {
+    padding: 0 !important; /* Evita que el padding desplace el número */
+    line-height: 1 !important;
+    text-align: center !important;
+}
+
+
+.admin-card {
+    background: rgba(18, 18, 18, 0.95) !important; /* Gris grafito profundo */
+    border-left: 5px solid var(--neon-blue) !important; /* Borde cian distintivo */
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.admin-card2 {
+    background: rgba(18, 18, 18, 0.95) !important; 
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.admin-card:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+}
+
+.text-neon {
+    color: var(--neon-blue) !important;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+
+
+.admin-card-gold {
+    background: rgba(18, 18, 18, 0.95) !important;
+    border-left: 5px solid var(--accent-gold) !important; /* CAMBIO A GOLD */
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.text-gold-admin {
+    color: var(--accent-gold) !important;
+}
+
+
+.transparency-header {
+    color: var(--text-main) !important;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.search-input-glass {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(0, 212, 255, 0.3) !important;
+    color: white !important;
+    border-radius: 50px !important;
+    padding: 10px 20px 10px 45px !important; /* Espacio para la lupa a la izquierda */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 15px center;
+}
+
+.search-input-glass::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.search-input-glass:focus {
+    border-color: var(--neon-blue) !important;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.2) !important;
+}
+
+/* Cambiar color de la flecha del acordeón de Bootstrap */
+.accordion-button::after {
+    filter: invert(1) brightness(2); /* Vuelve la flecha blanca */
+}
+
+.accordion-item {
+    background: rgba(18, 18, 18, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-bottom: 8px;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+.accordion-button {
+    background: transparent !important;
+    color: white !important;
+    box-shadow: none !important;
+    padding: 1rem 0.75rem !important; /* Menos padding lateral para móvil */
+}
+
+@media (max-width: 576px) {
+    .match-team-name {
+        font-size: 0.85rem !important;
+    }
+    .accordion-button {
+        padding: 0.8rem 0.5rem !important;
+    }
+}
+
+
+@media (max-width: 576px) {
+    .match-row-mobile {
+        flex-direction: column; /* Apila bandera y nombre */
+        gap: 5px;
+    }
+    
+    .team-container-mobile {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .match-team-name {
+        font-size: 0.75rem !important;
+        line-height: 1.1;
+        max-width: 80px;
+    }
+
+    /* Badge central flotante en móvil */
+    .status-badge-mobile {
+        order: -1; /* Lo sube al principio del contenedor */
+        margin-bottom: 10px;
+        width: fit-content;
+    }
+}
+
+
+.match-main-content {
+    max-width: 600px; /* Evita que los países se vayan a los bordes en monitores grandes */
+    margin: 0 auto;   /* Centra el bloque de equipos */
+}
+
+@media (min-width: 576px) {
+    .match-team-name {
+        font-size: 1rem !important; /* Texto más grande en PC */
+        white-space: nowrap;
+    }
+    
+    /* Espaciado extra para el badge en PC */
+    .order-sm-last {
+        min-width: 120px;
+        text-align: right;
+    }
+}
+
+@media (max-width: 575px) {
+    .match-main-content {
+        width: 100%; /* En móvil sí usa todo el ancho */
+    }
+}
+
+.modal-title-responsive {
+    font-size: 1.8rem; /* Tamaño normal para PC */
+    display: block;
+    line-height: 1.2;
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 576px) {
+    .modal-title-responsive {
+        font-size: 1.2rem !important; /* Tamaño reducido para móvil */
+    }
+}
+

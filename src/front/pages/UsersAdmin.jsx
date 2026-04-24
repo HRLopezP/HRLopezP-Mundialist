@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { apiFetch } from "../utils/api";
-import { toast } from "sonner";
+import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import Pagination from "../components/Pagination";
 import "../styles/admin.css";
@@ -32,11 +32,34 @@ const UsersAdmin = () => {
     };
 
     const handleRoleChange = async (userId, roleId) => {
-        const { response } = await apiFetch(`/users/${userId}/role`, {
-            method: 'PATCH',
-            body: JSON.stringify({ id_rol: roleId })
+        const nuevoRol = roles.find(r => r.id_rol == roleId)?.name_rol;
+
+        Swal.fire({
+            title: "¿Confirmar cambio de rol?",
+            text: `¿Estás seguro de que deseas asignar el rol de "${nuevoRol}" a este usuario?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "var(--pitch-green)",
+            cancelButtonColor: "#343a40",
+            confirmButtonText: "Sí, cambiar",
+            cancelButtonText: "Cancelar",
+            background: "#051426",
+            color: "#fff"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { response } = await apiFetch(`/users/${userId}/role`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ id_rol: roleId })
+                });
+                if (response.ok) {
+                    toast.success(`Rol actualizado a ${nuevoRol}`);
+                    loadInitialData(); // Recargamos para refrescar visualmente
+                }
+            } else {
+                // Si cancela, recargamos para que el select vuelva a su valor original
+                loadInitialData();
+            }
         });
-        if (response.ok) toast.success("Rol actualizado");
     };
 
     const handleToggleStatus = async (user) => {
@@ -82,6 +105,7 @@ const UsersAdmin = () => {
 
     return (
         <div className="admin-container animate__animated animate__fadeIn">
+            <Toaster position="top-center" richColors />
             <div className="admin-card p-3 p-md-4">
                 <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <h2 className="text-white mb-4">
@@ -136,14 +160,19 @@ const UsersAdmin = () => {
                                         <td>{u.name} {u.lastname}</td>
                                         <td className="small text-dim">{u.email}</td>
                                         <td>
-                                            <select
-                                                className="form-select form-select-sm bg-dark text-white border-secondary"
-                                                disabled={isRoot}
-                                                defaultValue={u.rol_id}
-                                                onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
-                                            >
-                                                {roles.map(r => <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>)}
-                                            </select>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className={`badge ${u.rol_id == 1 ? 'bg-info' : 'bg-secondary'} me-2`} style={{ fontSize: '0.7rem' }}>
+                                                    {u.name_rol}
+                                                </span>
+                                                <select
+                                                    className="form-select form-select-sm role-select-pc"
+                                                    disabled={isRoot}
+                                                    value={u.rol_id}
+                                                    onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
+                                                >
+                                                    {roles.map(r => <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>)}
+                                                </select>
+                                            </div>
                                         </td>
                                         <td>
                                             <div className="form-check form-switch">
@@ -168,38 +197,65 @@ const UsersAdmin = () => {
                     </table>
                 </div>
 
-                {/* Vista teléfonos */}
+                {/* Vista teléfonos mejorada */}
                 <div className="d-md-none">
-                    {users.map(u => (
-                        <div key={u.id_user} className={`user-mobile-card p-3 mb-2 ${u.id_user === 1 ? "opacity-50" : ""}`}>
-                            <div className="d-flex justify-content-between">
-                                <span className="fw-bold">{u.name} {u.lastname}</span>
-                                {u.id_user !== 1 && <i className="fa-solid fa-trash text-danger" onClick={() => handleDelete(u)}></i>}
-                            </div>
-                            <div className="small text-dim mb-2">{u.email}</div>
-                            <div className="row g-2 align-items-center">
-                                <div className="col-8">
-                                    <select
-                                        className="form-select form-select-sm bg-dark text-white border-secondary"
-                                        disabled={u.id_user === 1}
-                                        defaultValue={u.rol_id}
-                                        onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
-                                    >
-                                        {roles.map(r => <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>)}
-                                    </select>
+                    {users.map(u => {
+                        const isRoot = u.id_user === 1;
+                        return (
+                            <div key={u.id_user}
+                                className={`user-mobile-card p-3 mb-4 border-0 ${isRoot ? "border-start border-4 border-warning" : ""}`}
+                                style={{ opacity: isRoot ? 0.85 : 1 }}>
+
+                                <div className="row align-items-start">
+                                    {/* Nombre y Email */}
+                                    <div className="col-10">
+                                        <span className={`fw-bold d-block ${isRoot ? 'text-warning' : 'text-emerald'}`}>
+                                            {u.name} {u.lastname} {isRoot && "👑"}
+                                        </span>
+                                        <small className="text-dim d-block text-truncate" style={{ maxWidth: '200px' }}>
+                                            {u.email}
+                                        </small>
+                                    </div>
+
+                                    {/* Acción Eliminar */}
+                                    <div className="col-2 text-end">
+                                        {!isRoot && (
+                                            <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
+                                                <i className="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="col-4 d-flex justify-content-end">
-                                    <div className="form-check form-switch">
-                                        <input
-                                            className="form-check-input custom-switch" type="checkbox"
-                                            checked={u.is_active} disabled={u.id_user === 1}
-                                            onChange={() => handleToggleStatus(u)}
-                                        />
+
+                                <div className="row mt-3 align-items-center border-top border-secondary pt-2">
+                                    {/* Selector de Rol */}
+                                    <div className="col-8">
+                                        <select
+                                            className="form-select form-select-sm auth-input border-0"
+                                            disabled={isRoot}
+                                            defaultValue={u.rol_id}
+                                            onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
+                                        >
+                                            {roles.map(r => (
+                                                <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Switch de Estatus */}
+                                    <div className="col-4 d-flex justify-content-end">
+                                        <div className="form-check form-switch">
+                                            <input
+                                                className="form-check-input custom-switch" type="checkbox"
+                                                checked={u.is_active} disabled={isRoot}
+                                                onChange={() => handleToggleStatus(u)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
 
                 <Pagination

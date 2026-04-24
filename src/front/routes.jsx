@@ -16,6 +16,11 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RolesAdmin from "./pages/RolesAdmin";
 import AdminRoute from "./components/AdminRoute";
 import UsersAdmin from "./pages/UsersAdmin";
+import { Predictions } from "./pages/Predictions";
+import { MatchAdmin } from "./pages/MatchAdmin";
+import { Ranking } from "./pages/Ranking";
+import { TransparencyWall } from "./pages/TransparencyWall";
+import Rules from "./pages/Rules";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -40,6 +45,33 @@ export const router = createBrowserRouter(
         }
       />
 
+      <Route
+        path="/predictions"
+        element={
+          <ProtectedRoute>
+            <Predictions />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/transparency-wall"
+        element={
+          <ProtectedRoute>
+            <TransparencyWall />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/ranking"
+        element={
+          <ProtectedRoute>
+            <Ranking />
+          </ProtectedRoute>
+        }
+      />
+
       <Route path="/admin">
         <Route
           path="users"
@@ -57,7 +89,18 @@ export const router = createBrowserRouter(
             </AdminRoute>
           }
         />
+
+        <Route
+          path="matches"
+          element={
+            <AdminRoute>
+              <MatchAdmin />
+            </AdminRoute>
+          }
+        />
       </Route>
+
+      <Route path="/rules" element={<Rules />} />
 
     </Route>
   )

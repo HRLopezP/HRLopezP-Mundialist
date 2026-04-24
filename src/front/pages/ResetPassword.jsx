@@ -24,7 +24,6 @@ const ResetPassword = () => {
     const [isPasswordFocused, setIsPasswordFocused] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // Lógica de validación dinámica que mencionaste
     const [passwordValidity, setPasswordValidity] = useState({
         minLength: false, lowerCase: false, upperCase: false, number: false, specialChar: false,
     });
@@ -83,9 +82,9 @@ const ResetPassword = () => {
 
                             <div className="p-4">
                                 <form onSubmit={handleSubmit}>
-                                    <div className="mb-3">
-                                        <label className="auth-label mb-2">Contraseña Nueva</label>
-                                        <div className="input-group">
+                                    <div className="mb-5">
+                                        <label className="auth-label mb-0">Contraseña Nueva</label>
+                                        <div className="password-container">
                                             <input
                                                 type={showPassword ? "text" : "password"}
                                                 className={`form-control auth-input ${password.length > 0 && (isPasswordValid ? 'border-success' : 'border-danger')}`}
@@ -97,11 +96,11 @@ const ResetPassword = () => {
                                                 required
                                             />
                                             <button
-                                                className="btn auth-input border-start-0"
+                                                className="btn-icon-inside border-0 bg-transparent"
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
                                             >
-                                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--pitch-green)' }}></i>
+                                                <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--text-dim)' }}></i>
                                             </button>
                                         </div>
                                     </div>
@@ -125,9 +124,9 @@ const ResetPassword = () => {
                                         </div>
                                     )}
 
-                                    <div className="mb-4">
-                                        <label className="auth-label mb-2">Confirmar Contraseña</label>
-                                        <div className="input-group">
+                                    <div className="mb-5">
+                                        <label className="auth-label mb-0">Confirmar Contraseña</label>
+                                        <div className="password-container">
                                             <input
                                                 type={showConfirmPassword ? "text" : "password"}
                                                 className={`form-control auth-input ${confirmPassword.length > 0 && (password === confirmPassword ? 'border-success' : 'border-danger')}`}
@@ -137,20 +136,20 @@ const ResetPassword = () => {
                                                 required
                                             />
                                             <button
-                                                className="btn auth-input border-start-0"
+                                                className="btn-icon-inside border-0 bg-transparent"
                                                 type="button"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                             >
-                                                <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--text-primary)' }}></i>
+                                                <i className={`fa-solid ${showConfirmPassword ? 'fa-eye-slash' : 'fa-eye'}`} style={{ color: 'var(--text-dim)' }}></i>
                                             </button>
                                         </div>
                                         {passwordsDoNotMatch && (
                                             <small className="text-danger mt-1 d-block">Las contraseñas no coinciden</small>
                                         )}
                                     </div>
-                                    <button 
-                                        type="submit" 
-                                        className="btn-emerald w-100 py-3" 
+                                    <button
+                                        type="submit"
+                                        className="btn-emerald w-100 py-3"
                                         disabled={loading || !isPasswordValid || password !== confirmPassword}
                                     >
                                         {loading ? "PROCESANDO..." : "ACTUALIZAR CONTRASEÑA"}

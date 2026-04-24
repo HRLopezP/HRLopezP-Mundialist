@@ -1,0 +1,55 @@
+.rules-header h1 {
+  letter-spacing: 2px;
+}
+
+.custom-accordion .accordion-item {
+  background: rgba(5, 20, 38, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 10px;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.custom-accordion .accordion-button {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+  box-shadow: none;
+  padding: 20px;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+  color: var(--pitch-green);
+  background: rgba(40, 200, 125, 0.05);
+}
+
+.custom-accordion .accordion-button::after {
+  filter: brightness(0) invert(1); /* Hace la flechita blanca */
+}
+
+.custom-accordion .accordion-body {
+  color: var(--text-dim);
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* .bg-emerald-pr {
+  background-color: var(--pitch-green2) !important;
+  color: black;
+} */
+/* .bg-gold-pts {
+  background-color: var(--accent-gold) !important;
+  color: black;
+} */
+
+.italic {
+  font-style: italic;
+}
+
+@media (max-width: 576px) {
+  .custom-accordion .accordion-button {
+    font-size: 0.95rem;
+    padding: 15px;
+  }
+}
