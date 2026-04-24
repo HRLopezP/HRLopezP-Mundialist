@@ -84,10 +84,21 @@ export const Login = () => {
                                         </div>
                                     </div>
 
+                                    <div className="mb-4 d-flex justify-content-end">
+                                        <Link
+                                            to="/forgot-password"
+                                            className="text-dim small text-decoration-none hover-gold animate__animated animate__fadeIn"
+                                            style={{ fontSize: "0.8rem" }}
+                                        >
+                                            ¿Olvidaste tu contraseña?
+                                        </Link>
+                                    </div>
+
                                     <button type="submit" className="btn-emerald w-100" disabled={loading}>
                                         {loading ? "Verificando entrada..." : "Iniciar Sesión"}
                                     </button>
                                 </form>
+
 
                                 <div className="mt-4 text-center">
                                     <Link to="/register" className="text-dim small text-decoration-none hover-gold">
@@ -98,7 +109,7 @@ export const Login = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
