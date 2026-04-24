@@ -174,7 +174,7 @@ export const Ranking = () => {
                 <h2 className="fw-bold text-white">🏆 Ranking Mundialista</h2>
                 <p className="text-dim">Revisa quién lidera y audita sus predicciones.</p>
 
-                {/* BOTÓN PDF PARA MÓVIL Y PC: Lo ponemos aquí arriba para que siempre sea visible */}
+                {/* BOTÓN PDF*/}
                 <button
                     className="btn btn-sm btn-primary rounded-pill px-4 mt-2"
                     onClick={() => generateRankingReport(ranking)}
@@ -208,7 +208,6 @@ export const Ranking = () => {
                                             <span><small className='text-danger'><b>3° </b></small><i className="fa-solid fa-medal fs-2 text-danger"></i></span>
                                         ) : (
                                             <span><small className='text-secondary'><b>{i + 1}° </b></small><i className="fa-solid fa-award fs-2 text-secondary"></i></span>
-                                            // <span className="ranking-number text-danger">{i + 1}°</span>
                                         )}
                                     </div></td>
                                     <td>{u.username}</td>
@@ -229,14 +228,13 @@ export const Ranking = () => {
                     </table>
                 </div>
 
-                {/* Vista Móvil Optimizado con Grilla */}
+                {/* Vista Móvil */}
                 <div className="d-md-none">
                     {ranking.map((u, i) => (
                         <div key={u.id_user} className="user-mobile-card p-3 mb-4 border-0">
                             <div className="row align-items-center admin-card">
                                 {/* Columna Izquierda: Posición y Nombre */}
                                 <div className="col-7 d-flex align-items-center">
-                                    {/* Contenedor de Posición/Medalla */}
                                     <div className="position-container me-3">
                                         {i === 0 ? (
                                             <span><small className='text-warning fs-5'><b>1°</b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
@@ -246,7 +244,6 @@ export const Ranking = () => {
                                             <span><small className='text-secondary fs-5'><b>3°</b></small><i className="fa-solid fa-medal fs-2 text-secondary"></i></span>
                                         ) : (
                                             <span><small className='text-danger fs-6'><b>{i + 1}°</b></small><i className="fa-solid fa-award fs-2 text-danger"></i></span>
-                                            // <span className="ranking-number text-danger">{i + 1}°</span>
                                         )}
                                     </div>
 
@@ -257,12 +254,12 @@ export const Ranking = () => {
                                     </div>
                                 </div>
 
-                                {/* Columna Derecha: Puntos totales */}
+                                {/*Puntos totales */}
                                 <div className="col-5 text-end">
                                     <span className="fw-bold text-pitch-green fs-5">{u.total_points} pts</span>
                                 </div>
 
-                                {/* Línea inferior: Info extra y Botón */}
+                                {/* Info extra y Botón */}
                                 <div className="col-12 mt-3 d-flex justify-content-between align-items-center border-top border-secondary pt-2">
                                     <small className="text-dim">{u.exact_hits} Exactos</small>
                                     <button

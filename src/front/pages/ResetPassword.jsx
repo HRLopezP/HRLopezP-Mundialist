@@ -105,7 +105,7 @@ const ResetPassword = () => {
                                         </div>
                                     </div>
 
-                                    {/* Requisitos visuales dinámicos */}
+                                    {/* Requisitos visuales */}
                                     {shouldShowRequirements && (
                                         <div className="mb-3 p-3 rounded" style={{ background: 'rgba(255,255,255,0.05)', animation: 'fadeIn 0.3s ease' }}>
                                             <ul className="list-unstyled mb-0">

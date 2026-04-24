@@ -14,7 +14,7 @@ const Rules = () => {
                     </div>
 
                     <div className="accordion custom-accordion" id="rulesAccordion">
-                        {/* SECCIÓN 1: PUNTUACIÓN */}
+                        {/*  PUNTUACIÓN */}
                         <div className="accordion-item">
                             <h2 className="accordion-header">
                                 <button className="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne">
@@ -41,7 +41,7 @@ const Rules = () => {
                             </div>
                         </div>
 
-                        {/* SECCIÓN 2: REGLAS DE TIEMPO */}
+                        {/*REGLAS DE TIEMPO */}
                         <div className="accordion-item">
                             <h2 className="accordion-header">
                                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo">
@@ -59,7 +59,7 @@ const Rules = () => {
                             </div>
                         </div>
 
-                        {/* SECCIÓN 3: ADMINISTRACIÓN */}
+                        {/*ADMINISTRACIÓN */}
                         <div className="accordion-item">
                             <h2 className="accordion-header">
                                 <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree">
@@ -75,7 +75,7 @@ const Rules = () => {
                             </div>
                         </div>
 
-                        {/* SECCIÓN 4: CONSEJOS PRO */}
+                        {/* CONSEJOS PRO */}
                         <div className="accordion-item">
                             <h2 className="accordion-header">
                                 <button className="accordion-button collapsed bg-dark-soft" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour">

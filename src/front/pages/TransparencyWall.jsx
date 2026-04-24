@@ -3,7 +3,7 @@ import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
 import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { Toaster, toast } from "sonner";
-import "../styles/Predictions.css"; // Reutilizamos el CSS
+import "../styles/Predictions.css"; 
 
 export const TransparencyWall = () => {
     const [matches, setMatches] = useState([]);
@@ -51,7 +51,7 @@ export const TransparencyWall = () => {
                 <p className="text-dim small">Las predicciones se liberan 24h antes de cada partido.</p>
             </div>
 
-            {/* Buscador y Botón PDF en una misma zona */}
+            {/* Buscador y Botón */}
             <div className="row justify-content-center align-items-center g-3 mb-4">
                 <div className="col-12 col-md-6">
                     <div className="position-relative">
@@ -71,7 +71,7 @@ export const TransparencyWall = () => {
                         Haz click para auditar 
                     </p>
                     
-                    {/* Botón PDF a un ladito, más pequeño y elegante */}
+                    {/* Botón PDF */}
                     {!loading && matches.length > 0 && (
                         <button
                             className="btn btn-sm btn-outline-info rounded-pill px-3 py-1"
@@ -88,9 +88,6 @@ export const TransparencyWall = () => {
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
                         <div className="accordion-item" key={match.id_match}>
-                            {/* IMPORTANTE: Aquí GameMatchCard debe manejar las clases 
-                                .match-row-mobile y .team-container-mobile para el ajuste de banderas 
-                            */}
                             <GameMatchCard match={match} index={index} />
                         </div>
                     ))

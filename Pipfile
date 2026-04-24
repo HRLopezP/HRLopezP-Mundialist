@@ -6,21 +6,21 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-flask = "*"
-flask-sqlalchemy = "*"
-flask-migrate = "*"
 flask-swagger = "*"
-psycopg2-binary = "*"
-python-dotenv = "*"
-flask-cors = "*"
-gunicorn = "*"
 flask-admin = "==2.0.0"
 typing-extensions = "*"
 wtforms = "==3.1.2"
-sqlalchemy = "*"
-flask-jwt-extended = "*"
-cloudinary = "*"
 requests = "*"
+flask = "*"
+flask-sqlalchemy = "*"
+flask-migrate = "*"
+flask-jwt-extended = "*"
+psycopg2-binary = "*"
+cloudinary = "*"
+python-dotenv = "*"
+flask-cors = "*"
+gunicorn = "*"
+sqlalchemy = "*"
 
 [requires]
 python_version = "3.13"
