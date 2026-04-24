@@ -185,7 +185,7 @@ export const Predictions = () => {
                                                     letterSpacing: "1px",
                                                     boxShadow: points > 0 ? "0 0 10px rgba(255,255,255,0.2)" : "none"
                                                 }}>
-                                                {points} {points === 1 ? 'PUNTO OBTENIDO' : 'PUNTOS OBTENIDOS'}                                             </div>
+                                                {points} {points === 1 ? 'PUNTO' : 'PUNTOS'}                                             </div>
                                         ) : (
                                             !isEditable && <span className="badge bg-danger">🚫 CERRADO</span>
                                         )}

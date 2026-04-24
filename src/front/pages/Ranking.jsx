@@ -182,10 +182,10 @@ export const Ranking = () => {
                     <i className="fas fa-file-pdf me-2"></i> DESCARGAR RANKING
                 </button>
             </div>
-            <div className="admin-card p-4">
+            <div className="admin-card2 p-0">
 
-                <div className="table-responsive d-none d-md-block">
-                    <table className="table table-hover table-dark custom-table">
+                <div className="table-responsive d-none d-md-block m-3 admin-card">
+                    <table className="table table-hover table-dark custom-table mt-3">
                         <thead>
                             <tr className="text-dim small uppercase">
                                 <th>Pos</th>
@@ -199,7 +199,18 @@ export const Ranking = () => {
                         <tbody>
                             {ranking.map((u, i) => (
                                 <tr key={u.id_user} className="align-middle">
-                                    <td className="fw-bold text-dim">#{i + 1}</td>
+                                    <td><div className="position-container me-3">
+                                        {i === 0 ? (
+                                            <span><small className='text-warning'><b>1° </b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
+                                        ) : i === 1 ? (
+                                            <span><small className='text-info'><b>2° </b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
+                                        ) : i === 2 ? (
+                                            <span><small className='text-danger'><b>3° </b></small><i className="fa-solid fa-medal fs-2 text-danger"></i></span>
+                                        ) : (
+                                            <span><small className='text-secondary'><b>{i + 1}° </b></small><i className="fa-solid fa-award fs-2 text-secondary"></i></span>
+                                            // <span className="ranking-number text-danger">{i + 1}°</span>
+                                        )}
+                                    </div></td>
                                     <td>{u.username}</td>
                                     <td className="text-center text-success">{u.exact_hits}</td>
                                     <td className="text-center text-warning">{u.trend_hits}</td>
@@ -222,13 +233,28 @@ export const Ranking = () => {
                 <div className="d-md-none">
                     {ranking.map((u, i) => (
                         <div key={u.id_user} className="user-mobile-card p-3 mb-4 border-0">
-                            <div className="row align-items-center">
+                            <div className="row align-items-center admin-card">
                                 {/* Columna Izquierda: Posición y Nombre */}
                                 <div className="col-7 d-flex align-items-center">
-                                    <span className="badge bg-dark-soft me-2">#{i + 1}</span>
-                                    <span className="fw-bold text-white text-truncate" style={{ maxWidth: '150px' }}>
-                                        {u.username}
-                                    </span>
+                                    {/* Contenedor de Posición/Medalla */}
+                                    <div className="position-container me-3">
+                                        {i === 0 ? (
+                                            <span><small className='text-warning fs-5'><b>1°</b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
+                                        ) : i === 1 ? (
+                                            <span><small className='text-info fs-5'><b>2°</b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
+                                        ) : i === 2 ? (
+                                            <span><small className='text-secondary fs-5'><b>3°</b></small><i className="fa-solid fa-medal fs-2 text-secondary"></i></span>
+                                        ) : (
+                                            <span><small className='text-danger fs-6'><b>{i + 1}°</b></small><i className="fa-solid fa-award fs-2 text-danger"></i></span>
+                                            // <span className="ranking-number text-danger">{i + 1}°</span>
+                                        )}
+                                    </div>
+
+                                    <div className="d-flex flex-column justify-content-center">
+                                        <span className="fw-bold text-white text-truncate user-name-ranking">
+                                            {u.username}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 {/* Columna Derecha: Puntos totales */}

@@ -1,7 +1,9 @@
 :root {
   --accent-gold: #ffd700; 
-  --neon-blue: #00d4ff; 
+  --accent-gold2: #cdae00; 
+  --neon-blue: #058aa4; 
   --pitch-green: #28c87d;
+  --pitch-green2: #17995c;
   --deep-navy: #051426; 
   --text-main: #ffffff;
   --text-dim: #a8b2d1;
@@ -33,7 +35,7 @@ body {
 
 /* Botón Neón Mundialista */
 .btn-emerald {
-  background: var(--pitch-green) !important;
+  background: var(--pitch-green2) !important;
   color: #000 !important;
   font-weight: 800 !important;
   border: none !important;
@@ -111,7 +113,7 @@ body {
 }
 
 .group-tabs-container::-webkit-scrollbar-thumb {
-  background: var(--pitch-green);
+  background: var(--pitch-green2);
   border-radius: 10px;
 }
 
@@ -135,15 +137,15 @@ body {
 }
 
 .tab-btn.active {
-  background: var(--pitch-green) !important;
+  background: var(--pitch-green2) !important;
   color: #000 !important;
-  border-color: var(--pitch-green);
+  border-color: var(--pitch-green2);
   box-shadow: 0 0 15px rgba(40, 200, 125, 0.4);
 }
 
 .btn-update-pulse {
   border: 2px solid var(--accent-gold) !important;
-  color: var(--accent-gold) !important;
+  color: var(--accent-gold2) !important;
   box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
 }
 

@@ -34,14 +34,14 @@
   background: rgba(0, 0, 0, 0.2);
 }
 
-.bg-emerald-pr {
-  background-color: var(--pitch-green) !important;
+/* .bg-emerald-pr {
+  background-color: var(--pitch-green2) !important;
   color: black;
-}
-.bg-gold-pts {
+} */
+/* .bg-gold-pts {
   background-color: var(--accent-gold) !important;
   color: black;
-}
+} */
 
 .italic {
   font-style: italic;
