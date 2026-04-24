@@ -13,10 +13,8 @@ const calculatePoints = (prediction, match) => {
     const mHome = parseInt(match.home_score);
     const mAway = parseInt(match.away_score);
 
-    // 1. ACIERTO EXACTO: 3 Puntos
     if (pHome === mHome && pAway === mAway) return 3;
 
-    // 2. ACIERTO DE TENDENCIA: 1 Punto
     const realResult = mHome > mAway ? "home" : mHome < mAway ? "away" : "draw";
     const predResult = pHome > pAway ? "home" : pHome < pAway ? "away" : "draw";
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { apiFetch } from "../utils/api.js";
 import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
-import "../styles/Predictions.css"; // Reutilizamos tu CSS central
+import "../styles/Predictions.css";
 
 export const MatchAdmin = () => {
     const [matches, setMatches] = useState([]);
@@ -13,7 +13,6 @@ export const MatchAdmin = () => {
         loadMatches();
     }, []);
 
-    // Carga inicial con spinner
     const loadMatches = async () => {
         setLoading(true);
         try {
@@ -30,7 +29,6 @@ export const MatchAdmin = () => {
         }
     };
 
-    // CARGA SILENCIOSA: Evita el pestañeo al guardar
     const loadMatchesSilently = async () => {
         try {
             const { response, data } = await apiFetch("/matches");
@@ -56,7 +54,6 @@ export const MatchAdmin = () => {
 
         const isUpdate = match.home_score !== null && match.away_score !== null; // Determina si es modif.
 
-        // PREGUNTA DE SEGURIDAD CON SWEETALERT2
         const confirm = await Swal.fire({
             title: '¿Confirmar resultado oficial?',
             text: "Se recalcularán los puntos de todos los usuarios registrados.",
@@ -80,7 +77,6 @@ export const MatchAdmin = () => {
                 });
 
                 if (response.ok) {
-                    // SONNER DINÁMICO SEGÚN ACCIÓN
                     toast.success(isUpdate ? "📝 Resultado modificado correctamente" : "🏆 ¡Resultado publicado con éxito!", { id: toastId });
                     loadMatchesSilently();
                 } else {
@@ -106,7 +102,6 @@ export const MatchAdmin = () => {
             <Toaster position="top-center" richColors />
             <h1 className="text-center mb-5 mt-4 text-gold-admin">⚙️ ADMINISTRACIÓN DE RESULTADOS</h1>
 
-            {/* Selector de Grupos reutilizando el CSS de Predictions */}
             <div className="group-tabs-container mb-4">
                 {[...new Set(matches.map(m => m.home_team?.group_name))].filter(Boolean).sort().map(group => (
                     <button

@@ -28,7 +28,6 @@ export const Home = () => {
                             </p>
 
                             <div className="banner-buttons">
-                                {/* Ahora el botón es un enlace real */}
                                 <Link to="/predictions" className="btn btn-predict">
                                     ¡HACER MIS PREDICCIONES!
                                 </Link>

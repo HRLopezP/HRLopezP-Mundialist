@@ -53,10 +53,9 @@ const UsersAdmin = () => {
                 });
                 if (response.ok) {
                     toast.success(`Rol actualizado a ${nuevoRol}`);
-                    loadInitialData(); // Recargamos para refrescar visualmente
+                    loadInitialData();
                 }
             } else {
-                // Si cancela, recargamos para que el select vuelva a su valor original
                 loadInitialData();
             }
         });
@@ -197,7 +196,7 @@ const UsersAdmin = () => {
                     </table>
                 </div>
 
-                {/* Vista teléfonos mejorada */}
+                {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => {
                         const isRoot = u.id_user === 1;

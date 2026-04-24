@@ -127,7 +127,6 @@ const RolesAdmin = () => {
                         </thead>
                         <tbody>
                             {roles.map((rol) => {
-                                // Bloqueamos edición/borrado de roles base (ej: ID 1 y 2)
                                 const isSystemRole = rol.id_rol === 1 || rol.id_rol === 2;
 
                                 return (

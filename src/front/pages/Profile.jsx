@@ -19,7 +19,6 @@ const Profile = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({ name: "", lastname: "" });
 
-    // Estados de Contraseña (Recuperados)
     const [showPassModal, setShowPassModal] = useState(false);
     const [passData, setPassData] = useState({ current: "", new: "", confirm: "" });
     const [showPass, setShowPass] = useState({ current: false, new: false, confirm: false });
@@ -44,7 +43,7 @@ const Profile = () => {
         }
     };
 
-    // Validación de contraseña en tiempo real
+
     const validatePassword = (pass) => {
         const newValidity = {};
         passwordRequirements.forEach(req => {
@@ -113,14 +112,13 @@ const Profile = () => {
     };
 
     const closeAndResetModal = () => {
-        setPassData({ current: "", new: "", confirm: "" }); // Limpia los inputs
-        setPasswordValidity({}); // Reinicia los iconos de validación
-        setPassMatch(true); // Reinicia el error de coincidencia
-        setShowPassModal(false); // Cierra el modal
+        setPassData({ current: "", new: "", confirm: "" }); 
+        setPasswordValidity({}); 
+        setPassMatch(true); 
+        setShowPassModal(false); 
     };
 
     const updatePassword = async () => {
-        // 1. Validación local (Frontend)
         const isAllValid = passwordRequirements.every(req => passwordValidity[req.key]);
 
         if (!passData.current) {
@@ -133,7 +131,6 @@ const Profile = () => {
             return;
         }
 
-        // Definimos el ID del toast para poder manipularlo (dismiss/update)
         const toastId = toast.loading("Procesando cambio de contraseña...");
 
         try {
@@ -145,15 +142,11 @@ const Profile = () => {
                 })
             });
 
-            // 2. Manejo de respuesta Exitosa (Status 200-299)
             if (response.ok) {
                 toast.success("¡Contraseña actualizada correctamente!", { id: toastId });
-                closeAndResetModal(); // Cerramos y limpiamos solo si fue exitoso
+                closeAndResetModal(); 
             }
-            // 3. Manejo de errores controlados (Status 400, 401, 500, etc.)
             else {
-                // Si el backend envía un mensaje (ej: "Contraseña actual incorrecta"), lo mostramos
-                // Si no, enviamos un mensaje genérico
                 const errorMessage = data?.message || "Error al actualizar. Verifica tus datos.";
                 toast.error(errorMessage, { id: toastId });
             }
@@ -247,7 +240,7 @@ const Profile = () => {
                 </div>
             </div>
 
-            {/* Modal de Contraseña Pro con Validaciones */}
+            {/*  Validaciones */}
             {showPassModal && (
                 <div className="custom-modal-overlay">
                     <div className="custom-modal animate__animated animate__zoomIn">
@@ -277,7 +270,7 @@ const Profile = () => {
                             ))}
                         </div>
 
-                        {/* Caja de Requisitos Visuales */}
+                        {/* Caja de Requisitos */}
                         <div className="password-requirements-box mb-3">
                             {passwordRequirements.map(req => (
                                 <div key={req.key} className="requirement-item">
@@ -291,14 +284,13 @@ const Profile = () => {
                             <button
                                 className="btn btn-emerald w-100"
                                 onClick={updatePassword}
-                                // Deshabilitar si no cumple requisitos O si el modal ya se está enviando
                                 disabled={!passMatch || !passwordRequirements.every(req => passwordValidity[req.key]) || !passData.current}
                             >
                                 Actualizar
                             </button>
                             <button
                                 className="btn btn-dark w-100"
-                                onClick={closeAndResetModal} // <-- Usar la función de reset
+                                onClick={closeAndResetModal} 
                             >
                                 Cancelar
                             </button>
