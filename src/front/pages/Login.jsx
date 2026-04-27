@@ -45,7 +45,7 @@ export const Login = () => {
                     <div className="col-12 col-md-6 col-lg-5">
                         <div className="auth-card animate__animated animate__fadeIn">
                             <div className="auth-header">
-                                <h2 className="text-pitch-green fw-bold">MUNDIAL <span className="text-emerald d-sm-inline">ELITE</span></h2>
+                                <h2 className="text-pitch-green fw-bold">ÉLITE <span className="text-emerald d-sm-inline">MUNDIALISTA</span></h2>
                                 <p className="text-dim">Ingresa a tu panel de control</p>
                             </div>
 

@@ -1,8 +1,9 @@
 import requests
+import os
 
 def test_mundial_data():
     # Tu token que vimos en la imagen
-    TOKEN = "f4cab83c9e7a4d7bb5e0fb832cc88d2b"
+    TOKEN = os.getenv("FOOTBALL_API_TOKEN")
     
     # Según tu PDF, el endpoint para partidos de una competición es este [cite: 12, 29]
     # Usamos 'WC' que es el código estándar para la World Cup

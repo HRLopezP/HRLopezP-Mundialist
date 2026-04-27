@@ -20,7 +20,7 @@ def send_password_reset_email(user_email, user_name, token):
             
             <div style="background: linear-gradient(135deg, #051426 0%, #00d4ff 100%); padding: 40px 30px; text-align: center;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 4px; font-weight: 800;">
-                    MUNDIAL <span style="color: #28c87d;">ÉLITE</span>
+                    ÉLITE <span style="color: #28c87d;">MUNDIALISTA</span>
                 </h1>
                 <p style="color: rgba(255,255,255,0.8); margin-top: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
                     ¡Tu camino a la gloria!

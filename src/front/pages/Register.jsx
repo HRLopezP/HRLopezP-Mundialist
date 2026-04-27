@@ -87,7 +87,7 @@ const Register = () => {
             <div className="container d-flex justify-content-center">
                 <div className="auth-card w-100" style={{ maxWidth: '500px' }}>
                     <div className="auth-header text-center">
-                        <h2 style={{ color: 'var(--pitch-green)' }}>Mundial Elite</h2>
+                        <h2 style={{ color: 'var(--pitch-green)' }}>Élite Mundialista</h2>
                         <p className="text-dim small mb-0">Crea tu cuenta de vaticinios</p>
                     </div>
 

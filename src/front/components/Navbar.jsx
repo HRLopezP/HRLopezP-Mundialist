@@ -41,7 +41,7 @@ export const Navbar = () => {
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
                     {/* Ocultamos "ELITE" en pantallas muy pequeñas para ganar espacio */}
-                    <span className="brand-text">MUNDIAL <span className="text-emerald d-none d-sm-inline">ELITE</span></span>
+                    <span className="brand-text">ÉLITE <span className="text-emerald d-none d-sm-inline">MUNDIALISTA</span></span>
                 </Link>
 
                 {!store.user && (
