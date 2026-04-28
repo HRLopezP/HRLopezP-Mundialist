@@ -550,8 +550,8 @@ def update_match_result(match_id):
         pred.user.total_points = (pred.user.total_points - old_points) + pts
     
     audit = AuditLog(
-        action="MODIFICACION_RESULTADO",
-        details=f"Partido ID {match_id}: Cambió de {old_score_str} a {home_real}-{away_real}",
+        action="MODIFICACION", 
+        details=f"{match.home_team.name} vs {match.away_team.name} (ID {match_id}): Cambió de {old_score_str} a {home_real}-{away_real}",
         ip_address=request.remote_addr,
         user_id=get_jwt_identity()
     )

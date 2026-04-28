@@ -58,6 +58,20 @@ export const AuditPanel = () => {
         return details.split(":")[0]; // Retorna "Partido ID 13" o el nombre si lo envías desde el backend
     };
 
+    const getReference = (details) => {
+        // Si contiene ":", tomamos lo que está antes (Los equipos)
+        if (details.includes(":")) return details.split(":")[0];
+        // Si no (registros viejos), buscamos el ID si existe o devolvemos el inicio
+        return details.length > 20 ? details.substring(0, 20) + "..." : details;
+    };
+
+    const getChangeDetail = (details) => {
+        // Si contiene ":", tomamos lo que está después (El cambio de score)
+        if (details.includes(":")) return details.split(":")[1];
+        // Si no, devolvemos el texto completo (registros viejos)
+        return details;
+    };
+
     return (
         <div className="admin-container py-4">
             <Toaster richColors position="top-right" />
@@ -121,8 +135,13 @@ export const AuditPanel = () => {
                                                 {log.action.replace("_", " ")}
                                             </span>
                                         </td>
-                                        <td className="fw-bold text-emerald">{formatTeams(log.details)}</td>
-                                        <td className="small italic text-white-50">{log.details}</td>
+                                        <td className="fw-bold text-emerald">
+                                            {getReference(log.details)}
+                                        </td>
+                                        {/* COLUMNA DE DETALLE (EL CAMBIO) */}
+                                        <td className="small text-white-50">
+                                            {getChangeDetail(log.details)}
+                                        </td>
                                         <td className="text-end text-dim small font-monospace">{log.ip_address || "0.0.0.0"}</td>
                                     </tr>
                                 ))
