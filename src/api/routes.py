@@ -466,7 +466,6 @@ def get_matches():
 def save_prediction():
     user_id = get_jwt_identity()
     body = request.get_json()
-
     match_id = body.get("match_id")
     home_score = body.get("home_score")
     away_score = body.get("away_score")
@@ -475,16 +474,15 @@ def save_prediction():
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
 
     match = Match.query.get(match_id)
+    
     if not match:
         return jsonify({"msg": "El partido no existe"}), 404
 
     ahora = datetime.now(timezone.utc)
     limite_apuesta = match.match_date - timedelta(hours=24)
 
-    if ahora > limite_apuesta:
-        return jsonify({
-            "msg": "Tiempo agotado. Solo puedes predecir hasta 24 horas antes del inicio."
-        }), 403
+    if ahora > limite_apuesta or ahora >= match.match_date or match.status == "Finalizado":
+        return jsonify({"msg": "Las predicciones para este juego están cerradas."}), 403
 
     prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
 
@@ -510,37 +508,52 @@ def save_prediction():
         return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500
 
 
+#Administrador sube marcador oficial
 @api.route('/match-results/<int:match_id>', methods=['PUT'])
 @jwt_required()
 @manager_required
 def update_match_result(match_id):
     body = request.get_json()
     match = Match.query.get(match_id)
-    
     if not match:
         return jsonify({"msg": "Partido no encontrado"}), 404
+    
+    ahora = datetime.now(timezone.utc)
 
+    # --- VENTANA DE EMERGENCIA DE 2 HORAS ---
+    # Si el juego ya está finalizado Y han pasado más de 2 horas desde el inicio, se bloquea.
+    # (Usamos match_date + 4 horas asumiendo que un juego dura 2h aprox + 2h de gracia)
+    limite_correccion = match.match_date + timedelta(hours=4)
+
+    if match.status == "Finalizado" and ahora > limite_correccion:
+        return jsonify({"msg": "Tiempo de corrección agotado. Contactar soporte técnico."}), 403
+
+    # 1. Guardamos el resultado oficial en el partido
     home_real = body.get("home_score")
     away_real = body.get("away_score")
     match.home_score = home_real
     match.away_score = away_real
+    match.status = "Finalizado"
 
+    # 2. Buscamos todas las predicciones de este partido para actualizarlas
     predictions = Prediction.query.filter_by(match_id=match_id).all()
     
     for pred in predictions:
         pts = 0
+        # ACIERTO EXACTO (3 puntos)
         if pred.predicted_home_score == home_real and pred.predicted_away_score == away_real:
             pts = 3
+        # ACIERTO TENDENCIA (1 punto): Ganador o Empate
         elif (home_real > away_real and pred.predicted_home_score > pred.predicted_away_score) or \
              (home_real < away_real and pred.predicted_home_score < pred.predicted_away_score) or \
              (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
             pts = 1
         
-        pred.points_earned = pts 
+        pred.points_earned = pts # Guardamos el punto en la base de datos
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Resultado y puntos actualizados"}), 200
+        return jsonify({"msg": "Resultado sellado. Tienes 2 horas para correcciones."}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
