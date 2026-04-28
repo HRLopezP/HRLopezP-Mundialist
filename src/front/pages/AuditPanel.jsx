@@ -19,11 +19,10 @@ export const AuditPanel = () => {
     const fetchLogs = async (page = 1, order = sortOrder) => {
         setLoading(true);
         try {
-            // Agregamos el parámetro de página a la URL
             const { response, data } = await apiFetch(`/audit-logs?order=${order}&page=${page}&per_page=10`);
 
             if (response.ok) {
-                setLogs(data.logs); // logs viene del model_name que pusimos en el backend
+                setLogs(data.logs);
                 setPaginationData({
                     total: data.total,
                     pages: data.pages,
@@ -45,7 +44,7 @@ export const AuditPanel = () => {
     const toggleOrder = () => {
         const newOrder = sortOrder === "desc" ? "asc" : "desc";
         setSortOrder(newOrder);
-        fetchLogs(1, newOrder); // Al cambiar el orden, volvemos a la página 1
+        fetchLogs(1, newOrder);
     };
 
     useEffect(() => { fetchLogs(); }, []);

@@ -11,8 +11,6 @@ export const Navbar = () => {
     const navbarTogglerRef = useRef(null);
 
     const closeMenu = () => {
-        // Verificamos si el botón es visible (estamos en móvil) 
-        // y si el menú está desplegado (no tiene la clase 'collapsed')
         if (window.innerWidth < 992 && navbarTogglerRef.current && !navbarTogglerRef.current.classList.contains('collapsed')) {
             navbarTogglerRef.current.click();
         }
