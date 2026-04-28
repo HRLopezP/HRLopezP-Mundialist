@@ -114,7 +114,12 @@ export const Navbar = () => {
                                                 </Link>
                                             </li>
                                             <li>
-                                                <Link className="dropdown-item py-2" to="/admin/matches"onClick={closeMenu}>
+                                                <Link className="dropdown-item py-2" to="/admin/audit" onClick={closeMenu}>
+                                                    <i className="fa-solid fa-shield-halved me-2"></i> Auditoría
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link className="dropdown-item py-2" to="/admin/matches" onClick={closeMenu}>
                                                     <i className="fa-solid fa-calendar-check me-2"></i> Partidos
                                                 </Link>
                                             </li>

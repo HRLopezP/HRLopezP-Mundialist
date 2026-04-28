@@ -21,6 +21,7 @@ import { MatchAdmin } from "./pages/MatchAdmin";
 import { Ranking } from "./pages/Ranking";
 import { TransparencyWall } from "./pages/TransparencyWall";
 import Rules from "./pages/Rules";
+import { AuditPanel } from "./pages/AuditPanel";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -95,6 +96,15 @@ export const router = createBrowserRouter(
           element={
             <AdminRoute>
               <MatchAdmin />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="audit"
+          element={
+            <AdminRoute>
+              <AuditPanel />
             </AdminRoute>
           }
         />
