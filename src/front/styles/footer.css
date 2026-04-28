@@ -1,0 +1,47 @@
+:root {
+    --hrlp-navy-dark: #0B1221;
+    --hrlp-border: #1E293B;
+    --hrlp-text-muted: #94A3B8;
+    --hrlp-text-light: #F8FAFC;
+    --hrlp-accent-blue: #0EA5E9; 
+    --hrlp-divider: #334155;
+}
+
+.footer-hrlp {
+    background-color: var(--hrlp-navy-dark);
+    border-top: 1px solid var(--hrlp-border);
+    font-size: 0.8rem;
+    letter-spacing: 0.025em;
+}
+
+.footer-hrlp .text-muted-custom {
+    color: var(--hrlp-text-muted);
+}
+
+.footer-hrlp .link-custom {
+    color: var(--hrlp-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-hrlp .link-custom:hover {
+    color: var(--hrlp-text-light);
+}
+
+.footer-hrlp .accent-text {
+    color: var(--hrlp-accent-blue);
+}
+
+.footer-hrlp .divider {
+    color: var(--hrlp-divider);
+}
+
+.footer-hrlp .brand-text {
+    color: var(--hrlp-text-light);
+    font-weight: 700;
+}
+
+.footer-hrlp .author-text {
+    color: var(--hrlp-text-light);
+    font-weight: 600;
+}
