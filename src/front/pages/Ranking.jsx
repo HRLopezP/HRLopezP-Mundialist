@@ -5,7 +5,7 @@ import Swal from "sweetalert2";
 import Pagination from "../components/Pagination.jsx";
 import { generateRankingReport } from "../utils/transparencyPdf.js";
 
-export const Ranking = () => {
+const Ranking = () => {
     const [ranking, setRanking] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -277,3 +277,5 @@ export const Ranking = () => {
         </div>
     );
 };
+
+export default Ranking;

@@ -23,7 +23,7 @@ const calculatePoints = (prediction, match) => {
     return 0;
 };
 
-export const Predictions = () => {
+const Predictions = () => {
     const [matches, setMatches] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState("");
     const [loading, setLoading] = useState(true);
@@ -280,3 +280,5 @@ export const Predictions = () => {
         </div>
     );
 };
+
+export default Predictions;

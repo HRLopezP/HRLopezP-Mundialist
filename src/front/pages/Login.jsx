@@ -5,7 +5,7 @@ import { apiFetch } from "../utils/api"
 import { Toaster, toast } from "sonner";
 import "../styles/auth.css";
 
-export const Login = () => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -113,3 +113,5 @@ export const Login = () => {
         </div >
     );
 };
+
+export default Login;

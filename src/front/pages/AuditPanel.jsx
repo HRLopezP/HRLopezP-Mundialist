@@ -4,7 +4,7 @@ import Pagination from "../components/Pagination.jsx";
 import { Toaster, toast } from "sonner";
 import "../styles/admin.css";
 
-export const AuditPanel = () => {
+const AuditPanel = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState("desc");
@@ -167,3 +167,5 @@ export const AuditPanel = () => {
         </div>
     );
 };
+
+export default AuditPanel;

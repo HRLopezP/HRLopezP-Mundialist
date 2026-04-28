@@ -5,7 +5,7 @@ import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { Toaster, toast } from "sonner";
 import "../styles/Predictions.css"; 
 
-export const TransparencyWall = () => {
+const TransparencyWall = () => {
     const [matches, setMatches] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -100,3 +100,5 @@ export const TransparencyWall = () => {
         </div>
     );
 };
+
+export default TransparencyWall;
