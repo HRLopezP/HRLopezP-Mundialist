@@ -571,8 +571,11 @@ def update_match_result(match_id):
 @manager_required
 def get_audit_logs():
     order_param = request.args.get('order', 'desc')
-    
+    match_id = request.args.get('match_id')
     query = AuditLog.query
+
+    if match_id:
+        query = query.filter(AuditLog.details.contains(f"Partido ID {match_id}"))
     
     if order_param == 'asc':
         query = query.order_by(AuditLog.timestamp.asc())

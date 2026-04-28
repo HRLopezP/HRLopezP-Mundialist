@@ -8,6 +8,7 @@ export const AuditPanel = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState("desc");
+    const [searchId, setSearchId] = useState("");
 
     const [currentPage, setCurrentPage] = useState(1);
     const [paginationData, setPaginationData] = useState({
@@ -16,10 +17,11 @@ export const AuditPanel = () => {
         per_page: 10
     });
 
-    const fetchLogs = async (page = 1, order = sortOrder) => {
+    const fetchLogs = async (page = 1, order = sortOrder, mId = searchId) => {
         setLoading(true);
         try {
-            const { response, data } = await apiFetch(`/audit-logs?order=${order}&page=${page}&per_page=10`);
+            const url = `/audit-logs?order=${order}&page=${page}&per_page=10${mId ? `&match_id=${mId}` : ''}`;
+            const { response, data } = await apiFetch(url);;
 
             if (response.ok) {
                 setLogs(data.logs);
@@ -49,6 +51,13 @@ export const AuditPanel = () => {
 
     useEffect(() => { fetchLogs(); }, []);
 
+    const formatTeams = (details) => {
+        // Si tus detalles son: "Partido ID 13: Cambió de 0-0 a 2-1" 
+        // Podríamos mejorar el endpoint update_match_result para enviar los nombres
+        // Pero si quieres ver quiénes jugaron, lo ideal es que el detalle ya lo incluya.
+        return details.split(":")[0]; // Retorna "Partido ID 13" o el nombre si lo envías desde el backend
+    };
+
     return (
         <div className="admin-container py-4">
             <Toaster richColors position="top-right" />
@@ -59,6 +68,18 @@ export const AuditPanel = () => {
                         <p className="text-dim small mb-0">Seguimiento de modificaciones manuales</p>
                     </div>
                     <div className="d-flex gap-2">
+                        <input
+                            type="number"
+                            className="form-control form-control-sm auth-input"
+                            placeholder="Buscar por ID Partido..."
+                            style={{ width: "180px" }}
+                            value={searchId}
+                            onChange={(e) => setSearchId(e.target.value)}
+                            onKeyUp={(e) => e.key === 'Enter' && fetchLogs(1)}
+                        />
+                        <button className="btn btn-emerald btn-sm" onClick={() => fetchLogs(1)}>
+                            <i className="fas fa-search"></i>
+                        </button>
                         <button
                             className="btn btn-outline-light btn-sm"
                             onClick={toggleOrder}
@@ -80,6 +101,7 @@ export const AuditPanel = () => {
                                 <th className="py-3">Fecha y Hora</th>
                                 <th className="py-3">Usuario (Admin)</th>
                                 <th className="py-3">Acción</th>
+                                <th className="py-3">Referencia</th>
                                 <th className="py-3">Detalle del Cambio</th>
                                 <th className="py-3 text-end">Origen (IP)</th>
                             </tr>
@@ -99,6 +121,7 @@ export const AuditPanel = () => {
                                                 {log.action.replace("_", " ")}
                                             </span>
                                         </td>
+                                        <td className="fw-bold text-emerald">{formatTeams(log.details)}</td>
                                         <td className="small italic text-white-50">{log.details}</td>
                                         <td className="text-end text-dim small font-monospace">{log.ip_address || "0.0.0.0"}</td>
                                     </tr>
