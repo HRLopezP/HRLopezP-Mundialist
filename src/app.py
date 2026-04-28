@@ -32,6 +32,14 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_size": 4,           
+    "max_overflow": 4,       
+    "pool_timeout": 30,       
+    "pool_recycle": 1800,     
+}
+
 MIGRATE = Migrate(app, db, compare_type=True)
 app.config['SECRET_KEY'] = os.getenv("FLASK_APP_KEY")
 db.init_app(app)

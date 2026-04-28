@@ -545,7 +545,9 @@ def update_match_result(match_id):
              (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
             pts = 1
         
-        pred.points_earned = pts 
+        old_points = pred.points_earned or 0 
+        pred.points_earned = pts          
+        pred.user.total_points = (pred.user.total_points - old_points) + pts
     
     audit = AuditLog(
         action="MODIFICACION_RESULTADO",
