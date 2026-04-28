@@ -21,7 +21,7 @@ export const AuditPanel = () => {
         setLoading(true);
         try {
             const url = `/audit-logs?order=${order}&page=${page}&per_page=10${mId ? `&match_id=${mId}` : ''}`;
-            const { response, data } = await apiFetch(url);;
+            const { response, data } = await apiFetch(url);
 
             if (response.ok) {
                 setLogs(data.logs);
@@ -39,95 +39,104 @@ export const AuditPanel = () => {
         }
     };
 
-    const handlePageChange = (newPage) => {
-        fetchLogs(newPage, sortOrder);
-    };
+    useEffect(() => {
+        fetchLogs(1, sortOrder, searchId);
+    }, [sortOrder]); // Se dispara cuando cambias el select de orden
 
-    const toggleOrder = () => {
-        const newOrder = sortOrder === "desc" ? "asc" : "desc";
-        setSortOrder(newOrder);
-        fetchLogs(1, newOrder);
-    };
-
-    useEffect(() => { fetchLogs(); }, []);
-
-    const formatTeams = (details) => {
-        // Si tus detalles son: "Partido ID 13: Cambió de 0-0 a 2-1" 
-        // Podríamos mejorar el endpoint update_match_result para enviar los nombres
-        // Pero si quieres ver quiénes jugaron, lo ideal es que el detalle ya lo incluya.
-        return details.split(":")[0]; // Retorna "Partido ID 13" o el nombre si lo envías desde el backend
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            fetchLogs(1);
+        }
     };
 
     const getReference = (details) => {
-        // Si contiene ":", tomamos lo que está antes (Los equipos)
         if (details.includes(":")) return details.split(":")[0];
-        // Si no (registros viejos), buscamos el ID si existe o devolvemos el inicio
-        return details.length > 20 ? details.substring(0, 20) + "..." : details;
+        return "Ref: " + details.substring(0, 15);
     };
 
     const getChangeDetail = (details) => {
-        // Si contiene ":", tomamos lo que está después (El cambio de score)
         if (details.includes(":")) return details.split(":")[1];
-        // Si no, devolvemos el texto completo (registros viejos)
         return details;
     };
 
+    const handlePageChange = (page) => {
+        fetchLogs(page);
+    };
+
     return (
-        <div className="admin-container py-4">
-            <Toaster richColors position="top-right" />
-            <div className="admin-card p-4">
-                <div className="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <h2 className="text-white mb-1">🛡️ Auditoría de Resultados</h2>
-                        <p className="text-dim small mb-0">Seguimiento de modificaciones manuales</p>
-                    </div>
-                    <div className="d-flex gap-2">
+        <div className="admin-container animate__animated animate__fadeIn">
+            <Toaster position="top-center" richColors />
+            
+            {/* ENCABEZADO CENTRADO Y RESPONSIVE */}
+            <div className="text-center mb-4">
+                <h2 className="text-white mb-1 h3 fw-bold">
+                    <i className="fas fa-history me-2 text-emerald"></i>
+                    Historial de Auditoría
+                </h2>
+                <p className="text-dim small mb-4">Control de modificaciones del sistema SIGSSEP</p>
+
+                {/* FILTROS Y BUSCADOR */}
+                <div className="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 bg-dark-soft p-3 rounded-4 mx-auto" style={{ maxWidth: "800px" }}>
+                    
+                    {/* Buscador por ID */}
+                    <div className="input-group input-group-sm" style={{ maxWidth: "250px" }}>
+                        <span className="input-group-text bg-dark border-secondary text-dim">ID</span>
                         <input
                             type="number"
-                            className="form-control form-control-sm auth-input"
-                            placeholder="Buscar por ID Partido..."
-                            style={{ width: "180px" }}
+                            className="form-control bg-dark text-white border-secondary"
+                            placeholder="Buscar partido..."
                             value={searchId}
                             onChange={(e) => setSearchId(e.target.value)}
-                            onKeyUp={(e) => e.key === 'Enter' && fetchLogs(1)}
+                            onKeyDown={handleKeyDown}
                         />
-                        <button className="btn btn-emerald btn-sm" onClick={() => fetchLogs(1)}>
+                        <button className="btn btn-emerald" onClick={() => fetchLogs(1)}>
                             <i className="fas fa-search"></i>
                         </button>
-                        <button
-                            className="btn btn-outline-light btn-sm"
-                            onClick={toggleOrder}
-                            title={sortOrder === "desc" ? "Ver más antiguos primero" : "Ver más recientes primero"}
-                        >
-                            <i className={`fas ${sortOrder === "desc" ? "fa-sort-amount-up" : "fa-sort-amount-down"} me-2`}></i>
-                            {sortOrder === "desc" ? "Más recientes" : "Más antiguos"}
-                        </button>
-                        <button className="btn btn-emerald btn-sm" onClick={() => fetchLogs()}>
-                            <i className="fas fa-sync-alt"></i>
-                        </button>
                     </div>
-                </div>
 
-                <div className="table-responsive" style={{ maxHeight: "600px", overflowY: "auto" }}>
-                    <table className="table table-dark table-hover table-oxford border-0 align-middle">
-                        <thead className="sticky-top" style={{ zIndex: 1, backgroundColor: "#051426" }}>
+                    {/* Selector de Orden */}
+                    <div className="d-flex align-items-center gap-2">
+                        <label className="small text-dim d-none d-sm-block">Ordenar:</label>
+                        <select 
+                            className="form-select form-select-sm bg-dark text-white border-secondary"
+                            style={{ width: "160px" }}
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value)}
+                        >
+                            <option value="desc">Más recientes</option>
+                            <option value="asc">Más antiguos</option>
+                        </select>
+                    </div>
+
+                    {/* Botón Limpiar */}
+                    <button 
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => { setSearchId(""); setSortOrder("desc"); fetchLogs(1, "desc", ""); }}
+                    >
+                        <i className="fas fa-sync-alt me-1"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <div className="admin-card p-4 shadow">
+                <div className="table-responsive border-0">
+                    <table className="table table-dark table-hover table-oxford border-0">
+                        <thead>
                             <tr>
-                                <th className="py-3">Fecha y Hora</th>
-                                <th className="py-3">Usuario (Admin)</th>
-                                <th className="py-3">Acción</th>
-                                <th className="py-3">Referencia</th>
-                                <th className="py-3">Detalle del Cambio</th>
-                                <th className="py-3 text-end">Origen (IP)</th>
+                                <th>Fecha</th>
+                                <th>Admin</th>
+                                <th>Acción</th>
+                                <th>Referencia</th>
+                                <th>Detalle</th>
+                                <th className="text-end">IP</th>
                             </tr>
                         </thead>
                         <tbody>
                             {loading ? (
-                                <tr><td colSpan="5" className="text-center py-5 text-dim">Cargando bitácora...</td></tr>
-                            ) : logs.length === 0 ? (
-                                <tr><td colSpan="5" className="text-center py-5 text-dim">No hay registros de auditoría aún.</td></tr>
+                                <tr><td colSpan="6" className="text-center py-5">Cargando...</td></tr>
                             ) : (
                                 logs.map((log) => (
-                                    <tr key={log.id_audit} className="border-bottom border-secondary-subtle">
+                                    <tr key={log.id_audit} className="align-middle">
                                         <td className="small">{new Date(log.timestamp).toLocaleString()}</td>
                                         <td className="text-info fw-bold">{log.user_email}</td>
                                         <td>
@@ -135,13 +144,8 @@ export const AuditPanel = () => {
                                                 {log.action.replace("_", " ")}
                                             </span>
                                         </td>
-                                        <td className="fw-bold text-emerald">
-                                            {getReference(log.details)}
-                                        </td>
-                                        {/* COLUMNA DE DETALLE (EL CAMBIO) */}
-                                        <td className="small text-white-50">
-                                            {getChangeDetail(log.details)}
-                                        </td>
+                                        <td className="fw-bold text-emerald">{getReference(log.details)}</td>
+                                        <td className="small text-white-50">{getChangeDetail(log.details)}</td>
                                         <td className="text-end text-dim small font-monospace">{log.ip_address || "0.0.0.0"}</td>
                                     </tr>
                                 ))

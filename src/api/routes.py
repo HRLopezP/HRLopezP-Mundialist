@@ -575,7 +575,7 @@ def get_audit_logs():
     query = AuditLog.query
 
     if match_id:
-        query = query.filter(AuditLog.details.contains(f"Partido ID {match_id}"))
+        query = query.filter(AuditLog.details.contains(f"(ID {match_id})"))
     
     if order_param == 'asc':
         query = query.order_by(AuditLog.timestamp.asc())
