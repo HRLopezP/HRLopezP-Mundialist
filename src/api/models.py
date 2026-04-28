@@ -136,9 +136,9 @@ class Prediction(db.Model):
 class AuditLog(db.Model):
     __tablename__ = 'audit_log'
     id_audit: Mapped[int] = mapped_column(primary_key=True)
-    action: Mapped[str] = mapped_column(String(100), nullable=False) # Ej: "UPDATE_MATCH_RESULT"
-    details: Mapped[str] = mapped_column(String(255), nullable=False) # Ej: "Match 5: 2-1 -> 2-2"
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True) # Para rastrear la IP
+    action: Mapped[str] = mapped_column(String(100), nullable=False) 
+    details: Mapped[str] = mapped_column(String(255), nullable=False) 
+    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True) 
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)

@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
-from api.models import db, User, Rol, Match, Prediction
+from api.models import db, User, Rol, Match, Prediction, AuditLog
 from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
 from flask_cors import CORS
@@ -518,38 +518,42 @@ def update_match_result(match_id):
     if not match:
         return jsonify({"msg": "Partido no encontrado"}), 404
     
+    old_home = match.home_score if match.home_score is not None else "?"
+    old_away = match.away_score if match.away_score is not None else "?"
+    old_score_str = f"{old_home}-{old_away}"
+    
     ahora = datetime.now(timezone.utc)
-
-    # --- VENTANA DE EMERGENCIA DE 2 HORAS ---
-    # Si el juego ya está finalizado Y han pasado más de 2 horas desde el inicio, se bloquea.
-    # (Usamos match_date + 4 horas asumiendo que un juego dura 2h aprox + 2h de gracia)
     limite_correccion = match.match_date + timedelta(hours=4)
 
     if match.status == "Finalizado" and ahora > limite_correccion:
         return jsonify({"msg": "Tiempo de corrección agotado. Contactar soporte técnico."}), 403
 
-    # 1. Guardamos el resultado oficial en el partido
     home_real = body.get("home_score")
     away_real = body.get("away_score")
     match.home_score = home_real
     match.away_score = away_real
     match.status = "Finalizado"
 
-    # 2. Buscamos todas las predicciones de este partido para actualizarlas
     predictions = Prediction.query.filter_by(match_id=match_id).all()
     
     for pred in predictions:
         pts = 0
-        # ACIERTO EXACTO (3 puntos)
         if pred.predicted_home_score == home_real and pred.predicted_away_score == away_real:
             pts = 3
-        # ACIERTO TENDENCIA (1 punto): Ganador o Empate
         elif (home_real > away_real and pred.predicted_home_score > pred.predicted_away_score) or \
              (home_real < away_real and pred.predicted_home_score < pred.predicted_away_score) or \
              (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
             pts = 1
         
-        pred.points_earned = pts # Guardamos el punto en la base de datos
+        pred.points_earned = pts 
+    
+    audit = AuditLog(
+        action="MODIFICACION_RESULTADO",
+        details=f"Partido ID {match_id}: Cambió de {old_score_str} a {home_real}-{away_real}",
+        ip_address=request.remote_addr,
+        user_id=get_jwt_identity()
+    )
+    db.session.add(audit)
 
     try:
         db.session.commit()
@@ -557,6 +561,23 @@ def update_match_result(match_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
+
+
+# Ver auditoría de cambios de resultados finales
+@api.route('/audit-logs', methods=['GET'])
+@jwt_required()
+@manager_required
+def get_audit_logs():
+    order_param = request.args.get('order', 'desc')
+    
+    query = AuditLog.query
+    
+    if order_param == 'asc':
+        query = query.order_by(AuditLog.timestamp.asc())
+    else:
+        query = query.order_by(AuditLog.timestamp.desc())
+        
+    return jsonify(paginate_query(query, model_name="logs")), 200
 
 
 # Ver el ranking actualizado
