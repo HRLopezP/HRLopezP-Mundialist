@@ -131,7 +131,7 @@ def login():
     )
 
     return jsonify({
-        "message": "¡Bienvenido a Mundial Elite Predictor!",
+        "message": "¡Bienvenido a Élite Mundialista!",
         "token": access_token,
         "user": user.serialize()
     }), 200

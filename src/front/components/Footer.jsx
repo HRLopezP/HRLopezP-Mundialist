@@ -9,7 +9,7 @@ export const Footer = () => {
 
 					{/* Branding */}
 					<div className="d-flex align-items-center gap-2">
-						<i className="fa fa-soccer-ball-o me-2 accent-text"></i>
+						<i className="fa fa-soccer-ball-o me-0 accent-text"></i>
 						<span className="brand-text">Quiniela <span className="accent-text">HRLP</span></span>
 						<span className="d-none d-sm-inline divider">|</span>
 						<span>&copy; {new Date().getFullYear()}</span>
