@@ -7,12 +7,6 @@
     --hrlp-divider: #334155;
 }
 
-.footer-hrlp {
-    background-color: var(--hrlp-navy-dark);
-    border-top: 1px solid var(--hrlp-border);
-    font-size: 0.8rem;
-    letter-spacing: 0.025em;
-}
 
 .footer-hrlp .text-muted-custom {
     color: var(--hrlp-text-muted);
@@ -44,4 +38,37 @@
 .footer-hrlp .author-text {
     color: var(--hrlp-text-light);
     font-weight: 600;
+}
+
+.footer-hrlp {
+    background-color: var(--dark-pitch); 
+    border-top: 1px solid rgba(255, 215, 0, 0.1); 
+    width: 100%;
+}
+
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.text-muted-custom {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+}
+
+.accent-text {
+    color: var(--pitch-green);
+}
+
+.author-text {
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .footer-hrlp {
+        text-align: center;
+        padding-bottom: env(safe-area-inset-bottom); 
+    }
 }
