@@ -16,7 +16,9 @@ const ForgotPassword = () => {
         try {
             const { response, data } = await apiFetch("/request-password-reset", {
                 method: "POST",
-                body: JSON.stringify({ email })
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim()
+                })
             });
 
             if (response.ok) {

@@ -58,7 +58,7 @@ const Register = () => {
                 body: JSON.stringify({
                     name: user.name,
                     lastname: user.lastname,
-                    email: user.email,
+                    email: user.email.toLowerCase().trim(),
                     password: user.password
                 })
             });

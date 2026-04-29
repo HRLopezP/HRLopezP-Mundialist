@@ -20,7 +20,10 @@ const Login = () => {
         try {
             const { response, data } = await apiFetch('/login', {
                 method: 'POST',
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    password: password
+                })
             });
 
             if (response.ok) {

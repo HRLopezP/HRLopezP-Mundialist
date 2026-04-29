@@ -41,7 +41,7 @@ def register_user():
     if not data:
         return jsonify({"message": "No se recibieron datos"}), 400
 
-    email = data.get("email")
+    email = data.get("email").lower().strip() if data.get("email") else None
     password = data.get("password")
     name = data.get("name")
     lastname = data.get("lastname")
@@ -103,7 +103,7 @@ def login():
     if data is None:
         return jsonify({"message": "No se proporcionaron datos"}), 400
 
-    email = data.get("email", "").strip()
+    email = data.get("email", "").lower().strip()
     password = data.get("password", "").strip()
 
     if not email or not password:
@@ -141,30 +141,39 @@ def login():
 def request_password_reset():
     try:
         data = request.get_json()
-        email = data.get('email')
-        user = User.query.filter_by(email=email).first()
+        # CAMBIO AQUÍ: Normalizamos el email que recibimos del formulario
+        raw_email = data.get('email', '')
+        email_ingresado = raw_email.lower().strip() if raw_email else ""
+
+        if not email_ingresado:
+            return jsonify({"message": "El correo es obligatorio"}), 400
+
+        # Buscamos en la base de datos (donde todo está en minúsculas)
+        user = User.query.filter_by(email=email_ingresado).first()
 
         if user:
             # 1. Generamos el token seguro
-            token = generate_reset_token(email)
+            token = generate_reset_token(user.email)
             
             # 2. Preparamos el nombre para el saludo
             # Ajusta según tus campos (ej. user.name o user.username)
             user_name = getattr(user, 'name', 'Usuario') 
 
             # 3. Delegamos el envío al "Chef de correos"
-            email_sent = send_password_reset_email(email, user_name, token)
+            email_sent = send_password_reset_email(user.email, user_name, token)
 
             if email_sent:
                 return jsonify({"message": "Si el correo existe, se ha enviado un enlace de recuperación"}), 200
             else:
+                # Si el "Chef de correos" falla, devolvemos error
                 return jsonify({"message": "Error al procesar el envío del correo"}), 500
 
-        # Por seguridad, a veces es mejor devolver 200 aunque no exista, 
-        # pero para desarrollo el 404 está bien.
+        # Mantenemos el 404 para desarrollo como lo tienes
         return jsonify({"message": "Usuario no encontrado"}), 404
 
     except Exception as e:
+        # Esto nos dirá exactamente qué falló en la consola
+        print(f"Error en reset: {str(e)}") 
         return jsonify({"message": "Error interno", "error": str(e)}), 500
 
 
@@ -188,7 +197,7 @@ def reset_password():
         return jsonify({"message": "El enlace ha expirado o es inválido. Solicita uno nuevo."}), 400
 
     # 4. Buscar al usuario y actualizar
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email.lower()).first()
     if not user:
         return jsonify({"message": "Usuario no encontrado"}), 404
 
