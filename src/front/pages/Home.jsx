@@ -15,7 +15,7 @@ export const Home = () => {
                         />
 
                         <div className="banner-title">
-                            <h1 className="title-main">¡MUNDIAL ÉLITE!</h1>
+                            <h1 className="title-main">¡ÉLITE MUNDIALISTA!</h1>
                             <p className="title-sub">¡TU CAMINO A LA GLORIA!</p>
                         </div>
 

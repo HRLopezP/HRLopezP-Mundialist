@@ -11,8 +11,6 @@ export const Navbar = () => {
     const navbarTogglerRef = useRef(null);
 
     const closeMenu = () => {
-        // Verificamos si el botón es visible (estamos en móvil) 
-        // y si el menú está desplegado (no tiene la clase 'collapsed')
         if (window.innerWidth < 992 && navbarTogglerRef.current && !navbarTogglerRef.current.classList.contains('collapsed')) {
             navbarTogglerRef.current.click();
         }
@@ -41,7 +39,7 @@ export const Navbar = () => {
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
                     {/* Ocultamos "ELITE" en pantallas muy pequeñas para ganar espacio */}
-                    <span className="brand-text">MUNDIAL <span className="text-emerald d-none d-sm-inline">ELITE</span></span>
+                    <span className="brand-text">ÉLITE <span className="text-emerald d-none d-sm-inline">MUNDIALISTA</span></span>
                 </Link>
 
                 {!store.user && (
@@ -114,7 +112,12 @@ export const Navbar = () => {
                                                 </Link>
                                             </li>
                                             <li>
-                                                <Link className="dropdown-item py-2" to="/admin/matches"onClick={closeMenu}>
+                                                <Link className="dropdown-item py-2" to="/admin/audit" onClick={closeMenu}>
+                                                    <i className="fa-solid fa-shield-halved me-2"></i> Auditoría
+                                                </Link>
+                                            </li>
+                                            <li>
+                                                <Link className="dropdown-item py-2" to="/admin/matches" onClick={closeMenu}>
                                                     <i className="fa-solid fa-calendar-check me-2"></i> Partidos
                                                 </Link>
                                             </li>

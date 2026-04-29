@@ -1,9 +1,10 @@
 import requests
 from models import db, Team, Match
 from datetime import datetime
+import os
 
 def sync_world_cup_data(app):
-    TOKEN = "f4cab83c9e7a4d7bb5e0fb832cc88d2b"
+    TOKEN = os.getenv("FOOTBALL_API_TOKEN")
     URL = "https://api.football-data.org/v4/competitions/WC/matches?season=2026"
     headers = { "X-Auth-Token": TOKEN }
 

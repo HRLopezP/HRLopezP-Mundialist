@@ -97,3 +97,30 @@
 }
 
 
+.bg-dark-soft {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(5px);
+}
+
+.form-select-sm, .input-group-sm > .form-control {
+    border-radius: 8px !important;
+}
+
+/* Efecto hover suave en las filas para Management */
+.table-oxford tbody tr:hover {
+    background: rgba(40, 200, 125, 0.05) !important;
+    transition: background 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .bg-dark-soft {
+        width: 100%;
+        gap: 15px !important;
+    }
+    
+    .input-group, .form-select, .btn-outline-secondary {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}

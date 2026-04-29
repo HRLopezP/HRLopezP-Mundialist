@@ -4,7 +4,7 @@ import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import "../styles/Predictions.css";
 
-export const MatchAdmin = () => {
+const MatchAdmin = () => {
     const [matches, setMatches] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState("");
     const [loading, setLoading] = useState(true);
@@ -178,3 +178,5 @@ export const MatchAdmin = () => {
         </div>
     );
 };
+
+export default MatchAdmin;

@@ -36,6 +36,7 @@ class User(db.Model):
     rol_id: Mapped[int] = mapped_column(ForeignKey('rol.id_rol'), nullable=False)
     rol: Mapped["Rol"] = relationship("Rol", back_populates="users")
     predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
+    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user")
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -129,4 +130,26 @@ class Prediction(db.Model):
             "user_id": self.user_id,
             "match_id": self.match_id,
             "match_details": f"{self.match.home_team.name} vs {self.match.away_team.name}" if self.match else None
+        }
+
+
+class AuditLog(db.Model):
+    __tablename__ = 'audit_log'
+    id_audit: Mapped[int] = mapped_column(primary_key=True)
+    action: Mapped[str] = mapped_column(String(100), nullable=False) 
+    details: Mapped[str] = mapped_column(String(255), nullable=False) 
+    ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True) 
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
+    user: Mapped["User"] = relationship(back_populates="audit_logs")
+
+    def serialize(self):
+        return {
+            "id_audit": self.id_audit,
+            "action": self.action,
+            "details": self.details,
+            "ip_address": self.ip_address,
+            "timestamp": self.timestamp.isoformat(),
+            "user_email": self.user.email if self.user else "Sistema"
         }

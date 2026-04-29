@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
-from api.models import db, User, Rol, Match, Prediction
+from api.models import db, User, Rol, Match, Prediction, AuditLog
 from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
 from flask_cors import CORS
@@ -41,7 +41,7 @@ def register_user():
     if not data:
         return jsonify({"message": "No se recibieron datos"}), 400
 
-    email = data.get("email")
+    email = data.get("email").lower().strip() if data.get("email") else None
     password = data.get("password")
     name = data.get("name")
     lastname = data.get("lastname")
@@ -103,7 +103,7 @@ def login():
     if data is None:
         return jsonify({"message": "No se proporcionaron datos"}), 400
 
-    email = data.get("email", "").strip()
+    email = data.get("email", "").lower().strip()
     password = data.get("password", "").strip()
 
     if not email or not password:
@@ -131,7 +131,7 @@ def login():
     )
 
     return jsonify({
-        "message": "¡Bienvenido a Mundial Elite Predictor!",
+        "message": "¡Bienvenido a Élite Mundialista!",
         "token": access_token,
         "user": user.serialize()
     }), 200
@@ -141,30 +141,39 @@ def login():
 def request_password_reset():
     try:
         data = request.get_json()
-        email = data.get('email')
-        user = User.query.filter_by(email=email).first()
+        # CAMBIO AQUÍ: Normalizamos el email que recibimos del formulario
+        raw_email = data.get('email', '')
+        email_ingresado = raw_email.lower().strip() if raw_email else ""
+
+        if not email_ingresado:
+            return jsonify({"message": "El correo es obligatorio"}), 400
+
+        # Buscamos en la base de datos (donde todo está en minúsculas)
+        user = User.query.filter_by(email=email_ingresado).first()
 
         if user:
             # 1. Generamos el token seguro
-            token = generate_reset_token(email)
+            token = generate_reset_token(user.email)
             
             # 2. Preparamos el nombre para el saludo
             # Ajusta según tus campos (ej. user.name o user.username)
             user_name = getattr(user, 'name', 'Usuario') 
 
             # 3. Delegamos el envío al "Chef de correos"
-            email_sent = send_password_reset_email(email, user_name, token)
+            email_sent = send_password_reset_email(user.email, user_name, token)
 
             if email_sent:
                 return jsonify({"message": "Si el correo existe, se ha enviado un enlace de recuperación"}), 200
             else:
+                # Si el "Chef de correos" falla, devolvemos error
                 return jsonify({"message": "Error al procesar el envío del correo"}), 500
 
-        # Por seguridad, a veces es mejor devolver 200 aunque no exista, 
-        # pero para desarrollo el 404 está bien.
+        # Mantenemos el 404 para desarrollo como lo tienes
         return jsonify({"message": "Usuario no encontrado"}), 404
 
     except Exception as e:
+        # Esto nos dirá exactamente qué falló en la consola
+        print(f"Error en reset: {str(e)}") 
         return jsonify({"message": "Error interno", "error": str(e)}), 500
 
 
@@ -188,7 +197,7 @@ def reset_password():
         return jsonify({"message": "El enlace ha expirado o es inválido. Solicita uno nuevo."}), 400
 
     # 4. Buscar al usuario y actualizar
-    user = User.query.filter_by(email=email).first()
+    user = User.query.filter_by(email=email.lower()).first()
     if not user:
         return jsonify({"message": "Usuario no encontrado"}), 404
 
@@ -466,7 +475,6 @@ def get_matches():
 def save_prediction():
     user_id = get_jwt_identity()
     body = request.get_json()
-
     match_id = body.get("match_id")
     home_score = body.get("home_score")
     away_score = body.get("away_score")
@@ -475,16 +483,15 @@ def save_prediction():
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
 
     match = Match.query.get(match_id)
+    
     if not match:
         return jsonify({"msg": "El partido no existe"}), 404
 
     ahora = datetime.now(timezone.utc)
     limite_apuesta = match.match_date - timedelta(hours=24)
 
-    if ahora > limite_apuesta:
-        return jsonify({
-            "msg": "Tiempo agotado. Solo puedes predecir hasta 24 horas antes del inicio."
-        }), 403
+    if ahora > limite_apuesta or ahora >= match.match_date or match.status == "Finalizado":
+        return jsonify({"msg": "Las predicciones para este juego están cerradas."}), 403
 
     prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
 
@@ -510,20 +517,31 @@ def save_prediction():
         return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500
 
 
+#Administrador sube marcador oficial
 @api.route('/match-results/<int:match_id>', methods=['PUT'])
 @jwt_required()
 @manager_required
 def update_match_result(match_id):
     body = request.get_json()
     match = Match.query.get(match_id)
-    
     if not match:
         return jsonify({"msg": "Partido no encontrado"}), 404
+    
+    old_home = match.home_score if match.home_score is not None else "?"
+    old_away = match.away_score if match.away_score is not None else "?"
+    old_score_str = f"{old_home}-{old_away}"
+    
+    ahora = datetime.now(timezone.utc)
+    limite_correccion = match.match_date + timedelta(hours=4)
+
+    if match.status == "Finalizado" and ahora > limite_correccion:
+        return jsonify({"msg": "Tiempo de corrección agotado. Contactar soporte técnico."}), 403
 
     home_real = body.get("home_score")
     away_real = body.get("away_score")
     match.home_score = home_real
     match.away_score = away_real
+    match.status = "Finalizado"
 
     predictions = Prediction.query.filter_by(match_id=match_id).all()
     
@@ -536,14 +554,44 @@ def update_match_result(match_id):
              (home_real == away_real and pred.predicted_home_score == pred.predicted_away_score):
             pts = 1
         
-        pred.points_earned = pts 
+        old_points = pred.points_earned or 0 
+        pred.points_earned = pts          
+        pred.user.total_points = (pred.user.total_points - old_points) + pts
+    
+    audit = AuditLog(
+        action="MODIFICACION", 
+        details=f"{match.home_team.name} vs {match.away_team.name} (ID {match_id}): Cambió de {old_score_str} a {home_real}-{away_real}",
+        ip_address=request.remote_addr,
+        user_id=get_jwt_identity()
+    )
+    db.session.add(audit)
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Resultado y puntos actualizados"}), 200
+        return jsonify({"msg": "Resultado sellado. Tienes 2 horas para correcciones."}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
+
+
+# Ver auditoría de cambios de resultados finales
+@api.route('/audit-logs', methods=['GET'])
+@jwt_required()
+@manager_required
+def get_audit_logs():
+    order_param = request.args.get('order', 'desc')
+    match_id = request.args.get('match_id')
+    query = AuditLog.query
+
+    if match_id:
+        query = query.filter(AuditLog.details.contains(f"(ID {match_id})"))
+    
+    if order_param == 'asc':
+        query = query.order_by(AuditLog.timestamp.asc())
+    else:
+        query = query.order_by(AuditLog.timestamp.desc())
+        
+    return jsonify(paginate_query(query, model_name="logs")), 200
 
 
 # Ver el ranking actualizado

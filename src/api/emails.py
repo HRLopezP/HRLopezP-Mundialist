@@ -8,19 +8,17 @@ def send_password_reset_email(user_email, user_name, token):
     reset_url = f"{frontend_url}/reset-password?token={token}"
     
     msg = Message(
-        "🏆 Recupera tu acceso - Mundial Elite Predictor",
+        "🏆 Recupera tu acceso - Élite Mundialista",
         recipients=[user_email]
     )
     
-    # Diseño ajustado a los colores de la quiniela:
-    # Neon Blue: #00d4ff | Pitch Green: #28c87d | Deep Navy: #051426
     msg.html = f"""
     <div style="font-family: 'Inter', Arial, sans-serif; background-color: #051426; padding: 40px 10px; color: #ffffff;">
         <div style="max-width: 600px; margin: 0 auto; background-color: rgba(10, 20, 50, 0.95); border-radius: 24px; overflow: hidden; border: 1px solid rgba(0, 212, 255, 0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
             
             <div style="background: linear-gradient(135deg, #051426 0%, #00d4ff 100%); padding: 40px 30px; text-align: center;">
                 <h1 style="color: #ffffff; margin: 0; font-size: 28px; text-transform: uppercase; letter-spacing: 4px; font-weight: 800;">
-                    MUNDIAL <span style="color: #28c87d;">ÉLITE</span>
+                    ÉLITE <span style="color: #28c87d;">MUNDIALISTA</span>
                 </h1>
                 <p style="color: rgba(255,255,255,0.8); margin-top: 10px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">
                     ¡Tu camino a la gloria!
@@ -53,7 +51,7 @@ def send_password_reset_email(user_email, user_name, token):
 
             <div style="background-color: rgba(0,0,0,0.3); padding: 25px; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
                 <p style="font-size: 11px; color: #a8b2d1; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
-                    &copy; 2026 MUNDIAL ÉLITE PREDICTOR<br>
+                    &copy; 2026 ÉLITE MUNDIALISTA<br>
                     <span style="color: #28c87d;">La Quiniela de los Verdaderos Expertos</span>
                 </p>
             </div>

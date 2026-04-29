@@ -5,7 +5,7 @@ import { apiFetch } from "../utils/api"
 import { Toaster, toast } from "sonner";
 import "../styles/auth.css";
 
-export const Login = () => {
+const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -20,7 +20,10 @@ export const Login = () => {
         try {
             const { response, data } = await apiFetch('/login', {
                 method: 'POST',
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({
+                    email: email.toLowerCase().trim(),
+                    password: password
+                })
             });
 
             if (response.ok) {
@@ -45,7 +48,7 @@ export const Login = () => {
                     <div className="col-12 col-md-6 col-lg-5">
                         <div className="auth-card animate__animated animate__fadeIn">
                             <div className="auth-header">
-                                <h2 className="text-pitch-green fw-bold">MUNDIAL <span className="text-emerald d-sm-inline">ELITE</span></h2>
+                                <h2 className="text-pitch-green fw-bold">ÉLITE <span className="text-emerald d-sm-inline">MUNDIALISTA</span></h2>
                                 <p className="text-dim">Ingresa a tu panel de control</p>
                             </div>
 
@@ -113,3 +116,5 @@ export const Login = () => {
         </div >
     );
 };
+
+export default Login;

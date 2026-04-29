@@ -14,22 +14,19 @@ export const generateTransparencyReport = (matches) => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("MUNDIAL ELITE PREDICTOR", 14, 20);
+  doc.text("ÉLITE MUNDIALISTA", 14, 20);
   doc.setFontSize(10);
   doc.text("REPORTE OFICIAL DE TRANSPARENCIA", 14, 28);
   doc.text(`Generado: ${new Date().toLocaleString()}`, 14, 34);
 
   let currentY = 50;
 
-  // --- Contenido por Partido ---
   matches.forEach((match, index) => {
-    // Verificar si necesitamos una nueva página
     if (currentY > 240) {
       doc.addPage();
       currentY = 20;
     }
 
-    // Título del Partido
     doc.setTextColor(...colors.oxford);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
@@ -40,7 +37,6 @@ export const generateTransparencyReport = (matches) => {
     doc.setFont("helvetica", "normal");
     doc.text(`Fecha: ${new Date(match.match_date).toLocaleString()}`, 14, currentY + 5);
 
-    // Tabla de Predicciones
     autoTable(doc, {
       startY: currentY + 8,
       head: [["Participante", "Predicción"]],
@@ -72,22 +68,20 @@ export const generateRankingReport = (rankingData) => {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(22);
   doc.setFont("helvetica", "bold");
-  doc.text("MUNDIAL ELITE PREDICTOR", 14, 20);
+  doc.text("ÉLITE MUNDIALISTA", 14, 20);
   doc.setFontSize(10);
   doc.text("RANKING OFICIAL DE POSICIONES", 14, 28);
-  // Indicamos la fecha de descarga del reporte como solicitaste
   doc.text(`Fecha de descarga: ${new Date().toLocaleString()}`, 14, 34);
 
-  // --- Tabla de Ranking ---
   autoTable(doc, {
     startY: 50,
     head: [["Pos", "Usuario", "Exactos", "Tendencia", "Total Pts"]],
     body: rankingData.map((item, index) => [
-      index + 1,                   // Posición
-      item.username.toUpperCase(), // Usuario
-      item.exact_hits || 0,    // Exactos
-      item.trend_hits || 0,           // Tendencia (acierto ganador sin marcador exacto)
-      `${item.total_points} pts`   // Total
+      index + 1,                   
+      item.username.toUpperCase(), 
+      item.exact_hits || 0,   
+      item.trend_hits || 0,           
+      `${item.total_points} pts`  
     ]),
     theme: "striped",
     headStyles: { fillColor: colors.oxford, halign: 'center' },
@@ -98,7 +92,7 @@ export const generateRankingReport = (rankingData) => {
       3: { halign: 'center' },
       4: { halign: 'center', fontStyle: 'bold' }
     },
-    // Resaltamos visualmente al líder del ranking
+ 
     didParseCell: (data) => {
       if (data.section === 'body' && data.row.index === 0) {
         data.cell.styles.textColor = colors.emerald;

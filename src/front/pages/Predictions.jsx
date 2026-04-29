@@ -23,7 +23,7 @@ const calculatePoints = (prediction, match) => {
     return 0;
 };
 
-export const Predictions = () => {
+const Predictions = () => {
     const [matches, setMatches] = useState([]);
     const [selectedGroup, setSelectedGroup] = useState("");
     const [loading, setLoading] = useState(true);
@@ -133,6 +133,21 @@ export const Predictions = () => {
     const groups = [...new Set(safeMatches.map(m => m.home_team?.group_name))].filter(Boolean).sort();
     const filteredMatches = safeMatches.filter(m => m.home_team?.group_name === selectedGroup);
 
+    const formatToLocalTime = (utcDateString) => {
+        if (!utcDateString) return "Fecha por definir";
+
+        const date = new Date(utcDateString);
+
+        return date.toLocaleString(undefined, {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
     if (loading) return <div className="text-center mt-5 text-white"><h3>🏟️ Abriendo las puertas del estadio...</h3></div>;
 
     return (
@@ -170,7 +185,10 @@ export const Predictions = () => {
                             <div key={`match-card-${match.id_match}`} className="col-12 col-md-10 col-lg-8 col-xl-6 mb-5">
                                 <div className="admin-card p-4 border-0 shadow-lg">
                                     <div className="d-flex justify-content-between text-dim small mb-3">
-                                        <span>{new Date(match.match_date).toLocaleString()}</span>
+                                        <span className="badge bg-dark py-2 px-1 shadow-sm border border-secondary">
+                                            <i className="fas fa-calendar-alt me-2 text-warning"></i>
+                                            {formatToLocalTime(match.match_date)}
+                                        </span>
                                         <span className="badge bg-dark-soft">{match.group_name}</span>
                                         {/* MOSTRAR PUNTOS SI EL JUEGO TERMINÓ */}
                                         {isFinished ? (
@@ -262,3 +280,5 @@ export const Predictions = () => {
         </div>
     );
 };
+
+export default Predictions;
