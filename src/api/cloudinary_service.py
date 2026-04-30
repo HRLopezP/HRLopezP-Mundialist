@@ -19,7 +19,7 @@ class CloudinaryService:
             result = cloudinary.uploader.upload(
                 file,
                 upload_preset = os.getenv('VITE_CLOUDINARY_UPLOAD_PRESET'),
-                resource_type = "auto"
+                resource_type = "image"
             )
             return result.get("secure_url"), result.get("public_id")
         except Exception as e:

@@ -286,22 +286,16 @@ def update_user_photo():
                 "message": "Formato no permitido. Solo se aceptan imágenes (JPG, PNG, WEBP, GIF)."
             }), 400
         
-        # 1. Si ya tiene una foto, la borramos de Cloudinary para no gastar espacio
-        if user.profile_public_id:
-            CloudinaryService.delete_file(user.profile_public_id)
-        
-        # 2. Subimos la nueva
         url, public_id = CloudinaryService.upload_file(file)
         
         if url:
-            # Si tenía una foto vieja con ID, la borramos (esto ya lo tienes, está bien)
+            # Si tenía una foto vieja con ID, la borramos
             if user.profile_public_id:
                 CloudinaryService.delete_file(user.profile_public_id)
             
             user.profile = url
             user.profile_public_id = public_id
             
-            db.session.add(user)
             db.session.commit()
             
             return jsonify({"message": "Foto actualizada", "profile": url}), 200
@@ -310,6 +304,7 @@ def update_user_photo():
 
     except Exception as e:
         print(f"DEBUG QUINIELA - Error en update_photo: {str(e)}")
+        # app.logger.error(f"Error en update_photo: {str(e)}")
         return jsonify({"message": "Error al procesar la imagen"}), 500
 
 
@@ -317,22 +312,40 @@ def update_user_photo():
 @api.route('/user/update-profile', methods=['PATCH'])
 @jwt_required()
 def update_profile():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    data = request.json
-    
-    # Actualizar nombres si vienen en el body
-    if 'name' in data: user.name = data['name']
-    if 'lastname' in data: user.lastname = data['lastname']
-    
-    # Lógica para cambio de contraseña
-    if 'current_password' in data and 'new_password' in data:
-        if not check_password_hash(user.password, data['current_password']):
-            return jsonify({"message": "La contraseña actual es incorrecta"}), 400
-        user.password = generate_password_hash(data['new_password'])
-    
-    db.session.commit()
-    return jsonify({"message": "Perfil actualizado correctamente", "user": user.serialize()}), 200
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        data = request.json
+        
+        if not user:
+            return jsonify({"message": "Usuario no encontrado"}), 404
+        
+        if 'name' in data: user.name = data['name']
+        if 'lastname' in data: user.lastname = data['lastname']
+        
+        if 'profile' in data:
+            new_url = data['profile']
+            if CloudinaryService.validate_cloudinary_url(new_url):
+                user.profile = new_url
+            else:
+                return jsonify({"message": "La fuente de la imagen no es válida"}), 400
+
+        if 'current_password' in data and 'new_password' in data:
+            if not check_password_hash(user.password, data['current_password']):
+                return jsonify({"message": "La contraseña actual es incorrecta"}), 400
+            
+            user.password = generate_password_hash(data['new_password'])
+        
+        db.session.commit()
+        return jsonify({
+            "message": "Perfil actualizado correctamente", 
+            "user": user.serialize()
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        # app.logger.error(f"Error en update_profile: {str(e)}")
+        return jsonify({"message": "Error interno al actualizar el perfil"}), 500
 
 # Rol-ver
 @api.route('/roles', methods=['GET'])

@@ -66,6 +66,13 @@ const Profile = () => {
         const file = e.target.files[0];
         if (!file) return;
 
+        const maxSize = 2 * 1024 * 1024;
+        if (file.size > maxSize) {
+            toast.error("¡Archivo demasiado grande! El máximo permitido es 2MB.");
+            e.target.value = "";
+            return;
+        }
+
         const formData = new FormData();
         formData.append("file", file);
 
@@ -112,10 +119,10 @@ const Profile = () => {
     };
 
     const closeAndResetModal = () => {
-        setPassData({ current: "", new: "", confirm: "" }); 
-        setPasswordValidity({}); 
-        setPassMatch(true); 
-        setShowPassModal(false); 
+        setPassData({ current: "", new: "", confirm: "" });
+        setPasswordValidity({});
+        setPassMatch(true);
+        setShowPassModal(false);
     };
 
     const updatePassword = async () => {
@@ -144,7 +151,7 @@ const Profile = () => {
 
             if (response.ok) {
                 toast.success("¡Contraseña actualizada correctamente!", { id: toastId });
-                closeAndResetModal(); 
+                closeAndResetModal();
             }
             else {
                 const errorMessage = data?.message || "Error al actualizar. Verifica tus datos.";
@@ -289,7 +296,7 @@ const Profile = () => {
                             </button>
                             <button
                                 className="btn btn-dark w-100"
-                                onClick={closeAndResetModal} 
+                                onClick={closeAndResetModal}
                             >
                                 Cancelar
                             </button>
