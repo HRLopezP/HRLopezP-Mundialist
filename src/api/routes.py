@@ -113,28 +113,51 @@ def login():
 
     if not user or not check_password_hash(user.password, password):
         return jsonify({"message": "Correo o contraseña incorrectos"}), 401
+    
+    if user.is_blocked:
+        return jsonify({"message": "Cuenta bloqueada por seguridad. Por favor, restablece tu contraseña para recuperar el acceso."}), 403
 
     if not user.is_active:
         return jsonify({"message": "Tu cuenta está pendiente de activación por el administrador."}), 403
 
-    user_role_name = user.rol.name_rol if user.rol else "Participante"
-    is_admin = user_role_name == "Administrador"
+    if check_password_hash(user.password, password):
+        # ¡ÉXITO! Reseteamos los intentos fallidos porque entró bien
+        user.failed_attempts = 0
+        db.session.commit()
 
-    additional_claims = {
-        "is_administrator": is_admin,
-        "rol": user_role_name,
-    }
+        user_role_name = user.rol.name_rol if user.rol else "Participante"
+        is_admin = user_role_name == "Administrador"
 
-    access_token = create_access_token(
-        identity=str(user.id_user),
-        additional_claims=additional_claims
-    )
+        additional_claims = {
+            "is_administrator": is_admin,
+            "rol": user_role_name,
+            "name": user.name 
+        }
 
-    return jsonify({
-        "message": "¡Bienvenido a Élite Mundialista!",
-        "token": access_token,
-        "user": user.serialize()
-    }), 200
+        access_token = create_access_token(
+            identity=str(user.id_user),
+            additional_claims=additional_claims
+        )
+
+        return jsonify({
+            "message": "¡Bienvenido a Élite Mundialista!",
+            "token": access_token,
+            "user": user.serialize()
+        }), 200
+
+    else:
+        user.failed_attempts += 1
+        
+        # 4. ¿Llegó al límite de 5 intentos?
+        if user.failed_attempts >= 5:
+            user.is_blocked = True
+            user.is_active = False
+            db.session.commit()
+            
+            return jsonify({"message": "Has superado el límite de intentos. Tu cuenta ha sido bloqueada por seguridad."}), 403
+        
+        db.session.commit()
+        return jsonify({"message": "Credenciales inválidas"}), 401
 
 
 @api.route('/request-password-reset', methods=['POST'])
@@ -203,6 +226,10 @@ def reset_password():
 
     # 5. Encriptar y guardar
     user.password = generate_password_hash(new_password)
+    user.failed_attempts = 0
+    if user.is_blocked:
+        user.is_blocked = False
+        user.is_active = True
 
     try:
         db.session.commit()
@@ -210,6 +237,24 @@ def reset_password():
     except Exception as e:
         db.session.rollback()
         return jsonify({"message": "Error al guardar la nueva contraseña"}), 500
+
+
+#Bloquear usuario
+@api.route('/users/<int:user_id>/unlock', methods=['PATCH'])
+@jwt_required()
+@manager_required
+def unlock_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"message": "Usuario no encontrado"}), 404
+
+    user.is_blocked = False
+    user.failed_attempts = 0
+    user.is_active = True
+    
+    db.session.commit()
+    return jsonify({"message": f"El acceso de {user.name} ha sido restaurado."}), 200
+
 
 #Ver Perfil
 @api.route('/user/profile', methods=['GET'])
