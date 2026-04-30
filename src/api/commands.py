@@ -82,9 +82,9 @@ def setup_commands(app):
         print("🛠️ Configurando roles...")
         roles = ["Administrador", "Participante"]
         for role_name in roles:
-            role = Rol.query.filter_by(name=role_name).first()
+            role = Rol.query.filter_by(name_rol=role_name).first()
             if not role:
-                new_role = Rol(name=role_name)
+                new_role = Rol(name_rol=role_name)
                 db.session.add(new_role)
         
         db.session.commit()
