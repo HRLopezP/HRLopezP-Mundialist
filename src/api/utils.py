@@ -100,3 +100,21 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+def setup_app_logger(app):
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [en %(pathname)s:%(lineno)d]'
+    )
+
+    file_handler = logging.FileHandler('quiniela_errors.log')
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.ERROR)
+
+    app.logger.addHandler(file_handler)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    app.logger.addHandler(stream_handler)
+    
+    app.logger.setLevel(logging.ERROR)
+
+

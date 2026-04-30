@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, url_for, Blueprint, json
+from flask import Flask, request, jsonify, url_for, Blueprint, json, current_app
 from api.models import db, User, Rol, Match, Prediction, AuditLog
 from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token, allowed_file
@@ -70,10 +70,8 @@ def register_user():
     target_rol = Rol.query.filter(Rol.name_rol.ilike(rol_to_find.strip())).first()
     if not target_rol:
         all_roles = [r.name_rol for r in Rol.query.all()]
-        return jsonify({
-            "message": f"Error crítico: El rol '{rol_to_find}' no coincide.",
-            "debug_roles_en_db": all_roles 
-        }), 500
+        current_app.logger.error(f"Error crítico de configuración: El rol '{rol_to_find}' no existe en la DB. Roles actuales: {all_roles}")
+        return jsonify({"message": "Error interno en la configuración de roles"}), 500
 
     hashed_password = generate_password_hash(password)
     
@@ -93,106 +91,103 @@ def register_user():
         return jsonify({"message": msg}), 201
     except Exception as error:
         db.session.rollback()
+        current_app.logger.error(f"Error al registrar usuario {email}: {str(error)}")
         return jsonify({"message": "Error en el servidor", "error": str(error)}), 500
 
 
 @api.route("/login", methods=["POST"])
 def login():
-    data = request.get_json(silent=True)
+    try:
+        data = request.get_json(silent=True)
 
-    if data is None:
-        return jsonify({"message": "No se proporcionaron datos"}), 400
+        if data is None:
+            return jsonify({"message": "No se proporcionaron datos"}), 400
 
-    email = data.get("email", "").lower().strip()
-    password = data.get("password", "").strip()
+        email = data.get("email", "").lower().strip()
+        password = data.get("password", "").strip()
 
-    if not email or not password:
-        return jsonify({"message": "El correo y la contraseña son obligatorios"}), 400
+        if not email or not password:
+            return jsonify({"message": "El correo y la contraseña son obligatorios"}), 400
 
-    user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(email=email).first()
 
-    if not user:
-        return jsonify({"message": "Correo o contraseña incorrectos"}), 401
+        if not user:
+            return jsonify({"message": "Correo o contraseña incorrectos"}), 401
 
-    if user.is_blocked or not user.is_active:
-        return jsonify({"message": "Cuenta bloqueada o pendiente de activación. Contacta al administrador."}), 403
+        if user.is_blocked or not user.is_active:
+            return jsonify({"message": "Cuenta bloqueada o pendiente de activación. Contacta al administrador."}), 403
 
-    if check_password_hash(user.password, password):
-        user.failed_attempts = 0
-        db.session.commit()
-
-        user_role_name = user.rol.name_rol if user.rol else "Participante"
-        is_admin = user_role_name == "Administrador"
-
-        additional_claims = {
-            "is_administrator": is_admin,
-            "rol": user_role_name,
-            "name": user.name 
-        }
-
-        access_token = create_access_token(
-            identity=str(user.id_user),
-            additional_claims=additional_claims
-        )
-
-        return jsonify({
-            "message": "¡Bienvenido a Élite Mundialista!",
-            "token": access_token,
-            "user": user.serialize()
-        }), 200
-
-    else:
-        user.failed_attempts += 1
-        
-        if user.failed_attempts >= 5:
-            user.is_blocked = True
-            user.is_active = False
+        if check_password_hash(user.password, password):
+            user.failed_attempts = 0
             db.session.commit()
-            
-            return jsonify({"message": "Has superado el límite de intentos. Tu cuenta ha sido bloqueada por seguridad."}), 403
-        
-        db.session.commit()
-        return jsonify({"message": "Credenciales inválidas"}), 401
 
+            user_role_name = user.rol.name_rol if user.rol else "Participante"
+            is_admin = user_role_name == "Administrador"
+
+            additional_claims = {
+                "is_administrator": is_admin,
+                "rol": user_role_name,
+                "name": user.name 
+            }
+
+            access_token = create_access_token(
+                identity=str(user.id_user),
+                additional_claims=additional_claims
+            )
+
+            return jsonify({
+                "message": "¡Bienvenido a Élite Mundialista!",
+                "token": access_token,
+                "user": user.serialize()
+            }), 200
+
+        else:
+            user.failed_attempts += 1
+            
+            if user.failed_attempts >= 5:
+                user.is_blocked = True
+                user.is_active = False
+                db.session.commit()
+                current_app.logger.warning(f"Cuenta BLOQUEADA por intentos fallidos: {email}")
+                return jsonify({"message": "Has superado el límite de intentos. Tu cuenta ha sido bloqueada por seguridad."}), 403
+            
+            db.session.commit()
+            return jsonify({"message": "Credenciales inválidas"}), 401
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error en proceso de Login para {email}: {str(e)}")
+        return jsonify({"message": "Error interno del servidor"}), 500
 
 @api.route('/request-password-reset', methods=['POST'])
 def request_password_reset():
     try:
         data = request.get_json()
-        # CAMBIO AQUÍ: Normalizamos el email que recibimos del formulario
         raw_email = data.get('email', '')
         email_ingresado = raw_email.lower().strip() if raw_email else ""
 
         if not email_ingresado:
             return jsonify({"message": "El correo es obligatorio"}), 400
 
-        # Buscamos en la base de datos (donde todo está en minúsculas)
         user = User.query.filter_by(email=email_ingresado).first()
 
         if user:
-            # 1. Generamos el token seguro
             token = generate_reset_token(user.email)
             
-            # 2. Preparamos el nombre para el saludo
-            # Ajusta según tus campos (ej. user.name o user.username)
             user_name = getattr(user, 'name', 'Usuario') 
 
-            # 3. Delegamos el envío al "Chef de correos"
             email_sent = send_password_reset_email(user.email, user_name, token)
 
             if email_sent:
                 return jsonify({"message": "Si el correo existe, se ha enviado un enlace de recuperación"}), 200
             else:
-                # Si el "Chef de correos" falla, devolvemos error
                 return jsonify({"message": "Error al procesar el envío del correo"}), 500
 
-        # Mantenemos el 404 para desarrollo como lo tienes
         return jsonify({"message": "Usuario no encontrado"}), 404
 
     except Exception as e:
-        # Esto nos dirá exactamente qué falló en la consola
-        print(f"Error en reset: {str(e)}") 
-        return jsonify({"message": "Error interno", "error": str(e)}), 500
+        current_app.logger.error(f"Error en request_password_reset: {str(e)}")
+        return jsonify({"message": "Error interno al procesar la solicitud"}), 500
 
 
 @api.route('/reset-password', methods=['POST'])
@@ -230,11 +225,11 @@ def reset_password():
         db.session.commit()
         return jsonify({"message": "¡Golazo! Contraseña actualizada. Ya puedes iniciar sesión."}), 200
     except Exception as e:
-        db.session.rollback()
+        current_app.logger.error(f"Error en reset_password para el token proporcionado: {str(e)}")
         return jsonify({"message": "Error al guardar la nueva contraseña"}), 500
 
 
-#Bloquear usuario
+#Desbloquear usuario
 @api.route('/users/<int:user_id>/unlock', methods=['PATCH'])
 @jwt_required()
 @manager_required
@@ -265,8 +260,9 @@ def get_profile():
         return jsonify(user.serialize()), 200
 
     except Exception as e:
-        print(f"DEBUG QUINIELA - Error en get_profile: {str(e)}")
+        current_app.logger.error(f"Error en get_profile (User ID: {user_id}): {str(e)}")
         return jsonify({"message": "Error interno del servidor"}), 500
+    
 
 # 2. Actualizar Foto de Perfil
 @api.route('/user/update-photo', methods=['PATCH'])
@@ -303,8 +299,7 @@ def update_user_photo():
         return jsonify({"message": "No se pudo subir la imagen a la nube"}), 500
 
     except Exception as e:
-        print(f"DEBUG QUINIELA - Error en update_photo: {str(e)}")
-        # app.logger.error(f"Error en update_photo: {str(e)}")
+        current_app.logger.error(f"Fallo en actualización de foto: {str(e)}")
         return jsonify({"message": "Error al procesar la imagen"}), 500
 
 
@@ -344,7 +339,7 @@ def update_profile():
 
     except Exception as e:
         db.session.rollback()
-        # app.logger.error(f"Error en update_profile: {str(e)}")
+        current_app.logger.error(f"Error en update_profile: {str(e)}")
         return jsonify({"message": "Error interno al actualizar el perfil"}), 500
 
 # Rol-ver
@@ -352,8 +347,12 @@ def update_profile():
 @jwt_required()
 @manager_required
 def get_all_roles():
-    roles = Rol.query.all()
-    return jsonify([rol.serialize() for rol in roles]), 200
+    try: 
+        roles = Rol.query.all()
+        return jsonify([rol.serialize() for rol in roles]), 200
+    except Exception as e:
+        current_app.logger.error(f"Error al obtener lista de roles: {str(e)}")
+        return jsonify({"msg": "No se pudieron cargar los roles"}), 500
 
 
 # Rol-crear
@@ -361,54 +360,71 @@ def get_all_roles():
 @jwt_required()
 @manager_required
 def create_rol():
-    body = request.get_json()
-    
-    if not body or "name_rol" not in body:
-        return jsonify({"msg": "El nombre del rol es obligatorio"}), 400
+    try:
+        body = request.get_json()
         
-    # Verificar si ya existe
-    exist = Rol.query.filter_by(name_rol=body["name_rol"]).first()
-    if exist:
-        return jsonify({"msg": "Este rol ya existe"}), 400
+        if not body or "name_rol" not in body:
+            return jsonify({"msg": "El nombre del rol es obligatorio"}), 400
+            
+        # Verificar si ya existe
+        exist = Rol.query.filter_by(name_rol=body["name_rol"]).first()
+        if exist:
+            return jsonify({"msg": "Este rol ya existe"}), 400
 
-    new_rol = Rol(name_rol=body["name_rol"])
-    db.session.add(new_rol)
-    db.session.commit()
+        new_rol = Rol(name_rol=body["name_rol"])
+        db.session.add(new_rol)
+        db.session.commit()
+        
+        return jsonify({"msg": "Rol creado con éxito", "rol": new_rol.serialize()}), 201
     
-    return jsonify({"msg": "Rol creado con éxito", "rol": new_rol.serialize()}), 201
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al crear rol: {str(e)}")
+        return jsonify({"msg": "Error interno al crear el rol"}), 500
 
 # Rol-editar
 @api.route('/roles/<int:id>', methods=['PUT'])
 @jwt_required()
 @manager_required
 def update_rol(id):
-    rol = Rol.query.get(id)
-    if not rol:
-        return jsonify({"msg": "Rol no encontrado"}), 404
-        
-    body = request.get_json()
-    if "name_rol" in body:
-        rol.name_rol = body["name_rol"]
-        db.session.commit()
-        return jsonify({"msg": "Rol actualizado", "rol": rol.serialize()}), 200
-        
-    return jsonify({"msg": "Nada que actualizar"}), 400
+    try:
+        rol = Rol.query.get(id)
+        if not rol:
+            return jsonify({"msg": "Rol no encontrado"}), 404
+            
+        body = request.get_json()
+        if "name_rol" in body:
+            rol.name_rol = body["name_rol"]
+            db.session.commit()
+            return jsonify({"msg": "Rol actualizado", "rol": rol.serialize()}), 200
+            
+        return jsonify({"msg": "Nada que actualizar"}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al editar rol ID {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al actualizar el rol"}), 500
+    
 
 # Rol-eliminar
 @api.route('/roles/<int:id>', methods=['DELETE'])
 @jwt_required()
 @manager_required
 def delete_rol(id):
-    rol = Rol.query.get(id)
-    if not rol:
-        return jsonify({"msg": "Rol no encontrado"}), 404
-        
-    if len(rol.users) > 0:
-        return jsonify({"msg": "No se puede eliminar un rol que tiene usuarios asignados"}), 400
+    try:
+        rol = Rol.query.get(id)
+        if not rol:
+            return jsonify({"msg": "Rol no encontrado"}), 404
+            
+        if len(rol.users) > 0:
+            return jsonify({"msg": "No se puede eliminar un rol que tiene usuarios asignados"}), 400
 
-    db.session.delete(rol)
-    db.session.commit()
-    return jsonify({"msg": "Rol eliminado correctamente"}), 200
+        db.session.delete(rol)
+        db.session.commit()
+        return jsonify({"msg": "Rol eliminado correctamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al eliminar rol ID {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al intentar eliminar el rol"}), 500
 
 
 #Usuarios- ver
@@ -416,115 +432,137 @@ def delete_rol(id):
 @jwt_required()
 @manager_required
 def get_users():
-    search = request.args.get('search', '')
-    status = request.args.get('status', 'all')
-    
-    query = User.query
-    
-    if search:
-        query = query.filter(
-            (User.name.ilike(f"%{search}%")) | 
-            (User.lastname.ilike(f"%{search}%")) | 
-            (User.email.ilike(f"%{search}%"))
-        )
-    
-    if status == 'active':
-        query = query.filter_by(is_active=True)
-    elif status == 'inactive':
-        query = query.filter_by(is_active=False)
+    try:
+        search = request.args.get('search', '')
+        status = request.args.get('status', 'all')
         
-    data = paginate_query(query, model_name="users")
-    return jsonify(data), 200
+        query = User.query
+        
+        if search:
+            query = query.filter(
+                (User.name.ilike(f"%{search}%")) | 
+                (User.lastname.ilike(f"%{search}%")) | 
+                (User.email.ilike(f"%{search}%"))
+            )
+        
+        if status == 'active':
+            query = query.filter_by(is_active=True)
+        elif status == 'inactive':
+            query = query.filter_by(is_active=False)
+            
+        data = paginate_query(query, model_name="users")
+        return jsonify(data), 200
+    except Exception as e:
+        current_app.logger.error(f"Error en get_users (filtros: {request.args}): {str(e)}")
+        return jsonify({"msg": "Error interno al intentar ver todos los usuarios"}), 500
 
 # Cambiar estatus
 @api.route('/users/<int:id>/status', methods=['PATCH'])
 @jwt_required()
 @manager_required
 def toggle_user_status(id):
-    current_user_id = get_jwt_identity()
-    
-    if id == 1:
-        return jsonify({"msg": "El Administrador Principal es intocable"}), 403
-    if id == int(current_user_id):
-        return jsonify({"msg": "No puedes desactivar tu propia cuenta"}), 403
+    try: 
+        current_user_id = get_jwt_identity()
+        
+        if id == 1:
+            return jsonify({"msg": "El Administrador Principal es intocable"}), 403
+        if id == int(current_user_id):
+            return jsonify({"msg": "No puedes desactivar tu propia cuenta"}), 403
 
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"msg": "Usuario no encontrado"}), 404
-    
-    user.is_active = not user.is_active
-    db.session.commit()
-    return jsonify({"msg": "Estatus actualizado", "user": user.serialize()}), 200
+        user = User.query.get(id)
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        user.is_active = not user.is_active
+        db.session.commit()
+        return jsonify({"msg": "Estatus actualizado", "user": user.serialize()}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al cambiar estatus del usuario {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al cambiar estatus"}), 500
 
 # Cambiar rol
 @api.route('/users/<int:id>/role', methods=['PATCH'])
 @jwt_required()
 @manager_required
 def change_user_role(id):
-    current_user_id = get_jwt_identity()
-    
-    if id == 1:
-        return jsonify({"msg": "No se puede cambiar el rol del Administrador Principal"}), 403
-    if id == int(current_user_id):
-        return jsonify({"msg": "No puedes cambiar tu propio rol"}), 403
+    try: 
+        current_user_id = get_jwt_identity()
+        
+        if id == 1:
+            return jsonify({"msg": "No se puede cambiar el rol del Administrador Principal"}), 403
+        if id == int(current_user_id):
+            return jsonify({"msg": "No puedes cambiar tu propio rol"}), 403
 
-    body = request.get_json()
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"msg": "Usuario no encontrado"}), 404
+        body = request.get_json()
+        user = User.query.get(id)
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
 
-    user.rol_id = body.get("id_rol")
-    db.session.commit()
-    return jsonify({"msg": "Rol actualizado", "user": user.serialize()}), 200
+        user.rol_id = body.get("id_rol")
+        db.session.commit()
+        return jsonify({"msg": "Rol actualizado", "user": user.serialize()}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al cambiar rol del usuario {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al intentar cambiar el rol"}), 500
 
 # Usuarios borrar
 @api.route('/users/<int:id>', methods=['DELETE'])
 @jwt_required()
 @manager_required
 def delete_user(id):
-    current_user_id = get_jwt_identity()
-    
-    if id == 1:
-        return jsonify({"msg": "Acción prohibida: El Administrador Principal no puede ser eliminado"}), 403
-    if id == int(current_user_id):
-        return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 403
+    try:
+        current_user_id = get_jwt_identity()
+        
+        if id == 1:
+            return jsonify({"msg": "Acción prohibida: El Administrador Principal no puede ser eliminado"}), 403
+        if id == int(current_user_id):
+            return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 403
 
-    user = User.query.get(id)
-    if not user:
-        return jsonify({"msg": "Usuario no encontrado"}), 404
-    
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({"msg": "Usuario eliminado correctamente"}), 200
-
+        user = User.query.get(id)
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error crítico al eliminar usuario {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al intentar eliminar el usuario"}), 500
 
 
 # ver todos los juegos
 @api.route('/matches', methods=['GET'])
 @jwt_required()
 def get_matches():
-    user_id = get_jwt_identity()
-    
-    matches = Match.query.order_by(Match.match_date.asc()).all()
-    
-    results = []
-    for m in matches:
-        match_data = m.serialize()
+    try:
+        user_id = get_jwt_identity()
         
-        if user_id:
-            pred = Prediction.query.filter_by(user_id=user_id, match_id=m.id_match).first()
-            if pred:
-                match_data["user_prediction"] = {
-                    "home_score": pred.predicted_home_score,
-                    "away_score": pred.predicted_away_score,
-                    "id_prediction": pred.id_prediction
-                }
+        matches = Match.query.order_by(Match.match_date.asc()).all()
+        
+        results = []
+        for m in matches:
+            match_data = m.serialize()
+            
+            if user_id:
+                pred = Prediction.query.filter_by(user_id=user_id, match_id=m.id_match).first()
+                if pred:
+                    match_data["user_prediction"] = {
+                        "home_score": pred.predicted_home_score,
+                        "away_score": pred.predicted_away_score,
+                        "id_prediction": pred.id_prediction
+                    }
+                else:
+                    match_data["user_prediction"] = None
             else:
-                match_data["user_prediction"] = None
-        else:
-            match_data["user_prediction"] = None       
-        results.append(match_data)
-    return jsonify(results), 200
+                match_data["user_prediction"] = None       
+            results.append(match_data)
+        return jsonify(results), 200
+    except Exception as e:
+        current_app.logger.error(f"Error al cargar matches para usuario {get_jwt_identity()}: {str(e)}")
+        return jsonify({"msg": "Error interno al intentar ver todos los juegos"}), 500
 
 
 # Crear-editar una predicción
@@ -572,7 +610,8 @@ def save_prediction():
         return jsonify({"msg": msg, "prediction": prediction.serialize()}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": f"Error al guardar: {str(e)}"}), 500
+        current_app.logger.error(f"Error al guardar predicción (User: {user_id}, Match: {match_id}): {str(e)}")
+        return jsonify({"msg": "Error interno al procesar tu predicción. Intenta de nuevo."}), 500
 
 
 #Administrador sube marcador oficial
@@ -629,7 +668,8 @@ def update_match_result(match_id):
         return jsonify({"msg": "Resultado sellado. Tienes 2 horas para correcciones."}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"msg": f"Error en DB: {str(e)}"}), 500
+        current_app.logger.error(f"FALLO CRÍTICO al actualizar puntos - Partido {match_id}: {str(e)}")
+        return jsonify({"msg": "Error crítico al actualizar los puntos de los usuarios"}), 500
 
 
 # Ver auditoría de cambios de resultados finales
@@ -637,49 +677,57 @@ def update_match_result(match_id):
 @jwt_required()
 @manager_required
 def get_audit_logs():
-    order_param = request.args.get('order', 'desc')
-    match_id = request.args.get('match_id')
-    query = AuditLog.query
+    try:
+        order_param = request.args.get('order', 'desc')
+        match_id = request.args.get('match_id')
+        query = AuditLog.query
 
-    if match_id:
-        query = query.filter(AuditLog.details.contains(f"(ID {match_id})"))
-    
-    if order_param == 'asc':
-        query = query.order_by(AuditLog.timestamp.asc())
-    else:
-        query = query.order_by(AuditLog.timestamp.desc())
+        if match_id:
+            query = query.filter(AuditLog.details.contains(f"(ID {match_id})"))
         
-    return jsonify(paginate_query(query, model_name="logs")), 200
+        if order_param == 'asc':
+            query = query.order_by(AuditLog.timestamp.asc())
+        else:
+            query = query.order_by(AuditLog.timestamp.desc())
+            
+        return jsonify(paginate_query(query, model_name="logs")), 200
+    except Exception as e:
+        current_app.logger.error(f"Error al leer logs de auditoría: {str(e)}")
+        return jsonify({"msg": "Error al cargar el historial de auditoría"}), 500
 
 
 # Ver el ranking actualizado
 @api.route('/ranking', methods=['GET'])
 @jwt_required()
 def get_ranking():
-    users = User.query.filter_by(is_active=True).all()
-    ranking_list = []
-    
-    for user in users:
-        preds = Prediction.query.filter(
-            Prediction.user_id == user.id_user,
-            Prediction.points_earned != None
-        ).all()
+    try:
+        users = User.query.filter_by(is_active=True).all()
+        ranking_list = []
         
-        total_points = sum(p.points_earned for p in preds)
-        exact_hits = sum(1 for p in preds if p.points_earned == 3)
-        trend_hits = sum(1 for p in preds if p.points_earned == 1)
+        for user in users:
+            preds = Prediction.query.filter(
+                Prediction.user_id == user.id_user,
+                Prediction.points_earned != None
+            ).all()
+            
+            total_points = sum(p.points_earned for p in preds)
+            exact_hits = sum(1 for p in preds if p.points_earned == 3)
+            trend_hits = sum(1 for p in preds if p.points_earned == 1)
+            
+            ranking_list.append({
+                "id_user": user.id_user,
+                "username": f"{user.name} {user.lastname}",
+                "total_points": total_points,
+                "exact_hits": exact_hits,
+                "trend_hits": trend_hits
+            })
         
-        ranking_list.append({
-            "id_user": user.id_user,
-            "username": f"{user.name} {user.lastname}",
-            "total_points": total_points,
-            "exact_hits": exact_hits,
-            "trend_hits": trend_hits
-        })
-    
-    ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
-    
-    return jsonify(ranking_list), 200
+        ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
+        
+        return jsonify(ranking_list), 200
+    except Exception as e:
+        current_app.logger.error(f"Error al generar el Ranking: {str(e)}")
+        return jsonify({"msg": "No se pudo calcular el ranking en este momento"}), 500
 
 # Ver las predicciones finalizadas
 @api.route('/predictions/user/<int:user_id>', methods=['GET'])
