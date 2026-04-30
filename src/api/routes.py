@@ -111,17 +111,13 @@ def login():
 
     user = User.query.filter_by(email=email).first()
 
-    if not user or not check_password_hash(user.password, password):
+    if not user:
         return jsonify({"message": "Correo o contraseña incorrectos"}), 401
-    
-    if user.is_blocked:
-        return jsonify({"message": "Cuenta bloqueada por seguridad. Por favor, restablece tu contraseña para recuperar el acceso."}), 403
 
-    if not user.is_active:
-        return jsonify({"message": "Tu cuenta está pendiente de activación por el administrador."}), 403
+    if user.is_blocked or not user.is_active:
+        return jsonify({"message": "Cuenta bloqueada o pendiente de activación. Contacta al administrador."}), 403
 
     if check_password_hash(user.password, password):
-        # ¡ÉXITO! Reseteamos los intentos fallidos porque entró bien
         user.failed_attempts = 0
         db.session.commit()
 
@@ -148,7 +144,6 @@ def login():
     else:
         user.failed_attempts += 1
         
-        # 4. ¿Llegó al límite de 5 intentos?
         if user.failed_attempts >= 5:
             user.is_blocked = True
             user.is_active = False

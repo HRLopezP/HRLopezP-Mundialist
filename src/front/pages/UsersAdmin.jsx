@@ -53,9 +53,10 @@ const UsersAdmin = () => {
                 });
                 if (response.ok) {
                     toast.success(`Rol actualizado a ${nuevoRol}`);
-                    loadInitialData();
+                    loadInitialData(); // Recargamos para refrescar visualmente
                 }
             } else {
+                // Si cancela, recargamos para que el select vuelva a su valor original
                 loadInitialData();
             }
         });
@@ -91,6 +92,14 @@ const UsersAdmin = () => {
                 }
             }
         });
+    };
+
+    const handleUnlock = async (user) => {
+        const { response, data } = await apiFetch(`/users/${user.id_user}/unlock`, { method: 'PATCH' });
+        if (response.ok) {
+            toast.success(data.message, { icon: '🔓' });
+            setUsers(users.map(u => u.id_user === user.id_user ? { ...u, is_blocked: false, is_active: true } : u));
+        }
     };
 
     useEffect(() => {
@@ -174,21 +183,43 @@ const UsersAdmin = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <div className="form-check form-switch">
-                                                <input
-                                                    className="form-check-input custom-switch" type="checkbox"
-                                                    checked={u.is_active} disabled={isRoot}
-                                                    onChange={() => handleToggleStatus(u)}
-                                                />
+                                            <div className="d-flex align-items-center gap-2">
+                                                {u.is_blocked ? (
+                                                    <span className="badge bg-danger animate__animated animate__pulse animate__infinite" title="Bloqueado por intentos fallidos">
+                                                        BLOQUEADO
+                                                    </span>
+                                                ) : (
+                                                    <div className="form-check form-switch">
+                                                        <input
+                                                            className="form-check-input custom-switch" type="checkbox"
+                                                            checked={u.is_active} disabled={isRoot}
+                                                            onChange={() => handleToggleStatus(u)}
+                                                        />
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="text-center">
+                                            <div className="d-flex justify-content-center gap-2">
+                                                {u.is_blocked && (
+                                                    <button className="btn btn-link text-warning p-0" onClick={() => handleUnlock(u)} title="Desbloquear acceso">
+                                                        <i className="fa-solid fa-lock-open"></i>
+                                                    </button>
+                                                )}
+                                                {!isRoot && (
+                                                    <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
+                                                        <i className="fa-solid fa-trash-can"></i>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {/* <td className="text-center">
                                             {!isRoot && (
                                                 <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
                                                     <i className="fa-solid fa-trash-can"></i>
                                                 </button>
                                             )}
-                                        </td>
+                                        </td> */}
                                     </tr>
                                 )
                             })}
@@ -196,7 +227,7 @@ const UsersAdmin = () => {
                     </table>
                 </div>
 
-                {/* Vista teléfonos */}
+                {/* Vista teléfonos mejorada */}
                 <div className="d-md-none">
                     {users.map(u => {
                         const isRoot = u.id_user === 1;
@@ -242,14 +273,20 @@ const UsersAdmin = () => {
                                     </div>
 
                                     {/* Switch de Estatus */}
-                                    <div className="col-4 d-flex justify-content-end">
-                                        <div className="form-check form-switch">
-                                            <input
-                                                className="form-check-input custom-switch" type="checkbox"
-                                                checked={u.is_active} disabled={isRoot}
-                                                onChange={() => handleToggleStatus(u)}
-                                            />
-                                        </div>
+                                    <div className="col-4 d-flex justify-content-end align-items-center gap-2">
+                                        {u.is_blocked ? (
+                                            <button className="btn btn-sm btn-outline-danger border-0" onClick={() => handleUnlock(u)}>
+                                                <i className="fa-solid fa-lock-open"></i>
+                                            </button>
+                                        ) : (
+                                            <div className="form-check form-switch">
+                                                <input
+                                                    className="form-check-input custom-switch" type="checkbox"
+                                                    checked={u.is_active} disabled={isRoot}
+                                                    onChange={() => handleToggleStatus(u)}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
