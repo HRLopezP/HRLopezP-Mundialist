@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json
 from api.models import db, User, Rol, Match, Prediction, AuditLog
 from sqlalchemy.orm import joinedload
-from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token
+from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token, allowed_file
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
@@ -280,12 +280,17 @@ def update_user_photo():
             return jsonify({"message": "No se seleccionó ninguna imagen"}), 400
         
         file = request.files['file']
+
+        if not allowed_file(file.filename):
+            return jsonify({
+                "message": "Formato no permitido. Solo se aceptan imágenes (JPG, PNG, WEBP, GIF)."
+            }), 400
         
         # 1. Si ya tiene una foto, la borramos de Cloudinary para no gastar espacio
         if user.profile_public_id:
             CloudinaryService.delete_file(user.profile_public_id)
         
-        # 2. Subimos la nueva usando el PRESET (que ya tiene la carpeta configurada)
+        # 2. Subimos la nueva
         url, public_id = CloudinaryService.upload_file(file)
         
         if url:
@@ -293,12 +298,11 @@ def update_user_photo():
             if user.profile_public_id:
                 CloudinaryService.delete_file(user.profile_public_id)
             
-            # Asignamos los nuevos valores
             user.profile = url
             user.profile_public_id = public_id
             
-            db.session.add(user) # <-- Aseguramos el objeto en la sesión
-            db.session.commit()  # <-- Guardamos en la DB
+            db.session.add(user)
+            db.session.commit()
             
             return jsonify({"message": "Foto actualizada", "profile": url}), 200
         
@@ -307,6 +311,7 @@ def update_user_photo():
     except Exception as e:
         print(f"DEBUG QUINIELA - Error en update_photo: {str(e)}")
         return jsonify({"message": "Error al procesar la imagen"}), 500
+
 
 # Actualizar datos (Nombre, Apellido, Contraseña)
 @api.route('/user/update-profile', methods=['PATCH'])

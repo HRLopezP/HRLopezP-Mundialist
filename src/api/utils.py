@@ -2,6 +2,7 @@ from flask import jsonify, url_for, request
 import re
 import os
 from itsdangerous import URLSafeTimedSerializer
+import logging
 
 class APIException(Exception):
     status_code = 400
@@ -75,13 +76,11 @@ def val_password(password: str) -> bool:
 
 
 def generate_reset_token(email):
-    # Usamos la clave secreta de tu app para "firmar" el token
     serializer = URLSafeTimedSerializer(os.getenv("FLASK_APP_KEY"))
-    # El token llevará el email y una marca de tiempo
     return serializer.dumps(email, salt="password-reset-salt")
 
 
-def confirm_reset_token(token, expiration=900):  # 900 segundos = 15 minutos
+def confirm_reset_token(token, expiration=900):  
     serializer = URLSafeTimedSerializer(os.getenv("FLASK_APP_KEY"))
     try:
         email = serializer.loads(
@@ -92,3 +91,12 @@ def confirm_reset_token(token, expiration=900):  # 900 segundos = 15 minutos
         return email
     except:
         return None
+
+
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'}
+
+def allowed_file(filename):
+
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+

@@ -152,7 +152,6 @@ const Profile = () => {
             }
 
         } catch (error) {
-            // 4. Manejo de errores de red o excepciones del código
             console.error("Error crítico en updatePassword:", error);
             toast.error("Error de conexión con el servidor", { id: toastId });
         }
@@ -177,7 +176,7 @@ const Profile = () => {
                                 type="file"
                                 id="upload-photo"
                                 className="d-none"
-                                accept="image/*"
+                                accept="image/png, image/jpeg, image/webp, image/gif"
                                 onChange={handlePhotoChange}
                             />
                         </label>

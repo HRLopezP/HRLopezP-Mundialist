@@ -275,7 +275,7 @@ const UsersAdmin = () => {
                                     {/* Switch de Estatus */}
                                     <div className="col-4 d-flex justify-content-end align-items-center gap-2">
                                         {u.is_blocked ? (
-                                            <button className="btn btn-sm btn-outline-danger border-0" onClick={() => handleUnlock(u)}>
+                                            <button className="btn btn-sm btn-outline-warning border-0" onClick={() => handleUnlock(u)}>
                                                 <i className="fa-solid fa-lock-open"></i>
                                             </button>
                                         ) : (
