@@ -107,7 +107,6 @@
     border-radius: 8px !important;
 }
 
-/* Efecto hover suave en las filas para Management */
 .table-oxford tbody tr:hover {
     background: rgba(40, 200, 125, 0.05) !important;
     transition: background 0.3s ease;

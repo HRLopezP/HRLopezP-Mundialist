@@ -1,5 +1,3 @@
-/* src/styles/Home.css */
-
 .home-container {
     display: flex;
     justify-content: center;
@@ -8,20 +6,18 @@
 
 .banner-wrapper {
     width: 100%;
-    /* En PC usará 9 de 12 columnas (aprox 75%) */
     max-width: 75%; 
     margin: 0 auto;
 }
 
 .banner-img {
     width: 100%;
-    height: auto; /* Esto evita que la imagen se corte y mantiene la proporción */
+    height: auto; 
     display: block;
-    border-radius: 15px; /* Un toque redondeado para que combine con tus cards */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); /* Sombra para darle profundidad */
+    border-radius: 15px; 
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
-/* Ajuste para móviles: que ocupe más espacio */
 @media (max-width: 768px) {
     .banner-wrapper {
         max-width: 95%;
@@ -29,7 +25,7 @@
 }
 
 .banner-container {
-    position: relative; /* Importante para que los textos floten dentro */
+    position: relative;
     width: 100%;
     overflow: hidden;
     border-radius: 20px;
@@ -41,7 +37,6 @@
     display: block;
 }
 
-/* Título Principal Dorado */
 .banner-title {
     position: absolute;
     top: 5%;
@@ -52,14 +47,14 @@
 }
 
 .title-main {
-    font-size: clamp(2rem, 5vw, 4.5rem); /* Se ajusta solo al tamaño de pantalla */
+    font-size: clamp(2rem, 5vw, 4.5rem);
     font-weight: 900;
     color: #fff9d1;
     text-transform: uppercase;
     margin: 0;
     line-height: 1;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-    font-family: 'serif'; /* O una fuente tipo cinzel si tienes */
+    font-family: 'serif'; 
 }
 
 .title-sub {
@@ -69,7 +64,6 @@
     margin-top: 5px;
 }
 
-/* Textos Laterales */
 .banner-overlay-left {
     position: absolute;
     top: 25%;
@@ -95,7 +89,6 @@
     margin: 15px 0;
 }
 
-/* Botones sobre la imagen */
 .banner-buttons {
     display: flex;
     flex-direction: column;
@@ -124,23 +117,23 @@
 @media (max-width: 768px) {
     .banner-container {
         display: flex;
-        flex-direction: column; /* Apila la imagen y luego el texto */
+        flex-direction: column; 
         border-radius: 15px;
-        background: rgba(5, 20, 38, 0.5); /* Fondo sutil para el área de texto */
+        background: rgba(5, 20, 38, 0.5); 
     }
 
     .banner-overlay-left {
-        position: relative; /* Deja de flotar sobre la imagen */
+        position: relative; 
         top: 0;
         left: 0;
         max-width: 100%;
         padding: 20px;
         text-align: center;
-        display: block !important; /* Forzamos que se vea en móvil */
+        display: block !important; 
     }
 
     .banner-title {
-        top: 2%; /* Subimos un poco el título principal para que no tape caras */
+        top: 2%; 
     }
 
     .banner-buttons {
@@ -148,7 +141,6 @@
     }
 }
 
-/* Estilo para el nuevo icono de reglamento */
 .reglamento-icon {
     font-size: 1.2rem;
     vertical-align: middle;
