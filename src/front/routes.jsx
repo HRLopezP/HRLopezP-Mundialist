@@ -19,6 +19,7 @@ const Ranking = lazy(() => import("./pages/Ranking"));
 const TransparencyWall = lazy(() => import("./pages/TransparencyWall"));
 const Rules = lazy(() => import("./pages/Rules"));
 const AuditPanel = lazy(() => import("./pages/AuditPanel"));
+const GroupsAdmin = lazy(() => import("./pages/GroupsAdmin"));
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
@@ -51,6 +52,7 @@ export const router = createBrowserRouter(
         <Route path="roles" element={<AdminRoute><RolesAdmin /></AdminRoute>} />
         <Route path="matches" element={<AdminRoute><MatchAdmin /></AdminRoute>} />
         <Route path="audit" element={<AdminRoute><AuditPanel /></AdminRoute>} />
+        <Route path="groups" element={<AdminRoute><GroupsAdmin /></AdminRoute>}/>
       </Route>
       <Route path="/rules" element={<Rules />} />
 
