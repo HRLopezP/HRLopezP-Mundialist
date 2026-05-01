@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, url_for, Blueprint, json, current_app
-from api.models import db, User, Rol, Match, Prediction, AuditLog
+from api.models import db, User, Rol, Match, Prediction, AuditLog, Group
 from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token, allowed_file
 from flask_cors import CORS
@@ -473,6 +473,9 @@ def toggle_user_status(id):
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
+        if not user.is_active and user.group_id is None:
+            return jsonify({"msg": "No puedes activar a un usuario sin asignarle un grupo primero"}), 400
+        
         user.is_active = not user.is_active
         db.session.commit()
         return jsonify({"msg": "Estatus actualizado", "user": user.serialize()}), 200
@@ -710,7 +713,17 @@ def get_audit_logs():
 @jwt_required()
 def get_ranking():
     try:
-        users = User.query.filter_by(is_active=True).all()
+        current_user = User.query.get(get_jwt_identity())
+        
+        if current_user.rol.name_rol == "Administrador":
+            target_group_id = request.args.get('group_id', type=int)
+        else:
+            target_group_id = current_user.group_id
+
+        if not target_group_id:
+            return jsonify({"msg": "Debes especificar o pertenecer a un grupo"}), 400
+
+        users = User.query.filter_by(group_id=target_group_id, is_active=True).all()
         ranking_list = []
         
         for user in users:
@@ -728,7 +741,8 @@ def get_ranking():
                 "username": f"{user.name} {user.lastname}",
                 "total_points": total_points,
                 "exact_hits": exact_hits,
-                "trend_hits": trend_hits
+                "trend_hits": trend_hits,
+                "group_name": user.group.name_group if user.group else ""
             })
         
         ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
@@ -738,11 +752,22 @@ def get_ranking():
         current_app.logger.error(f"Error al generar el Ranking: {str(e)}")
         return jsonify({"msg": "No se pudo calcular el ranking en este momento"}), 500
 
+
 # Ver las predicciones finalizadas
 @api.route('/predictions/user/<int:user_id>', methods=['GET'])
 @jwt_required()
 def get_user_predictions_detail(user_id):
     try:
+        requester = User.query.get(get_jwt_identity())
+        target_user = User.query.get(user_id)
+
+        if not target_user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        if requester.rol.name_rol != "Administrador" and requester.group_id != target_user.group_id:
+            current_app.logger.warning(f"Intento de espionaje: Usuario {requester.id_user} intentó ver datos del Usuario {user_id} de otro grupo.")
+            return jsonify({"msg": "No tienes permiso para ver datos de usuarios de otros grupos"}), 403
+    
         query = Prediction.query.join(Match).filter(
             Prediction.user_id == user_id,
             Match.home_score != None
@@ -773,6 +798,9 @@ def get_user_predictions_detail(user_id):
 @jwt_required()
 def get_transparency_wall():
     try:
+        user = User.query.get(get_jwt_identity())
+        target_group_id = request.args.get('group_id', user.group_id, type=int)
+
         ahora = datetime.now(timezone.utc)
         limite_24h = ahora + timedelta(hours=24)
 
@@ -783,7 +811,10 @@ def get_transparency_wall():
 
         results = []
         for m in matches:
-            preds = Prediction.query.filter_by(match_id=m.id_match).all()
+            preds = Prediction.query.join(User).filter(
+                Prediction.match_id == m.id_match,
+                User.group_id == target_group_id
+            ).all()
             
             results.append({
                 "id_match": m.id_match,
@@ -806,3 +837,120 @@ def get_transparency_wall():
     except Exception as e:
         current_app.logger.error(f"Error en el Muro de Transparencia: {str(e)}")
         return jsonify({"msg": "No se pudo cargar el muro de transparencia en este momento"}), 500
+    
+
+# Ver todos los grupos
+@api.route('/groups', methods=['GET'])
+@jwt_required()
+def get_groups():
+    try:
+        groups = Group.query.all()
+        return jsonify([g.serialize() for g in groups]), 200
+    except Exception as e:
+        current_app.logger.error(f"Error al mostar los grupos: {str(e)}")
+        return jsonify({"msg": "No se pudieron cargar los grupos"}), 500
+
+
+# crear G
+@api.route('/groups', methods=['POST'])
+@jwt_required()
+@manager_required
+def create_group():
+    try:
+        data = request.get_json()
+        if not data or "name_group" not in data:
+            return jsonify({"msg": "El nombre del grupo es obligatorio"}), 400
+        
+        if Group.query.filter_by(name_group=data["name_group"]).first():
+            return jsonify({"msg": "Este grupo ya existe"}), 400
+
+        new_group = Group(name_group=data["name_group"])
+        db.session.add(new_group)
+        db.session.commit()
+        return jsonify({"msg": "Grupo creado con éxito", "group": new_group.serialize()}), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al crear grupo: {str(e)}") 
+        return jsonify({"msg": "Error interno al crear grupo"}), 500
+    
+#Editar nombre de G
+@api.route('/groups/<int:id>', methods=['PUT'])
+@jwt_required()
+@manager_required
+def update_group(id):
+    try:
+        group = Group.query.get(id)
+        if not group:
+            return jsonify({"msg": "Grupo no encontrado"}), 404
+            
+        body = request.get_json()
+        if "name_group" in body:
+            exist = Group.query.filter(Group.name_group == body["name_group"], Group.id_group != id).first()
+            if exist:
+                return jsonify({"msg": "Ya existe otro grupo con ese nombre"}), 400
+
+            group.name_group = body["name_group"]
+            db.session.commit()
+            return jsonify({"msg": "Nombre del grupo actualizado", "group": group.serialize()}), 200
+            
+        return jsonify({"msg": "Nada que actualizar"}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al editar grupo ID {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al actualizar el grupo"}), 500
+
+
+#Eliminar G
+@api.route('/groups/<int:id>', methods=['DELETE'])
+@jwt_required()
+@manager_required
+def delete_group(id):
+    try:
+        group = Group.query.get(id)
+        if not group:
+            return jsonify({"msg": "Grupo no encontrado"}), 404
+
+        if len(group.users) > 0:
+            return jsonify({
+                "msg": "No se puede eliminar un grupo que tiene usuarios. Mueve a los usuarios a otro grupo primero."
+            }), 400
+
+        db.session.delete(group)
+        db.session.commit()
+        return jsonify({"msg": "Grupo eliminado correctamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al eliminar grupo ID {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al intentar eliminar el grupo"}), 500
+    
+
+# Asignar Grupo
+@api.route('/users/<int:id>/assign-group', methods=['PATCH'])
+@jwt_required()
+@manager_required
+def assign_group(id):
+    try:
+        user = User.query.get(id)
+        if not user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
+
+        body = request.get_json()
+        group_id = body.get("group_id")
+
+        if group_id:
+            group = Group.query.get(group_id)
+            if not group:
+                return jsonify({"msg": "El grupo seleccionado no existe"}), 404
+            user.group_id = group_id
+        else:
+            user.group_id = None 
+
+        db.session.commit()
+        return jsonify({"msg": f"Grupo de {user.name} actualizado", "user": user.serialize()}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error al asignar grupo al usuario {id}: {str(e)}")
+        return jsonify({"msg": "Error interno al asignar grupo"}), 500
