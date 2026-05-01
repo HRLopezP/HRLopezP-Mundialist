@@ -40,6 +40,9 @@ class User(db.Model):
     predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
     audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user")
 
+    group_id: Mapped[Optional[int]] = mapped_column(ForeignKey('group.id_group'), nullable=True)
+    group: Mapped[Optional["Group"]] = relationship("Group", back_populates="users")
+
     def __repr__(self):
         return f'<User {self.email}>'
 
@@ -58,7 +61,9 @@ class User(db.Model):
             "total_points": self.total_points,
             "profile_public_id": self.profile_public_id,
             "rol": self.rol.name_rol if self.rol else "Sin Rol",
-            "rol_id": self.rol_id
+            "rol_id": self.rol_id,
+            "group_id": self.group_id,
+            "group_name": self.group.name_group if self.group else "Sin Grupo"
         }
     
     
@@ -157,3 +162,21 @@ class AuditLog(db.Model):
             "timestamp": self.timestamp.isoformat(),
             "user_email": self.user.email if self.user else "Sistema"
         }
+
+
+class Group(db.Model):
+    __tablename__ = 'group'
+    id_group: Mapped[int] = mapped_column(primary_key=True)
+    name_group: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    
+    users: Mapped[List["User"]] = relationship("User", back_populates="group")
+
+    def serialize(self):
+        return {
+            "id_group": self.id_group,
+            "name_group": self.name_group,
+            "total_users": len(self.users) 
+        }
+    
+
+
