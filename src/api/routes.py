@@ -578,6 +578,15 @@ def save_prediction():
     if None in [match_id, home_score, away_score]:
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
 
+    try:
+        h_score = int(home_score)
+        a_score = int(away_score)
+
+        if h_score < 0 or h_score > 10 or a_score < 0 or a_score > 10:
+            return jsonify({"msg": "El marcador debe estar entre 0 y 10 goles."}), 400
+    except (ValueError, TypeError):
+        return jsonify({"msg": "Los goles deben ser números válidos."}), 400
+
     match = Match.query.get(match_id)
     
     if not match:
@@ -592,15 +601,15 @@ def save_prediction():
     prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
 
     if prediction:
-        prediction.predicted_home_score = home_score
-        prediction.predicted_away_score = away_score
+        prediction.predicted_home_score = h_score
+        prediction.predicted_away_score = a_score
         msg = "Predicción actualizada con éxito"
     else:
         prediction = Prediction(
             user_id=user_id,
             match_id=match_id,
-            predicted_home_score=home_score,
-            predicted_away_score=away_score
+            predicted_home_score=h_score,
+            predicted_away_score=a_score
         )
         db.session.add(prediction)
         msg = "Predicción guardada con éxito"
