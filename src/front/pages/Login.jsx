@@ -20,10 +20,7 @@ const Login = () => {
         try {
             const { response, data } = await apiFetch('/login', {
                 method: 'POST',
-                body: JSON.stringify({
-                    email: email.toLowerCase().trim(),
-                    password: password
-                })
+                body: JSON.stringify({ email, password })
             });
 
             if (response.ok) {
@@ -100,6 +97,10 @@ const Login = () => {
                                     <button type="submit" className="btn-emerald w-100" disabled={loading}>
                                         {loading ? "Verificando entrada..." : "Iniciar Sesión"}
                                     </button>
+                                    <p className="text-center text-dim mt-3" style={{ fontSize: "0.75rem", opacity: 0.7 }}>
+                                        <i className="fa-solid fa-shield-halved me-1"></i>
+                                        Por seguridad, la cuenta se bloqueará tras 5 intentos fallidos.
+                                    </p>
                                 </form>
 
 

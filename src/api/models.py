@@ -26,6 +26,8 @@ class User(db.Model):
     lastname: Mapped[str] = mapped_column(String(100), nullable=False) 
     password: Mapped[str] = mapped_column(String(255), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
+    failed_attempts: Mapped[int] = mapped_column(Integer(), default=0, nullable=False)
+    is_blocked: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
     profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default=None)
     profile_public_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     total_points: Mapped[float] = mapped_column(Float, default=0.0)
@@ -50,6 +52,8 @@ class User(db.Model):
             "name": self.name,
             "lastname": self.lastname,
             "is_active": self.is_active,
+            "is_blocked": self.is_blocked,
+            "failed_attempts": self.failed_attempts,
             "profile": self.profile if self.profile else default_avatar,
             "total_points": self.total_points,
             "profile_public_id": self.profile_public_id,

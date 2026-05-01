@@ -12,6 +12,7 @@ from datetime import timedelta
 from flask_mail import Mail
 from api.extensions import mail
 from flask_cors import CORS
+from api.utils import setup_app_logger
 
 # from models import Person
 
@@ -19,6 +20,9 @@ ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
+CORS(app)
+setup_app_logger(app)
 app.url_map.strict_slashes = False
 
 # database condiguration
@@ -78,9 +82,16 @@ mail.init_app(app)
 
 @app.errorhandler(APIException)
 def handle_invalid_usage(error):
+    app.logger.error(f"APIException: {error.message}")
     return jsonify(error.to_dict()), error.status_code
 
 # generate sitemap with all your endpoints
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Esto atrapa CUALQUIER error que se nos haya escapado
+    app.logger.error(f"Error no controlado: {str(e)}")
+    return jsonify({"message": "Ha ocurrido un error interno en el sistema"}), 500
 
 
 @app.route('/')

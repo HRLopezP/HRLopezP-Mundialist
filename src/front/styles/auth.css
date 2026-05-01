@@ -1,4 +1,3 @@
-/* src/styles/auth.css */
 .auth-page {
   min-height: 100vh;
   display: flex;
@@ -14,26 +13,25 @@
   border-radius: 24px !important;
   box-shadow: 0 25px 50px rgb(0, 0, 0) !important;
   width: 100%;
-  max-width: 450px; /* Un poco más estrecho se ve más elegante */
-  padding: 0 !important; /* IMPORTANTE: Quitamos el padding de aquí */
+  max-width: 450px;
+  padding: 0 !important; 
   overflow: hidden;
   animation: slideUp 0.6s ease-out;
 }
 
 .auth-header {
-    padding: 30px 20px 10px 20px !important; /* Reducimos el padding inferior de 30px a 10px */
+    padding: 30px 20px 10px 20px !important;
     text-align: center;
 }
 
 .auth-header p {
-    margin-bottom: 5px !important; /* Reduce el espacio debajo del texto "Ingresa a tu panel..." */
+    margin-bottom: 5px !important; 
 }
 
 .card-body {
-  padding: 0 40px 40px 40px; /* Padding generoso para desktop */
+  padding: 0 40px 40px 40px; 
 }
 
-/* Estilo para el botón del ojo */
 .password-container {
   position: relative;
   display: flex;
@@ -53,7 +51,7 @@
 }
 
 .auth-label {
-  color: var(--neon-blue) !important; /* Etiquetas vibrantes */
+  color: var(--neon-blue) !important; 
   font-size: 0.75rem !important;
   font-weight: 700 !important;
   text-transform: uppercase;
@@ -68,7 +66,6 @@
   color: white !important;
   border-radius: 10px !important;
   height: 50px !important;
-  /* margin-bottom: 1.2rem !important; */
 }
 
 .auth-input:focus {
@@ -93,34 +90,34 @@
     255,
     255,
     0.7
-  ) !important; /* Blanco con un toque de transparencia */
-  opacity: 1; /* Firefox necesita esto */
+  ) !important; 
+  opacity: 1; 
 }
 
-/* Internet Explorer 10-11 */
+
 .auth-input:-ms-input-placeholder {
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
-/* Microsoft Edge */
+
 .auth-input::-ms-input-placeholder {
   color: rgba(255, 255, 255, 0.7) !important;
 }
 
 @media (max-width: 576px) {
   .auth-page {
-    padding: 60px 15px !important; /* Espacio exterior mínimo */
+    padding: 60px 15px !important; 
   }
 
   .card-body {
-    padding: 0 20px 30px 20px !important; /* ¡Aquí es donde ganamos el ancho del input! */
+    padding: 0 20px 30px 20px !important; 
   }
 
   .auth-header {
-        padding: 20px 15px 5px 15px !important; /* Casi eliminamos el padding inferior en móvil */
+        padding: 20px 15px 5px 15px !important; 
     }
 
   .auth-input {
-    font-size: 16px !important; /* Evita zoom molesto en iPhone */
+    font-size: 16px !important; 
   }
 }

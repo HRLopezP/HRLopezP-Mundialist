@@ -25,7 +25,7 @@
 }
 
 .custom-accordion .accordion-button::after {
-  filter: brightness(0) invert(1); /* Hace la flechita blanca */
+  filter: brightness(0) invert(1); 
 }
 
 .custom-accordion .accordion-body {
@@ -33,15 +33,6 @@
   line-height: 1.6;
   background: rgba(0, 0, 0, 0.2);
 }
-
-/* .bg-emerald-pr {
-  background-color: var(--pitch-green2) !important;
-  color: black;
-} */
-/* .bg-gold-pts {
-  background-color: var(--accent-gold) !important;
-  color: black;
-} */
 
 .italic {
   font-style: italic;
