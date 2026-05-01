@@ -8,6 +8,7 @@ import "../styles/admin.css";
 const UsersAdmin = () => {
     const [users, setUsers] = useState([]);
     const [roles, setRoles] = useState([]);
+    const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({ total: 0, pages: 0, current: 1 });
     const [filters, setFilters] = useState({ search: "", status: "all" });
@@ -18,12 +19,14 @@ const UsersAdmin = () => {
 
     const loadInitialData = async () => {
         setLoading(true);
-        const [resRoles, resUsers] = await Promise.all([
+        const [resRoles, resUsers, resGroups] = await Promise.all([
             apiFetch("/roles"),
-            apiFetch(`/users?page=${pagination.current}&status=${filters.status}&search=${filters.search}`)
+            apiFetch(`/users?page=${pagination.current}&status=${filters.status}&search=${filters.search}`),
+            apiFetch("/groups")
         ]);
 
         if (resRoles.response.ok) setRoles(resRoles.data);
+        if (resGroups.response.ok) setGroups(resGroups.data);
         if (resUsers.response.ok) {
             setUsers(resUsers.data.users);
             setPagination(prev => ({ ...prev, total: resUsers.data.total, pages: resUsers.data.pages }));
@@ -53,10 +56,9 @@ const UsersAdmin = () => {
                 });
                 if (response.ok) {
                     toast.success(`Rol actualizado a ${nuevoRol}`);
-                    loadInitialData(); // Recargamos para refrescar visualmente
+                    loadInitialData();
                 }
             } else {
-                // Si cancela, recargamos para que el select vuelva a su valor original
                 loadInitialData();
             }
         });
@@ -71,6 +73,35 @@ const UsersAdmin = () => {
             });
             setUsers(users.map(u => u.id_user === user.id_user ? { ...u, is_active: !u.is_active } : u));
         }
+    };
+
+    const handleGroupChange = async (userId, groupId) => {
+        const nuevoGrupo = groups.find(g => g.id_group == groupId)?.name_group || "Sin Grupo";
+
+        Swal.fire({
+            title: "¿Cambiar de grupo?",
+            text: `¿Mover a este usuario al grupo "${nuevoGrupo}"?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "var(--pitch-green)",
+            cancelButtonColor: "#343a40",
+            confirmButtonText: "Sí, mover",
+            background: "#051426",
+            color: "#fff"
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                const { response } = await apiFetch(`/users/${userId}/assign-group`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ group_id: groupId })
+                });
+                if (response.ok) {
+                    toast.success(`Usuario movido a ${nuevoGrupo}`);
+                    loadInitialData();
+                }
+            } else {
+                loadInitialData();
+            }
+        });
     };
 
     const handleDelete = (user) => {
@@ -156,6 +187,7 @@ const UsersAdmin = () => {
                                 <th>Nombre y Apellido</th>
                                 <th>Correo</th>
                                 <th>Rol</th>
+                                <th>Grupo</th>
                                 <th>Estatus</th>
                                 <th className="text-center">Acciones</th>
                             </tr>
@@ -181,6 +213,17 @@ const UsersAdmin = () => {
                                                     {roles.map(r => <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>)}
                                                 </select>
                                             </div>
+                                        </td>
+                                        <td>
+                                            <select
+                                                className="form-select form-select-sm auth-input"
+                                                disabled={isRoot}
+                                                value={u.group_id || ""}
+                                                onChange={(e) => handleGroupChange(u.id_user, e.target.value)}
+                                            >
+                                                <option value="">Seleccionar Grupo</option>
+                                                {groups.map(g => <option key={g.id_group} value={g.id_group}>{g.name_group}</option>)}
+                                            </select>
                                         </td>
                                         <td>
                                             <div className="d-flex align-items-center gap-2">
@@ -213,13 +256,6 @@ const UsersAdmin = () => {
                                                 )}
                                             </div>
                                         </td>
-                                        {/* <td className="text-center">
-                                            {!isRoot && (
-                                                <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
-                                                    <i className="fa-solid fa-trash-can"></i>
-                                                </button>
-                                            )}
-                                        </td> */}
                                     </tr>
                                 )
                             })}
@@ -227,7 +263,7 @@ const UsersAdmin = () => {
                     </table>
                 </div>
 
-                {/* Vista teléfonos mejorada */}
+                {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => {
                         const isRoot = u.id_user === 1;
@@ -269,6 +305,18 @@ const UsersAdmin = () => {
                                             {roles.map(r => (
                                                 <option key={r.id_rol} value={r.id_rol}>{r.name_rol}</option>
                                             ))}
+                                        </select>
+                                    </div>
+                                    <div className="mb-2">
+                                        <label className="text-dim" style={{ fontSize: '0.7rem' }}>GRUPO</label>
+                                        <select
+                                            className="form-select form-select-sm auth-input"
+                                            disabled={isRoot}
+                                            value={u.group_id || ""}
+                                            onChange={(e) => handleGroupChange(u.id_user, e.target.value)}
+                                        >
+                                            <option value="">Sin Grupo</option>
+                                            {groups.map(g => <option key={g.id_group} value={g.id_group}>{g.name_group}</option>)}
                                         </select>
                                     </div>
 

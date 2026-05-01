@@ -713,15 +713,26 @@ def get_audit_logs():
 @jwt_required()
 def get_ranking():
     try:
-        current_user = User.query.get(get_jwt_identity())
+        user_id = get_jwt_identity()
+        current_user = User.query.get(user_id)
         
-        if current_user.rol.name_rol == "Administrador":
-            target_group_id = request.args.get('group_id', type=int)
-        else:
-            target_group_id = current_user.group_id
+        if not current_user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
 
+        # 1. DETERMINAR QUÉ GRUPO QUEREMOS VER
+        # El Administrador puede pasar un group_id por el selector (URL args)
+        target_group_id = request.args.get('group_id', type=int)
+
+        # Si no se pasó un group_id por el selector:
         if not target_group_id:
-            return jsonify({"msg": "Debes especificar o pertenecer a un grupo"}), 400
+            # Si el usuario (sea Admin o no) pertenece a un grupo, usamos ese por defecto
+            if current_user.group_id:
+                target_group_id = current_user.group_id
+            else:
+                # Si es Admin pero no eligió grupo y no pertenece a ninguno
+                if current_user.rol.name_rol == "Administrador":
+                    return jsonify({"msg": "Como administrador, selecciona un grupo para ver su ranking"}), 200
+                return jsonify({"msg": "No perteneces a ningún grupo"}), 400
 
         users = User.query.filter_by(group_id=target_group_id, is_active=True).all()
         ranking_list = []
