@@ -217,7 +217,7 @@ const UsersAdmin = () => {
                                         <td>
                                             <select
                                                 className="form-select form-select-sm auth-input"
-                                                disabled={isRoot}
+                                                disabled={false}
                                                 value={u.group_id || ""}
                                                 onChange={(e) => handleGroupChange(u.id_user, e.target.value)}
                                             >
@@ -311,7 +311,7 @@ const UsersAdmin = () => {
                                         <label className="text-dim" style={{ fontSize: '0.7rem' }}>GRUPO</label>
                                         <select
                                             className="form-select form-select-sm auth-input"
-                                            disabled={isRoot}
+                                            disabled={false}
                                             value={u.group_id || ""}
                                             onChange={(e) => handleGroupChange(u.id_user, e.target.value)}
                                         >

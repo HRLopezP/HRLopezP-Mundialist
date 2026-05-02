@@ -713,26 +713,18 @@ def get_audit_logs():
 @jwt_required()
 def get_ranking():
     try:
-        user_id = get_jwt_identity()
-        current_user = User.query.get(user_id)
+        current_user = User.query.get(get_jwt_identity())
+        is_admin = current_user.rol.name_rol == "Administrador"
+
+        requested_group_id = request.args.get('group_id', type=int)
         
-        if not current_user:
-            return jsonify({"msg": "Usuario no encontrado"}), 404
+        if not is_admin:
+            target_group_id = current_user.group_id
+        else:
+            target_group_id = requested_group_id if requested_group_id else current_user.group_id
 
-        # 1. DETERMINAR QUÉ GRUPO QUEREMOS VER
-        # El Administrador puede pasar un group_id por el selector (URL args)
-        target_group_id = request.args.get('group_id', type=int)
-
-        # Si no se pasó un group_id por el selector:
         if not target_group_id:
-            # Si el usuario (sea Admin o no) pertenece a un grupo, usamos ese por defecto
-            if current_user.group_id:
-                target_group_id = current_user.group_id
-            else:
-                # Si es Admin pero no eligió grupo y no pertenece a ninguno
-                if current_user.rol.name_rol == "Administrador":
-                    return jsonify({"msg": "Como administrador, selecciona un grupo para ver su ranking"}), 200
-                return jsonify({"msg": "No perteneces a ningún grupo"}), 400
+            return jsonify({"msg": "No se especificó un grupo válido"}), 400
 
         users = User.query.filter_by(group_id=target_group_id, is_active=True).all()
         ranking_list = []
@@ -775,9 +767,11 @@ def get_user_predictions_detail(user_id):
         if not target_user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         
-        if requester.rol.name_rol != "Administrador" and requester.group_id != target_user.group_id:
-            current_app.logger.warning(f"Intento de espionaje: Usuario {requester.id_user} intentó ver datos del Usuario {user_id} de otro grupo.")
-            return jsonify({"msg": "No tienes permiso para ver datos de usuarios de otros grupos"}), 403
+        is_admin = requester.rol.name_rol == "Administrador"
+
+        if not is_admin and requester.group_id != target_user.group_id:
+            current_app.logger.warning(f"Intento de acceso no autorizado: Usuario {requester.id_user} a datos de {user_id}")
+            return jsonify({"msg": "Solo puedes auditar puntos de miembros de tu propio grupo"}), 403
     
         query = Prediction.query.join(Match).filter(
             Prediction.user_id == user_id,
@@ -810,7 +804,15 @@ def get_user_predictions_detail(user_id):
 def get_transparency_wall():
     try:
         user = User.query.get(get_jwt_identity())
-        target_group_id = request.args.get('group_id', user.group_id, type=int)
+        is_admin = user.rol.name_rol == "Administrador"
+
+        if not is_admin:
+            target_group_id = user.group_id
+        else:
+            target_group_id = request.args.get('group_id', user.group_id, type=int)
+
+        if not target_group_id:
+            return jsonify({"msg": "Debes pertenecer a un grupo para ver el muro"}), 400
 
         ahora = datetime.now(timezone.utc)
         limite_24h = ahora + timedelta(hours=24)
@@ -824,7 +826,8 @@ def get_transparency_wall():
         for m in matches:
             preds = Prediction.query.join(User).filter(
                 Prediction.match_id == m.id_match,
-                User.group_id == target_group_id
+                User.group_id == target_group_id,
+                User.is_active == True
             ).all()
             
             results.append({
@@ -959,7 +962,8 @@ def assign_group(id):
             user.group_id = None 
 
         db.session.commit()
-        return jsonify({"msg": f"Grupo de {user.name} actualizado", "user": user.serialize()}), 200
+        status_msg = f"al grupo {group.name_group}" if user.group_id else "a ningún grupo (Sin Grupo)"
+        return jsonify({"msg": f"Usuario {user.name} asignado {status_msg}", "user": user.serialize()}), 200
 
     except Exception as e:
         db.session.rollback()
