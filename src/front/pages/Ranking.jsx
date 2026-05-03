@@ -20,30 +20,25 @@ const Ranking = () => {
         initData();
     }, []);
 
-    // Recargar ranking cuando cambie el grupo seleccionado
     useEffect(() => {
         if (activeGroup !== null) loadRanking();
     }, [activeGroup]);
 
     const initData = async () => {
         setLoading(true);
-        // Si es admin, cargamos todos los grupos disponibles
         if (store.user?.rol === "Administrador") {
             const { response, data } = await apiFetch("/groups");
             if (response.ok) {
                 setGroups(data);
-                // Por defecto seleccionamos el grupo del admin o el primero de la lista
                 setActiveGroup(store.user.group_id || (data.length > 0 ? data[0].id_group : null));
             }
         } else {
-            // Si es usuario normal, solo ve su grupo asignado
             setActiveGroup(store.user?.group_id);
         }
         await loadRanking();
     };
 
     const loadRanking = async () => {
-        // Pasamos el group_id como parámetro de consulta (query param)
         const url = activeGroup ? `/ranking?group_id=${activeGroup}` : "/ranking";
         const { response, data } = await apiFetch(url);
         if (response.ok) setRanking(data);
@@ -202,7 +197,7 @@ const Ranking = () => {
                 <h2 className="fw-bold text-white">🏆 Ranking Mundialista</h2>
                 <p className="text-dim">Revisa quién lidera y audita sus predicciones.</p>
 
-                {/* SELECTOR DE GRUPOS (Solo para Admin) */}
+                {/* SELECTOR DE GRUPOS */}
                 {store.user?.rol === "Administrador" && groups.length > 0 && (
                     <div className="group-tabs-container mt-3">
                         {groups.map(g => (
@@ -217,11 +212,6 @@ const Ranking = () => {
                     </div>
                 )}
 
-                {/* <p className="text-dim mt-2">
-                    {activeGroup
-                        ? `Viendo ranking del grupo: ${groups.find(g => g.id_group === activeGroup)?.name_group || 'Mi Grupo'}`
-                        : "No tienes un grupo asignado."}
-                </p> */}
 
                 {/* BOTÓN PDF*/}
                 <div className='d-flex justify-content-start'>

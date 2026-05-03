@@ -1,6 +1,6 @@
 import React from "react";
 import { useCountdown } from "../hooks/useCountdown";
-import "../styles/Predictions.css"; // Importante para heredar los estilos
+import "../styles/Predictions.css"; 
 
 export const GameMatchCard = ({ match, index }) => {
   const { timeLeft, isMatchStarted } = useCountdown(match.match_date);
@@ -17,14 +17,14 @@ export const GameMatchCard = ({ match, index }) => {
         >
           <div className="d-flex flex-column flex-sm-row justify-content-between align-items-center w-100 me-3">
 
-            {/* BADGE DE TIEMPO: Se mantiene arriba en móvil y se va al final en PC */}
+            {/* BADGE DE TIEMPO*/}
             <div className="status-badge-mobile mb-2 mb-sm-0 order-first order-sm-last ms-sm-3">
               <span className={`badge ${isMatchStarted ? 'bg-success' : 'bg-warning text-dark'} shadow-sm`}>
                 {isMatchStarted ? "⚽ EN JUEGO" : `⏳ ${timeLeft}`}
               </span>
             </div>
 
-            {/* CONTENEDOR CENTRAL: Ahora con clase para control de ancho en PC */}
+            {/* CONTENEDOR CENTRAL */}
             <div className="match-main-content d-flex align-items-center justify-content-center flex-grow-1">
 
               {/* Equipo Local */}

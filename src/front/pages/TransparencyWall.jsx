@@ -21,7 +21,6 @@ const TransparencyWall = () => {
                 const { response, data } = await apiFetch("/groups");
                 if (response.ok) {
                     setGroups(data);
-                    // Seleccionamos su grupo o el primero disponible
                     setActiveGroup(store.user.group_id || (data.length > 0 ? data[0].id_group : null));
                 }
             } else {
@@ -31,7 +30,7 @@ const TransparencyWall = () => {
         initTransparency();
     }, [store.user]);
 
-    // 2. Carga de datos cuando cambia el grupo activo
+
     useEffect(() => {
         if (activeGroup !== null) {
             loadData();
@@ -40,7 +39,6 @@ const TransparencyWall = () => {
 
     const loadData = async () => {
         try {
-            // Enviamos el group_id como query param
             const url = activeGroup ? `/transparency-wall?group_id=${activeGroup}` : "/transparency-wall";
             const { response, data } = await apiFetch(url);
             if (response.ok) {
@@ -129,9 +127,7 @@ const TransparencyWall = () => {
             <div className="accordion accordion-flush bg-transparent" id="transparencyWall">
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                        <div className="accordion-item" key={match.id_match}>
-                            <GameMatchCard match={match} index={index} />
-                        </div>
+                            <GameMatchCard key={match.id_match} match={match} index={index} />
                     ))
                 ) : (
                     <div className="alert bg-dark text-info border-info text-center mt-5">
