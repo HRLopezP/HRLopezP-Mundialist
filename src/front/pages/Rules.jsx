@@ -36,6 +36,9 @@ const Rules = () => {
                                             <i className="fa-solid fa-circle-info text-info me-2"></i>
                                             En caso de empate en el ranking global, el criterio de desempate será quien tenga <strong>más marcadores exactos</strong>.
                                         </li>
+                                        <p className="small text-dim italic border-top pt-2 mt-2">
+                                            * La quiniela se llevará a cabo solo en la fase de grupos (72 partidos).
+                                        </p>
                                     </ul>
                                 </div>
                             </div>

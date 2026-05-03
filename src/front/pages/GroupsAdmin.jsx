@@ -117,7 +117,7 @@ const GroupsAdmin = () => {
                             value={newGroupName}
                             onChange={(e) => setNewGroupName(e.target.value)}
                         />
-                        <button className="btn btn-emerald px-4" type="submit">
+                        <button className="btn btn-emerald px-4 d-flex align-items-center" type="submit">
                             <i className="fa-solid fa-plus me-1"></i> Crear
                         </button>
                     </div>
