@@ -3,21 +3,49 @@ import { apiFetch } from "../utils/api.js";
 import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import Pagination from "../components/Pagination.jsx";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 import { generateRankingReport } from "../utils/transparencyPdf.js";
 
 const Ranking = () => {
+    const { store } = useGlobalReducer();
     const [ranking, setRanking] = useState([]);
+    const [groups, setGroups] = useState([]);
+    const [activeGroup, setActiveGroup] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const [auditData, setAuditData] = useState({ predictions: [], total: 0, pages: 1, current_page: 1 });
     const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
-        loadRanking();
+        initData();
     }, []);
 
+    // Recargar ranking cuando cambie el grupo seleccionado
+    useEffect(() => {
+        if (activeGroup !== null) loadRanking();
+    }, [activeGroup]);
+
+    const initData = async () => {
+        setLoading(true);
+        // Si es admin, cargamos todos los grupos disponibles
+        if (store.user?.rol === "Administrador") {
+            const { response, data } = await apiFetch("/groups");
+            if (response.ok) {
+                setGroups(data);
+                // Por defecto seleccionamos el grupo del admin o el primero de la lista
+                setActiveGroup(store.user.group_id || (data.length > 0 ? data[0].id_group : null));
+            }
+        } else {
+            // Si es usuario normal, solo ve su grupo asignado
+            setActiveGroup(store.user?.group_id);
+        }
+        await loadRanking();
+    };
+
     const loadRanking = async () => {
-        const { response, data } = await apiFetch("/ranking");
+        // Pasamos el group_id como parámetro de consulta (query param)
+        const url = activeGroup ? `/ranking?group_id=${activeGroup}` : "/ranking";
+        const { response, data } = await apiFetch(url);
         if (response.ok) setRanking(data);
         setLoading(false);
     };
@@ -174,13 +202,36 @@ const Ranking = () => {
                 <h2 className="fw-bold text-white">🏆 Ranking Mundialista</h2>
                 <p className="text-dim">Revisa quién lidera y audita sus predicciones.</p>
 
+                {/* SELECTOR DE GRUPOS (Solo para Admin) */}
+                {store.user?.rol === "Administrador" && groups.length > 0 && (
+                    <div className="group-tabs-container mt-3">
+                        {groups.map(g => (
+                            <button
+                                key={g.id_group}
+                                className={`tab-btn ${activeGroup === g.id_group ? 'active' : ''}`}
+                                onClick={() => setActiveGroup(g.id_group)}
+                            >
+                                {g.name_group}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* <p className="text-dim mt-2">
+                    {activeGroup
+                        ? `Viendo ranking del grupo: ${groups.find(g => g.id_group === activeGroup)?.name_group || 'Mi Grupo'}`
+                        : "No tienes un grupo asignado."}
+                </p> */}
+
                 {/* BOTÓN PDF*/}
-                <button
-                    className="btn btn-sm btn-primary rounded-pill px-4 mt-2"
-                    onClick={() => generateRankingReport(ranking)}
-                >
-                    <i className="fas fa-file-pdf me-2"></i> DESCARGAR RANKING
-                </button>
+                <div className='d-flex justify-content-start'>
+                    <button
+                        className="btn btn-sm btn-primary rounded-pill px-4 mt-2"
+                        onClick={() => generateRankingReport(ranking)}
+                    >
+                        <i className="fas fa-file-pdf me-2"></i> DESCARGAR RANKING
+                    </button>
+                </div>
             </div>
             <div className="admin-card2 p-0">
 
@@ -274,6 +325,12 @@ const Ranking = () => {
                     ))}
                 </div>
             </div>
+            {ranking.length === 0 && !loading && (
+                <div className="admin-card p-5 text-center text-dim">
+                    <i className="fa-solid fa-circle-info fs-1 mb-3"></i>
+                    <p>No hay usuarios con puntos en este grupo todavía.</p>
+                </div>
+            )}
         </div>
     );
 };
