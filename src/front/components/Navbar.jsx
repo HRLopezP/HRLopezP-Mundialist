@@ -112,6 +112,11 @@ export const Navbar = () => {
                                                 </Link>
                                             </li>
                                             <li>
+                                                <Link className="dropdown-item py-2" to="/admin/groups" onClick={closeMenu}>
+                                                    <i className="fa-solid fa-people-group me-2"></i> Grupos
+                                                </Link>
+                                            </li>
+                                            <li>
                                                 <Link className="dropdown-item py-2" to="/admin/audit" onClick={closeMenu}>
                                                     <i className="fa-solid fa-shield-halved me-2"></i> Auditoría
                                                 </Link>

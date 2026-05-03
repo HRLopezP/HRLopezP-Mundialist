@@ -3,16 +3,44 @@ import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
 import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { Toaster, toast } from "sonner";
-import "../styles/Predictions.css"; 
+import useGlobalReducer from "../hooks/useGlobalReducer"
+import "../styles/Predictions.css";
 
 const TransparencyWall = () => {
+    const { store } = useGlobalReducer();
     const [matches, setMatches] = useState([]);
+    const [groups, setGroups] = useState([]);
+    const [activeGroup, setActiveGroup] = useState(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
+    useEffect(() => {
+        const initTransparency = async () => {
+            setLoading(true);
+            if (store.user?.rol === "Administrador") {
+                const { response, data } = await apiFetch("/groups");
+                if (response.ok) {
+                    setGroups(data);
+                    setActiveGroup(store.user.group_id || (data.length > 0 ? data[0].id_group : null));
+                }
+            } else {
+                setActiveGroup(store.user?.group_id);
+            }
+        };
+        initTransparency();
+    }, [store.user]);
+
+
+    useEffect(() => {
+        if (activeGroup !== null) {
+            loadData();
+        }
+    }, [activeGroup]);
+
     const loadData = async () => {
         try {
-            const { response, data } = await apiFetch("/transparency-wall");
+            const url = activeGroup ? `/transparency-wall?group_id=${activeGroup}` : "/transparency-wall";
+            const { response, data } = await apiFetch(url);
             if (response.ok) {
                 setMatches(data);
             } else {
@@ -25,9 +53,6 @@ const TransparencyWall = () => {
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
 
     const filteredMatches = matches.map(match => ({
         ...match,
@@ -45,10 +70,25 @@ const TransparencyWall = () => {
     return (
         <div className="container py-5">
             <Toaster position="top-center" richColors />
-            
+
             <div className="text-center mb-4">
                 <h2 className="fw-bold transparency-header">🛡️ Muro de Transparencia</h2>
                 <p className="text-dim small">Las predicciones se liberan 24h antes de cada partido.</p>
+
+                {store.user?.rol === "Administrador" && groups.length > 0 && (
+                    <div className="group-tabs-container mt-3 mb-2">
+                        {groups.map(g => (
+                            <button
+                                key={g.id_group}
+                                className={`tab-btn ${activeGroup === g.id_group ? 'active' : ''}`}
+                                onClick={() => setActiveGroup(g.id_group)}
+                            >
+                                {g.name_group}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
             </div>
 
             {/* Buscador y Botón */}
@@ -64,13 +104,13 @@ const TransparencyWall = () => {
                         />
                     </div>
                 </div>
-                
+
                 <div className="col-12 text-center d-flex justify-content-between align-items-center gap-2">
                     <p className="text-dim mb-0 small">
-                        <i className="fas fa-info-circle me-1 text-info"></i> 
-                        Haz click para auditar 
+                        <i className="fas fa-info-circle me-1 text-info"></i>
+                        Haz click para auditar
                     </p>
-                    
+
                     {/* Botón PDF */}
                     {!loading && matches.length > 0 && (
                         <button
@@ -87,9 +127,7 @@ const TransparencyWall = () => {
             <div className="accordion accordion-flush bg-transparent" id="transparencyWall">
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                        <div className="accordion-item" key={match.id_match}>
-                            <GameMatchCard match={match} index={index} />
-                        </div>
+                            <GameMatchCard key={match.id_match} match={match} index={index} />
                     ))
                 ) : (
                     <div className="alert bg-dark text-info border-info text-center mt-5">
