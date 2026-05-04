@@ -72,14 +72,8 @@ def register_user():
     if User.query.filter_by(email=email).first():
         return jsonify({"message": "Este correo ya está registrado"}), 422
 
-    ADMIN_EMAIL = "hrlp843@gmail.com"
-    
-    if email == ADMIN_EMAIL:
-        rol_to_find = "Administrador"
-        is_active_status = True
-    else:
-        rol_to_find = "Participante"
-        is_active_status = False
+    rol_to_find = "Participante"
+    is_active_status = False
 
     target_rol = Rol.query.filter(Rol.name_rol.ilike(rol_to_find.strip())).first()
     if not target_rol:
@@ -102,6 +96,7 @@ def register_user():
         db.session.add(new_user)
         db.session.commit()
         msg = "¡Bienvenido, Administrador!" if is_active_status else "Registro exitoso. Tu cuenta será activada pronto."
+        msg = "Registro exitoso. Tu cuenta será activada por un administrador pronto."
         return jsonify({"message": msg}), 201
     except Exception as error:
         db.session.rollback()
