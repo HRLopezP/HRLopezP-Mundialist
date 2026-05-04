@@ -7,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
 from datetime import datetime, timedelta, date, timezone
 import os
+from sqlalchemy import func
 from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
 from .manager_decorator import manager_required
@@ -95,13 +96,11 @@ def register_user():
     try:
         db.session.add(new_user)
         db.session.commit()
-        msg = "¡Bienvenido, Administrador!" if is_active_status else "Registro exitoso. Tu cuenta será activada pronto."
-        msg = "Registro exitoso. Tu cuenta será activada por un administrador pronto."
-        return jsonify({"message": msg}), 201
+        return jsonify({"message": "Registro exitoso. Tu cuenta será activada pronto."}), 201
     except Exception as error:
         db.session.rollback()
         current_app.logger.error(f"Error al registrar usuario {email}: {str(error)}")
-        return jsonify({"message": "Error en el servidor", "error": str(error)}), 500
+        return jsonify({"message": "Error interno al procesar el registro"}), 500
 
 
 @api.route("/login", methods=["POST"])
@@ -500,9 +499,7 @@ def toggle_user_status(id):
 def change_user_role(id):
     try: 
         current_user_id = get_jwt_identity()
-        
-        if id == 1:
-            return jsonify({"msg": "No se puede cambiar el rol del Administrador Principal"}), 403
+
         if id == int(current_user_id):
             return jsonify({"msg": "No puedes cambiar tu propio rol"}), 403
 
@@ -517,7 +514,14 @@ def change_user_role(id):
         user = db.session.get(User, id)
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
-        
+
+        if user.rol.name_rol == "Administrador":
+            admin_count = User.query.join(Rol).filter(
+                Rol.name_rol == "Administrador"
+            ).count()
+            if admin_count <= 1:
+                return jsonify({"msg": "No puedes quitar el rol al único administrador del sistema"}), 403
+
         if user.rol_id == new_rol_id:
             return jsonify({"msg": "El usuario ya tiene asignado este rol", "user": user.serialize()}), 200
 
@@ -529,6 +533,7 @@ def change_user_role(id):
         db.session.commit()
 
         return jsonify({"msg": "Rol actualizado", "user": user.serialize()}), 200
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error al cambiar rol del usuario {id}: {str(e)}")
@@ -597,18 +602,23 @@ def get_matches():
 @jwt_required() 
 def save_prediction():
     user_id = get_jwt_identity()
-    body = request.get_json()
+    
+    user = db.session.get(User, user_id)
+    if not user or not user.is_active:
+        return jsonify({"msg": "Usuario no autorizado o inactivo"}), 403
+
+    body = request.get_json(silent=True)
     if not body:
         return jsonify({"msg": "No se recibieron datos"}), 400
-    
+
     match_id = body.get("match_id")
     home_score = body.get("home_score")
     away_score = body.get("away_score")
 
-    if None in [match_id, home_score, away_score]:
+    if any(v is None for v in [match_id, home_score, away_score]):
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
     
-    match = Match.query.get(match_id)
+    match = db.session.get(Match, match_id)
     if not match:
         return jsonify({"msg": "El partido no existe"}), 404
 
@@ -617,22 +627,19 @@ def save_prediction():
         a_score = int(away_score)
         if not (0 <= h_score <= 10 and 0 <= a_score <= 10):
             return jsonify({"msg": "El marcador debe estar entre 0 y 10 goles"}), 400
-        
     except (ValueError, TypeError):
         return jsonify({"msg": "Los goles deben ser números válidos."}), 400
 
     ahora = datetime.now(timezone.utc)
-    limite_apuesta = match.match_date - timedelta(hours=24)
-
-    if ahora > limite_apuesta or ahora >= match.match_date or match.status == "Finalizado":
-        return jsonify({"msg": "Las predicciones para este juego están cerradas."}), 403
+    if ahora >= (match.match_date - timedelta(hours=24)) or match.status == "Finalizado":
+        return jsonify({"msg": "El tiempo para esta predicción ha expirado (Cierra 24h antes)"}), 403
 
     prediction = Prediction.query.filter_by(user_id=user_id, match_id=match_id).first()
-
+    
     if prediction:
         prediction.predicted_home_score = h_score
         prediction.predicted_away_score = a_score
-        msg = "Predicción actualizada con éxito"
+        msg = "¡Predicción actualizada!"
     else:
         prediction = Prediction(
             user_id=user_id,
@@ -641,15 +648,15 @@ def save_prediction():
             predicted_away_score=a_score
         )
         db.session.add(prediction)
-        msg = "Predicción guardada con éxito"
+        msg = "¡Predicción guardada!"
 
     try:
         db.session.commit()
         return jsonify({"msg": msg, "prediction": prediction.serialize()}), 200
     except Exception as e:
         db.session.rollback()
-        current_app.logger.error(f"Error al guardar predicción (User: {user_id}, Match: {match_id}): {str(e)}")
-        return jsonify({"msg": "Error interno al procesar tu predicción. Intenta de nuevo."}), 500
+        current_app.logger.error(f"Error en predicción: {str(e)}")
+        return jsonify({"msg": "Error al procesar la predicción"}), 500
 
 
 #Administrador sube marcador oficial
@@ -734,52 +741,75 @@ def get_audit_logs():
         return jsonify({"msg": "Error al cargar el historial de auditoría"}), 500
 
 
+#Función auxiliar para el ranking
+def get_ranking_by_group(group_id):
+    ranking_data = db.session.query(
+        User,
+        func.sum(Prediction.points_earned).label('total_points'),
+        func.count(Prediction.id_prediction).filter(Prediction.points_earned == 3).label('exact_hits'),
+        func.count(Prediction.id_prediction).filter(Prediction.points_earned == 1).label('trend_hits')
+    ).join(Prediction, User.id_user == Prediction.user_id, isouter=True)\
+     .filter(User.is_active == True, User.group_id == group_id)\
+     .group_by(User.id_user)\
+     .all()
+
+    ranking_list = []
+    for user, total_points, exact_hits, trend_hits in ranking_data:
+        ranking_list.append({
+            "id_user": user.id_user,
+            "username": f"{user.name} {user.lastname}",
+            "total_points": int(total_points or 0),
+            "exact_hits": exact_hits,
+            "trend_hits": trend_hits,
+            "group_name": user.group.name_group if user.group else "Sin Grupo"
+        })
+
+    ranking_list.sort(
+        key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']),
+        reverse=True
+    )
+    return ranking_list
+
+
 # Ver el ranking actualizado
 @api.route('/ranking', methods=['GET'])
 @jwt_required()
 def get_ranking():
     try:
-        current_user = User.query.get(get_jwt_identity())
+        current_user = db.session.get(User, get_jwt_identity())
         is_admin = current_user.rol.name_rol == "Administrador"
-
         requested_group_id = request.args.get('group_id', type=int)
-        
+
         if not is_admin:
             target_group_id = current_user.group_id
+            if not target_group_id:
+                return jsonify({"msg": "No perteneces a ningún grupo todavía"}), 400
+
+            ranking_list = get_ranking_by_group(target_group_id)
+            return jsonify(ranking_list), 200
+
         else:
-            target_group_id = requested_group_id if requested_group_id else current_user.group_id
+            if requested_group_id:
+                if not db.session.get(Group, requested_group_id):
+                    return jsonify({"msg": "El grupo especificado no existe"}), 404
+                ranking_list = get_ranking_by_group(requested_group_id)
+                return jsonify(ranking_list), 200
 
-        if not target_group_id:
-            return jsonify({"msg": "No se especificó un grupo válido"}), 400
+            all_groups = Group.query.all()
+            response = []
+            for group in all_groups:
+                ranking_list = get_ranking_by_group(group.id_group)
+                response.append({
+                    "group_id": group.id_group,
+                    "group_name": group.name_group,
+                    "ranking": ranking_list
+                })
+            return jsonify(response), 200
 
-        users = User.query.filter_by(group_id=target_group_id, is_active=True).all()
-        ranking_list = []
-        
-        for user in users:
-            preds = Prediction.query.filter(
-                Prediction.user_id == user.id_user,
-                Prediction.points_earned != None
-            ).all()
-            
-            total_points = sum(p.points_earned for p in preds)
-            exact_hits = sum(1 for p in preds if p.points_earned == 3)
-            trend_hits = sum(1 for p in preds if p.points_earned == 1)
-            
-            ranking_list.append({
-                "id_user": user.id_user,
-                "username": f"{user.name} {user.lastname}",
-                "total_points": total_points,
-                "exact_hits": exact_hits,
-                "trend_hits": trend_hits,
-                "group_name": user.group.name_group if user.group else ""
-            })
-        
-        ranking_list.sort(key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']), reverse=True)
-        
-        return jsonify(ranking_list), 200
     except Exception as e:
         current_app.logger.error(f"Error al generar el Ranking: {str(e)}")
-        return jsonify({"msg": "No se pudo calcular el ranking en este momento"}), 500
+        return jsonify({"msg": "Error interno al calcular el ranking"}), 500
+
 
 
 # Ver las predicciones finalizadas
@@ -824,37 +854,38 @@ def get_user_predictions_detail(user_id):
         return jsonify({"msg": "Error interno al cargar el historial de predicciones"}), 500
 
 
-#Ver las predicciones de menos 24 horas y sin finalizar
+#Ver las prediccio@nes de menos 24 horas y sin finalizar
 @api.route('/transparency-wall', methods=['GET'])
 @jwt_required()
 def get_transparency_wall():
     try:
-        user = User.query.get(get_jwt_identity())
+        user = db.session.get(User, get_jwt_identity())
         is_admin = user.rol.name_rol == "Administrador"
-
-        if not is_admin:
-            target_group_id = user.group_id
-        else:
-            target_group_id = request.args.get('group_id', user.group_id, type=int)
-
-        if is_admin and target_group_id:
-            if not Group.query.get(target_group_id):
-                return jsonify({"msg": "El grupo especificado no existe"}), 404
+        
+        target_group_id = request.args.get('group_id', user.group_id, type=int) if is_admin else user.group_id
 
         if not target_group_id:
             return jsonify({"msg": "Debes pertenecer a un grupo para ver el muro"}), 400
+        
+        if is_admin and not db.session.get(Group, target_group_id):
+            return jsonify({"msg": "El grupo especificado no existe"}), 404
 
         ahora = datetime.now(timezone.utc)
         limite_24h = ahora + timedelta(hours=24)
 
-        matches = Match.query.filter(
+        matches = Match.query.options(
+            joinedload(Match.home_team), 
+            joinedload(Match.away_team)
+        ).filter(
             Match.match_date <= limite_24h,
             Match.home_score == None
         ).order_by(Match.match_date.asc()).all()
 
         results = []
         for m in matches:
-            preds = Prediction.query.join(User).filter(
+            preds = Prediction.query.join(User).options(
+                joinedload(Prediction.user)
+            ).filter(
                 Prediction.match_id == m.id_match,
                 User.group_id == target_group_id,
                 User.is_active == True
@@ -880,7 +911,7 @@ def get_transparency_wall():
         return jsonify(results), 200
     except Exception as e:
         current_app.logger.error(f"Error en el Muro de Transparencia: {str(e)}")
-        return jsonify({"msg": "No se pudo cargar el muro de transparencia en este momento"}), 500
+        return jsonify({"msg": "Error interno del servidor"}), 500
     
 
 # Ver todos los grupos
