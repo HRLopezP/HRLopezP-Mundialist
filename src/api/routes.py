@@ -10,11 +10,19 @@ import os
 from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
 from .manager_decorator import manager_required
+import re
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
+
+NAME_REGEX = re.compile(r"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\-']+$")
+
+def val_name(text):
+    if not text or not (2 <= len(text) <= 50):
+        return False
+    return bool(NAME_REGEX.match(text))
 
 def paginate_query(query, model_name="items"):
     page = request.args.get('page', 1, type=int)
@@ -43,11 +51,17 @@ def register_user():
 
     email = data.get("email").lower().strip() if data.get("email") else None
     password = data.get("password")
-    name = data.get("name")
-    lastname = data.get("lastname")
+    name = data.get("name", "").strip()
+    lastname = data.get("lastname", "").strip()
 
     if not all([email, password, name, lastname]):
         return jsonify({"message": "Todos los campos son obligatorios"}), 400
+    
+    if not val_name(name):
+        return jsonify({"message": "Nombre inválido (debe tener entre 2 y 50 letras)"}), 400
+    
+    if not val_name(lastname):
+        return jsonify({"message": "Apellido inválido (debe tener entre 2 y 50 letras)"}), 400
 
     if not val_email(email):
         return jsonify({"message": "Formato de correo inválido"}), 400
@@ -497,13 +511,28 @@ def change_user_role(id):
         if id == int(current_user_id):
             return jsonify({"msg": "No puedes cambiar tu propio rol"}), 403
 
-        body = request.get_json()
-        user = User.query.get(id)
+        body = request.get_json(silent=True)
+        if not body:
+            return jsonify({"msg": "No se recibieron datos"}), 400
+        
+        new_rol_id = body.get("id_rol")
+        if not new_rol_id:
+            return jsonify({"msg": "El id del rol es obligatorio"}), 400
+
+        user = db.session.get(User, id)
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        if user.rol_id == new_rol_id:
+            return jsonify({"msg": "El usuario ya tiene asignado este rol", "user": user.serialize()}), 200
 
-        user.rol_id = body.get("id_rol")
+        rol = db.session.get(Rol, new_rol_id)
+        if not rol:
+            return jsonify({"msg": "El rol especificado no existe"}), 404
+
+        user.rol_id = new_rol_id
         db.session.commit()
+
         return jsonify({"msg": "Rol actualizado", "user": user.serialize()}), 200
     except Exception as e:
         db.session.rollback()
@@ -574,26 +603,28 @@ def get_matches():
 def save_prediction():
     user_id = get_jwt_identity()
     body = request.get_json()
+    if not body:
+        return jsonify({"msg": "No se recibieron datos"}), 400
+    
     match_id = body.get("match_id")
     home_score = body.get("home_score")
     away_score = body.get("away_score")
 
     if None in [match_id, home_score, away_score]:
         return jsonify({"msg": "Faltan datos (match_id, scores)"}), 400
+    
+    match = Match.query.get(match_id)
+    if not match:
+        return jsonify({"msg": "El partido no existe"}), 404
 
     try:
         h_score = int(home_score)
         a_score = int(away_score)
-
-        if h_score < 0 or h_score > 10 or a_score < 0 or a_score > 10:
-            return jsonify({"msg": "El marcador debe estar entre 0 y 10 goles."}), 400
+        if not (0 <= h_score <= 10 and 0 <= a_score <= 10):
+            return jsonify({"msg": "El marcador debe estar entre 0 y 10 goles"}), 400
+        
     except (ValueError, TypeError):
         return jsonify({"msg": "Los goles deben ser números válidos."}), 400
-
-    match = Match.query.get(match_id)
-    
-    if not match:
-        return jsonify({"msg": "El partido no existe"}), 404
 
     ahora = datetime.now(timezone.utc)
     limite_apuesta = match.match_date - timedelta(hours=24)
@@ -810,6 +841,10 @@ def get_transparency_wall():
             target_group_id = user.group_id
         else:
             target_group_id = request.args.get('group_id', user.group_id, type=int)
+
+        if is_admin and target_group_id:
+            if not Group.query.get(target_group_id):
+                return jsonify({"msg": "El grupo especificado no existe"}), 404
 
         if not target_group_id:
             return jsonify({"msg": "Debes pertenecer a un grupo para ver el muro"}), 400
