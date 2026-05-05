@@ -21,8 +21,6 @@ CORS(api)
 NAME_REGEX = re.compile(r"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\-']+$")
 
 def val_name(text):
-    if not text or not (2 <= len(text) <= 50):
-        return False
     return bool(NAME_REGEX.match(text))
 
 def paginate_query(query, model_name="items"):
@@ -50,7 +48,7 @@ def register_user():
     if not data:
         return jsonify({"message": "No se recibieron datos"}), 400
 
-    email = data.get("email").lower().strip() if data.get("email") else None
+    email = data.get("email", "").lower().strip()
     password = data.get("password")
     name = data.get("name", "").strip()
     lastname = data.get("lastname", "").strip()
@@ -58,11 +56,17 @@ def register_user():
     if not all([email, password, name, lastname]):
         return jsonify({"message": "Todos los campos son obligatorios"}), 400
     
+    if not (2 <= len(name) <= 50):
+        return jsonify({"message": "El nombre debe tener entre 2 y 50 caracteres"}), 400
+    
     if not val_name(name):
-        return jsonify({"message": "Nombre inválido (debe tener entre 2 y 50 letras)"}), 400
+        return jsonify({"message": "Nombre inválido (solo puede contener letras, tildes y guiones)"}), 400
+    
+    if not (2 <= len(lastname) <= 50):
+        return jsonify({"message": "El apellido debe tener entre 2 y 50 caracteres"}), 400
     
     if not val_name(lastname):
-        return jsonify({"message": "Apellido inválido (debe tener entre 2 y 50 letras)"}), 400
+        return jsonify({"message": "Apellido inválido (solo puede contener letras, tildes y guiones)"}), 400
 
     if not val_email(email):
         return jsonify({"message": "Formato de correo inválido"}), 400
@@ -722,7 +726,7 @@ def update_match_result(match_id):
 
     try:
         db.session.commit()
-        return jsonify({"msg": "Resultado sellado. Tienes 2 horas para correcciones."}), 200
+        return jsonify({"msg": "Resultado sellado. Tienes hasta 2 horas después del pitazo final para correcciones."}), 200
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"FALLO CRÍTICO al actualizar puntos - Partido {match_id}: {str(e)}")
