@@ -273,7 +273,7 @@ def get_profile():
 def update_user_photo():
     try:
         user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        user = db.session.get(User, id)
         
         if 'file' not in request.files:
             return jsonify({"message": "No se seleccionó ninguna imagen"}), 400
@@ -385,23 +385,39 @@ def create_rol():
         current_app.logger.error(f"Error al crear rol: {str(e)}")
         return jsonify({"msg": "Error interno al crear el rol"}), 500
 
+
+SYSTEM_ROLES = [1, 2]
+
 # Rol-editar
 @api.route('/roles/<int:id>', methods=['PUT'])
 @jwt_required()
 @manager_required
 def update_rol(id):
     try:
-        rol = Rol.query.get(id)
+        if id in SYSTEM_ROLES:
+            return jsonify({"msg": "Los roles del sistema no pueden modificarse"}), 403
+
+        rol = db.session.get(Rol, id)
         if not rol:
             return jsonify({"msg": "Rol no encontrado"}), 404
             
-        body = request.get_json()
-        if "name_rol" in body:
-            rol.name_rol = body["name_rol"]
-            db.session.commit()
-            return jsonify({"msg": "Rol actualizado", "rol": rol.serialize()}), 200
-            
-        return jsonify({"msg": "Nada que actualizar"}), 400
+        body = request.get_json(silent=True)
+        if not body or "name_rol" not in body:
+            return jsonify({"msg": "El campo 'name_rol' es obligatorio"}), 400
+
+        new_name = body["name_rol"].strip()
+
+        if len(new_name) < 3 or len(new_name) > 30:
+            return jsonify({"msg": "El nombre del rol debe tener entre 3 y 30 caracteres"}), 400
+
+        existing_rol = Rol.query.filter(Rol.name_rol.ilike(new_name)).first()
+        if existing_rol and existing_rol.id_rol != id:
+            return jsonify({"msg": f"Ya existe un rol llamado '{new_name}'"}), 400
+        
+        rol.name_rol = new_name
+        db.session.commit()
+        
+        return jsonify({"msg": "Rol actualizado con éxito", "rol": rol.serialize()}), 200
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error al editar rol ID {id}: {str(e)}")
@@ -414,12 +430,15 @@ def update_rol(id):
 @manager_required
 def delete_rol(id):
     try:
-        rol = Rol.query.get(id)
+        if id in SYSTEM_ROLES:
+            return jsonify({"msg": "Los roles del sistema no pueden eliminarse"}), 403
+        rol = db.session.get(Rol, id)
         if not rol:
             return jsonify({"msg": "Rol no encontrado"}), 404
             
-        if len(rol.users) > 0:
-            return jsonify({"msg": "No se puede eliminar un rol que tiene usuarios asignados"}), 400
+        user_count = User.query.filter_by(rol_id=id).count()
+        if user_count > 0:
+            return jsonify({"msg": "No se puede eliminar: hay usuarios vinculados a este rol"}), 400
 
         db.session.delete(rol)
         db.session.commit()
@@ -542,12 +561,10 @@ def delete_user(id):
     try:
         current_user_id = get_jwt_identity()
         
-        if id == 1:
-            return jsonify({"msg": "Acción prohibida: El Administrador Principal no puede ser eliminado"}), 403
-        if id == int(current_user_id):
-            return jsonify({"msg": "No puedes eliminarte a ti mismo"}), 403
+        if id == current_user_id:
+            return jsonify({"msg": "No puedes eliminar tu propia cuenta"}), 403
 
-        user = User.query.get(id)
+        user = db.session.get(User, id)
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
         

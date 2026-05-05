@@ -37,8 +37,8 @@ class User(db.Model):
     
     rol_id: Mapped[int] = mapped_column(ForeignKey('rol.id_rol'), nullable=False)
     rol: Mapped["Rol"] = relationship("Rol", back_populates="users")
-    predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
-    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user")
+    predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
+    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     group_id: Mapped[Optional[int]] = mapped_column(ForeignKey('group.id_group'), nullable=True)
     group: Mapped[Optional["Group"]] = relationship("Group", back_populates="users")
