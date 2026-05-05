@@ -75,12 +75,14 @@ const ResetPassword = () => {
                     <div className="row justify-content-center">
                         <div className="col-12 col-md-6 col-lg-5">
                             <div className="auth-card p-4 text-center">
-                                <i className="fa-solid fa-triangle-exclamation fa-3x mb-3" style={{ color: 'var(--accent-gold)' }}></i>
+                                <i className="fa-solid fa-triangle-exclamation fa-3x my-3" style={{ color: 'var(--accent-gold)' }}></i>
                                 <h4 className="text-white">Enlace inválido</h4>
-                                <p className="text-white-50">Este enlace no es válido o ya fue usado.</p>
-                                <Link to="/forgot-password" className="btn-emerald">
-                                    Solicitar nuevo enlace
-                                </Link>
+                                <p className="text-white-50 mb-4">Este enlace no es válido o ya fue usado.</p>
+                                <div className="mb-5">
+                                    <Link to="/forgot-password" className="btn-emerald">
+                                        Solicitar nuevo enlace
+                                    </Link>
+                                </div>
                             </div>
                         </div>
                     </div>
