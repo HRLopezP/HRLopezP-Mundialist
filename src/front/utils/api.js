@@ -22,6 +22,7 @@ export const apiFetch = async (endpoint, options = {}) => {
 
     if (response.status === 401 && endpoint !== "/login") {
       localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
       return { response, data: null };
     }

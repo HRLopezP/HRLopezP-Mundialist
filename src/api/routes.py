@@ -181,17 +181,12 @@ def request_password_reset():
 
         if user:
             token = generate_reset_token(user.email)
-            
-            user_name = getattr(user, 'name', 'Usuario') 
+            user_name = getattr(user, 'name', 'Usuario')
+            send_password_reset_email(user.email, user_name, token)
 
-            email_sent = send_password_reset_email(user.email, user_name, token)
-
-            if email_sent:
-                return jsonify({"message": "Si el correo existe, se ha enviado un enlace de recuperación"}), 200
-            else:
-                return jsonify({"message": "Error al procesar el envío del correo"}), 500
-
-        return jsonify({"message": "Usuario no encontrado"}), 404
+        return jsonify({
+            "message": "Si el correo está registrado, recibirás un enlace en breve"
+        }), 200
 
     except Exception as e:
         current_app.logger.error(f"Error en request_password_reset: {str(e)}")

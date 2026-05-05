@@ -1,14 +1,14 @@
 from flask_mail import Message
 from api.extensions import mail
 import os
-
+from urllib.parse import quote
 
 def send_password_reset_email(user_email, user_name, token):
     frontend_url = os.getenv("FRONTEND_URL").rstrip('/')
-    reset_url = f"{frontend_url}/reset-password?token={token}"
+    reset_url = f"{frontend_url}/reset-password?token={quote(token, safe='')}"
     
     msg = Message(
-        "🏆 Recupera tu acceso - Élite Mundialista",
+        "🏆 Recupera tu acceso - Mundial Elite Predictor",
         recipients=[user_email]
     )
     
