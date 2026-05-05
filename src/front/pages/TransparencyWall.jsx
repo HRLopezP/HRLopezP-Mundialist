@@ -3,11 +3,13 @@ import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
 import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { Toaster, toast } from "sonner";
-import useGlobalReducer from "../hooks/useGlobalReducer"
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import { getRolFromToken } from "../utils/auth";
 import "../styles/Predictions.css";
 
 const TransparencyWall = () => {
     const { store } = useGlobalReducer();
+    const isAdmin = getRolFromToken() === "Administrador";
     const [matches, setMatches] = useState([]);
     const [groups, setGroups] = useState([]);
     const [activeGroup, setActiveGroup] = useState(null);
@@ -17,7 +19,7 @@ const TransparencyWall = () => {
     useEffect(() => {
         const initTransparency = async () => {
             setLoading(true);
-            if (store.user?.rol === "Administrador") {
+            if (isAdmin) {
                 const { response, data } = await apiFetch("/groups");
                 if (response.ok) {
                     setGroups(data);
@@ -39,7 +41,9 @@ const TransparencyWall = () => {
 
     const loadData = async () => {
         try {
-            const url = activeGroup ? `/transparency-wall?group_id=${activeGroup}` : "/transparency-wall";
+            const url = (isAdmin && activeGroup)
+                ? `/transparency-wall?group_id=${activeGroup}`
+                : "/transparency-wall";
             const { response, data } = await apiFetch(url);
             if (response.ok) {
                 setMatches(data);
@@ -75,7 +79,7 @@ const TransparencyWall = () => {
                 <h2 className="fw-bold transparency-header">🛡️ Muro de Transparencia</h2>
                 <p className="text-dim small">Las predicciones se liberan 24h antes de cada partido.</p>
 
-                {store.user?.rol === "Administrador" && groups.length > 0 && (
+                {isAdmin && groups.length > 0 && (
                     <div className="group-tabs-container mt-3 mb-2">
                         {groups.map(g => (
                             <button
@@ -88,7 +92,6 @@ const TransparencyWall = () => {
                         ))}
                     </div>
                 )}
-
             </div>
 
             {/* Buscador y Botón */}
@@ -127,7 +130,7 @@ const TransparencyWall = () => {
             <div className="accordion accordion-flush bg-transparent" id="transparencyWall">
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                            <GameMatchCard key={match.id_match} match={match} index={index} />
+                        <GameMatchCard key={match.id_match} match={match} index={index} />
                     ))
                 ) : (
                     <div className="alert bg-dark text-info border-info text-center mt-5">

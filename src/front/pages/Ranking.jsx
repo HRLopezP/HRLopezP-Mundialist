@@ -5,9 +5,11 @@ import Swal from "sweetalert2";
 import Pagination from "../components/Pagination.jsx";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { generateRankingReport } from "../utils/transparencyPdf.js";
+import { getRolFromToken } from "../utils/auth";
 
 const Ranking = () => {
     const { store } = useGlobalReducer();
+    const isAdmin = getRolFromToken() === "Administrador";
     const [ranking, setRanking] = useState([]);
     const [groups, setGroups] = useState([]);
     const [activeGroup, setActiveGroup] = useState(null);
@@ -26,7 +28,7 @@ const Ranking = () => {
 
     const initData = async () => {
         setLoading(true);
-        if (store.user?.rol === "Administrador") {
+        if (isAdmin) {
             const { response, data } = await apiFetch("/groups");
             if (response.ok) {
                 setGroups(data);
@@ -35,11 +37,12 @@ const Ranking = () => {
         } else {
             setActiveGroup(store.user?.group_id);
         }
-        await loadRanking();
     };
 
     const loadRanking = async () => {
-        const url = activeGroup ? `/ranking?group_id=${activeGroup}` : "/ranking";
+        const url = (isAdmin && activeGroup)
+            ? `/ranking?group_id=${activeGroup}`
+            : "/ranking";
         const { response, data } = await apiFetch(url);
         if (response.ok) setRanking(data);
         setLoading(false);
@@ -157,36 +160,6 @@ const Ranking = () => {
     };
 
 
-    const renderAuditContent = () => {
-        const container = document.getElementById('audit-container');
-        if (!container) return;
-
-        container.innerHTML = `
-            <div class="table-responsive">
-                <table class="table table-dark table-sm small">
-                    <thead>
-                        <tr>
-                            <th>Partido</th>
-                            <th>Pred.</th>
-                            <th>Real</th>
-                            <th>Pts</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${auditData.predictions.map(p => `
-                            <tr>
-                                <td class="text-dim">${p.match}</td>
-                                <td class="fw-bold">${p.prediction}</td>
-                                <td class="text-success">${p.real_result}</td>
-                                <td><span class="badge ${p.points === 3 ? 'bg-success' : 'bg-warning text-dark'}">${p.points}</span></td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    };
-
     if (loading) return <div className="text-center mt-5"><div className="spinner-border text-emerald"></div></div>;
 
     return (
@@ -198,7 +171,7 @@ const Ranking = () => {
                 <p className="text-dim">Revisa quién lidera y audita sus predicciones.</p>
 
                 {/* SELECTOR DE GRUPOS */}
-                {store.user?.rol === "Administrador" && groups.length > 0 && (
+                {isAdmin && groups.length > 0 && (
                     <div className="group-tabs-container mt-3">
                         {groups.map(g => (
                             <button

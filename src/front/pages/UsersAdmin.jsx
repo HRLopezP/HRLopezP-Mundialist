@@ -59,12 +59,29 @@ const UsersAdmin = () => {
                     loadInitialData();
                 }
             } else {
+                toast.error(data.msg || "No se pudo cambiar el rol");
                 loadInitialData();
             }
         });
     };
 
     const handleToggleStatus = async (user) => {
+        const accion = user.is_active ? "desactivar" : "activar";
+
+        const confirm = await Swal.fire({
+            title: `¿${accion.charAt(0).toUpperCase() + accion.slice(1)} a ${user.name}?`,
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "var(--pitch-green)",
+            cancelButtonColor: "#343a40",
+            confirmButtonText: `Sí, ${accion}`,
+            cancelButtonText: "Cancelar",
+            background: "#051426",
+            color: "#fff"
+        });
+
+        if (!confirm.isConfirmed) return;
+
         const { response, data } = await apiFetch(`/users/${user.id_user}/status`, { method: 'PATCH' });
         if (response.ok) {
             const accion = !user.is_active ? "activado" : "desactivado";
@@ -126,6 +143,21 @@ const UsersAdmin = () => {
     };
 
     const handleUnlock = async (user) => {
+        const confirm = await Swal.fire({
+            title: `¿Desbloquear a ${user.name}?`,
+            text: "Se restaurará su acceso al sistema.",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonColor: "var(--pitch-green)",
+            cancelButtonColor: "#343a40",
+            confirmButtonText: "Sí, desbloquear",
+            cancelButtonText: "Cancelar",
+            background: "#051426",
+            color: "#fff"
+        });
+
+        if (!confirm.isConfirmed) return;
+
         const { response, data } = await apiFetch(`/users/${user.id_user}/unlock`, { method: 'PATCH' });
         if (response.ok) {
             toast.success(data.message, { icon: '🔓' });
@@ -194,7 +226,7 @@ const UsersAdmin = () => {
                         </thead>
                         <tbody>
                             {users.map(u => {
-                                const isRoot = u.id_user === 1;
+                                const isRoot = u.rol_id === 1;
                                 return (
                                     <tr key={u.id_user} className={isRoot ? "opacity-50" : ""}>
                                         <td>{u.name} {u.lastname}</td>
@@ -266,7 +298,7 @@ const UsersAdmin = () => {
                 {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => {
-                        const isRoot = u.id_user === 1;
+                        const isRoot = u.rol_id === 1;
                         return (
                             <div key={u.id_user}
                                 className={`user-mobile-card p-3 mb-4 border-0 ${isRoot ? "border-start border-4 border-warning" : ""}`}
@@ -299,7 +331,7 @@ const UsersAdmin = () => {
                                         <select
                                             className="form-select form-select-sm auth-input border-0"
                                             disabled={isRoot}
-                                            defaultValue={u.rol_id}
+                                            value={u.rol_id}
                                             onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
                                         >
                                             {roles.map(r => (
