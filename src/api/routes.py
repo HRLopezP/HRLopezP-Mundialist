@@ -277,7 +277,9 @@ def get_profile():
 def update_user_photo():
     try:
         user_id = get_jwt_identity()
-        user = db.session.get(User, id)
+        user = db.session.get(User, user_id)
+        if not user:
+            return jsonify({"message": "Usuario no encontrado"}), 404
         
         if 'file' not in request.files:
             return jsonify({"message": "No se seleccionó ninguna imagen"}), 400
@@ -372,8 +374,12 @@ def create_rol():
         
         if not body or "name_rol" not in body:
             return jsonify({"msg": "El nombre del rol es obligatorio"}), 400
+        
+        new_rol = body["name_rol"].strip()
+
+        if len(new_rol) < 3 or len(new_rol) > 30:
+            return jsonify({"msg": "El nombre del rol debe tener entre 3 y 30 caracteres"}), 400
             
-        # Verificar si ya existe
         exist = Rol.query.filter_by(name_rol=body["name_rol"]).first()
         if exist:
             return jsonify({"msg": "Este rol ya existe"}), 400

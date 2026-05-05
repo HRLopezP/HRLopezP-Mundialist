@@ -80,7 +80,7 @@ const AuditPanel = () => {
                     
                     {/* Buscador por ID */}
                     <div className="input-group input-group-sm" style={{ maxWidth: "250px" }}>
-                        <span className="input-group-text bg-dark border-secondary text-dim">ID</span>
+                        <span className="input-group-text bg-dark border-secondary text-white">ID</span>
                         <input
                             type="number"
                             min="1"
