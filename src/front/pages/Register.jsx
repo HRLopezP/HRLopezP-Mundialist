@@ -25,6 +25,7 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+    const [registered, setRegistered] = useState(false);
 
     const [passwordValidity, setPasswordValidity] = useState({
         minLength: false, lowerCase: false, upperCase: false, number: false, specialChar: false,
@@ -66,6 +67,7 @@ const Register = () => {
 
             if (response.ok) {
                 toast.success(data.message || "¡Registro exitoso! Bienvenido al Mundial");
+                setRegistered(true); 
                 setUser(initialUserState);
 
                 setTimeout(() => {
@@ -161,8 +163,8 @@ const Register = () => {
                                 )}
                             </div>
 
-                            <button type="submit" className="btn-emerald w-100" disabled={isFormIncomplete}>
-                                Registrarme para el Mundial
+                            <button type="submit" className="btn-emerald w-100" disabled={isFormIncomplete || registered}>
+                               {registered ? "Redirigiendo..." : "Registrarme para el Mundial"}
                             </button>
 
                             <div className="text-center mt-4">

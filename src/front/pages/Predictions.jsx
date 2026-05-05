@@ -222,6 +222,8 @@ const Predictions = () => {
                                             <div className="d-flex justify-content-center align-items-center gap-2">
                                                 <input
                                                     type="number"
+                                                    min="0"
+                                                    max="15"
                                                     disabled={!isEditable || isFinished}
                                                     className={`form-control score-input text-center bg-dark text-white border-secondary ${isFinished ? 'opacity-75' : ''}`}
                                                     style={{ width: "50px" }}
@@ -231,6 +233,8 @@ const Predictions = () => {
                                                 <span className="h4 text-white mb-0">-</span>
                                                 <input
                                                     type="number"
+                                                    min="0"
+                                                    max="15"
                                                     disabled={!isEditable || isFinished}
                                                     className={`form-control score-input text-center bg-dark text-white border-secondary ${isFinished ? 'opacity-75' : ''}`}
                                                     style={{ width: "50px" }}

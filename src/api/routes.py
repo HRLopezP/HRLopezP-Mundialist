@@ -620,8 +620,8 @@ def save_prediction():
     try:
         h_score = int(home_score)
         a_score = int(away_score)
-        if not (0 <= h_score <= 10 and 0 <= a_score <= 10):
-            return jsonify({"msg": "El marcador debe estar entre 0 y 10 goles"}), 400
+        if not (0 <= h_score <= 15 and 0 <= a_score <= 15):
+            return jsonify({"msg": "El marcador debe estar entre 0 y 15 goles"}), 400
     except (ValueError, TypeError):
         return jsonify({"msg": "Los goles deben ser números válidos."}), 400
 

@@ -141,6 +141,8 @@ const MatchAdmin = () => {
                                     <div className="col-4 d-flex justify-content-center align-items-center gap-2">
                                         <input
                                             type="number"
+                                            min="0"
+                                            max="15"
                                             className="form-control score-input text-center border-secondary"
                                             value={match.home_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'home_score', e.target.value)}
@@ -149,6 +151,8 @@ const MatchAdmin = () => {
                                         <span className="text-white fw-bold">-</span>
                                         <input
                                             type="number"
+                                            min="0"
+                                            max="15"
                                             className="form-control score-input text-center border-secondary"
                                             value={match.away_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'away_score', e.target.value)}

@@ -83,8 +83,9 @@ const AuditPanel = () => {
                         <span className="input-group-text bg-dark border-secondary text-dim">ID</span>
                         <input
                             type="number"
+                            min="1"
                             className="form-control bg-dark text-white border-secondary"
-                            placeholder="Buscar partido..."
+                            placeholder="Buscar número de partido..."
                             value={searchId}
                             onChange={(e) => setSearchId(e.target.value)}
                             onKeyDown={handleKeyDown}
