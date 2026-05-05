@@ -1,9 +1,10 @@
 import React from "react";
-import "../styles/footer.css"; 
+import { Link } from "react-router-dom";
+import "../styles/footer.css";
 
 export const Footer = () => {
     return (
-        <footer className="footer-hrlp mt-auto py-3"> 
+        <footer className="footer-hrlp mt-auto py-3">
             <div className="container-fluid px-4">
                 <div className="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3 text-muted-custom">
 
@@ -17,8 +18,8 @@ export const Footer = () => {
 
                     {/* Navegación - Centrada en móvil */}
                     <div className="d-flex align-items-center gap-4 order-1 order-md-2">
-                        <a href="/rules" className="link-custom">Reglas</a>
-                        <a href="/ranking" className="link-custom">Ranking</a>
+                        <Link to="/rules" className="link-custom">Reglas</Link>
+                        <Link to="/ranking" className="link-custom">Ranking</Link>
                     </div>
 
                     {/* Autoría */}

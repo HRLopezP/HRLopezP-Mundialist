@@ -34,7 +34,14 @@ export const router = createBrowserRouter(
           <Layout />
         </Suspense>
       }
-      errorElement={<h1>Not found!</h1>}
+      errorElement={
+        <div className="d-flex flex-column justify-content-center align-items-center vh-100 text-white text-center">
+          <i className="fa-solid fa-triangle-exclamation fa-4x text-warning mb-4"></i>
+          <h2>Página no encontrada</h2>
+          <p className="text-dim">La ruta que buscas no existe.</p>
+          <a href="/" className="btn btn-emerald mt-3">Volver al inicio</a>
+        </div>
+      }
     >
 
       <Route path="/" element={<Home />} />
@@ -52,7 +59,7 @@ export const router = createBrowserRouter(
         <Route path="roles" element={<AdminRoute><RolesAdmin /></AdminRoute>} />
         <Route path="matches" element={<AdminRoute><MatchAdmin /></AdminRoute>} />
         <Route path="audit" element={<AdminRoute><AuditPanel /></AdminRoute>} />
-        <Route path="groups" element={<AdminRoute><GroupsAdmin /></AdminRoute>}/>
+        <Route path="groups" element={<AdminRoute><GroupsAdmin /></AdminRoute>} />
       </Route>
       <Route path="/rules" element={<Rules />} />
 
