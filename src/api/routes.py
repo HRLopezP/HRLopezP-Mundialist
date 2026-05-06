@@ -993,23 +993,40 @@ def update_group(id):
         group = Group.query.get(id)
         if not group:
             return jsonify({"msg": "Grupo no encontrado"}), 404
-            
+
         body = request.get_json()
+        updated = False
+
         if "name_group" in body:
-            exist = Group.query.filter(Group.name_group == body["name_group"], Group.id_group != id).first()
+            new_name = body["name_group"].strip()
+            if not new_name:
+                return jsonify({"msg": "El nombre no puede estar vacío"}), 400
+            exist = Group.query.filter(
+                Group.name_group == new_name,
+                Group.id_group != id
+            ).first()
             if exist:
                 return jsonify({"msg": "Ya existe otro grupo con ese nombre"}), 400
+            group.name_group = new_name
+            updated = True
 
-            group.name_group = body["name_group"]
-            db.session.commit()
-            return jsonify({"msg": "Nombre del grupo actualizado", "group": group.serialize()}), 200
-            
-        return jsonify({"msg": "Nada que actualizar"}), 400
+        if "entry_fee" in body:
+            fee = body["entry_fee"]
+            if not isinstance(fee, (int, float)) or fee < 0:
+                return jsonify({"msg": "La cuota debe ser un número positivo"}), 400
+            group.entry_fee = float(fee)
+            updated = True
+
+        if not updated:
+            return jsonify({"msg": "Nada que actualizar"}), 400
+
+        db.session.commit()
+        return jsonify({"msg": "Grupo actualizado", "group": group.serialize()}), 200
+
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"Error al editar grupo ID {id}: {str(e)}")
         return jsonify({"msg": "Error interno al actualizar el grupo"}), 500
-
 
 #Eliminar G
 @api.route('/groups/<int:id>', methods=['DELETE'])
@@ -1065,3 +1082,52 @@ def assign_group(id):
         db.session.rollback()
         current_app.logger.error(f"Error al asignar grupo al usuario {id}: {str(e)}")
         return jsonify({"msg": "Error interno al asignar grupo"}), 500
+    
+#Inform. del grupo del usuario
+@api.route('/group/my-info', methods=['GET'])
+@jwt_required()
+def get_my_group_info():
+    try:
+        user_id = get_jwt_identity()
+        current_user = db.session.get(User, user_id)
+
+        if not current_user or not current_user.group_id:
+            return jsonify({"msg": "No perteneces a ningún grupo"}), 404
+
+        group = db.session.get(Group, current_user.group_id)
+        if not group:
+            return jsonify({"msg": "Grupo no encontrado"}), 404
+
+        active_members = [u for u in group.users if u.is_active]
+
+        def get_avatar(u):
+            if u.profile:
+                return u.profile
+            initials = f"{u.name[0]}{u.lastname[0]}".upper()
+            return f"https://ui-avatars.com/api/?name={initials}&size=128&background=random&rounded=true"
+
+        members_data = [
+            {
+                "id_user": u.id_user,
+                "name": u.name,
+                "lastname": u.lastname,
+                "profile": get_avatar(u),
+                "total_points": u.total_points,
+                "is_me": u.id_user == int(user_id)
+            }
+            for u in sorted(active_members, key=lambda u: u.total_points, reverse=True)
+        ]
+
+        prize_pool = round(group.entry_fee * len(active_members), 2)
+
+        return jsonify({
+            "group_name": group.name_group,
+            "entry_fee": group.entry_fee,
+            "active_count": len(active_members),
+            "prize_pool": prize_pool,
+            "members": members_data
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error en /group/my-info para user {user_id}: {str(e)}")
+        return jsonify({"msg": "Error interno al cargar la info del grupo"}), 500

@@ -173,14 +173,19 @@ class Group(db.Model):
     __tablename__ = 'group'
     id_group: Mapped[int] = mapped_column(primary_key=True)
     name_group: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    entry_fee: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     
     users: Mapped[List["User"]] = relationship("User", back_populates="group")
 
     def serialize(self):
+        active_users = [u for u in self.users if u.is_active]
         return {
             "id_group": self.id_group,
             "name_group": self.name_group,
-            "total_users": len(self.users) 
+            "entry_fee": self.entry_fee,
+            "total_users": len(self.users),
+            "active_users": len(active_users),
+            "prize_pool": round(self.entry_fee * len(active_users), 2)
         }
     
 
