@@ -12,3 +12,17 @@ export const getRolFromToken = () => {
         return null;
     }
 };
+
+
+export const getIdFromToken = () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) return null;
+
+    try {
+        const payload = token.split(".")[1];
+        const decoded = JSON.parse(atob(payload));
+        return parseInt(decoded.sub);
+    } catch (e) {
+        return null;
+    }
+};

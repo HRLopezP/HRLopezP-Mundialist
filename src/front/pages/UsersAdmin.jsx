@@ -3,6 +3,7 @@ import { apiFetch } from "../utils/api";
 import { Toaster, toast } from "sonner";
 import Swal from "sweetalert2";
 import Pagination from "../components/Pagination";
+import { getRolFromToken, getIdFromToken } from "../utils/auth"
 import "../styles/admin.css";
 
 const UsersAdmin = () => {
@@ -12,6 +13,7 @@ const UsersAdmin = () => {
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({ total: 0, pages: 0, current: 1 });
     const [filters, setFilters] = useState({ search: "", status: "all" });
+    const currentUserId = getIdFromToken();
 
     useEffect(() => {
         loadInitialData();
@@ -226,7 +228,7 @@ const UsersAdmin = () => {
                         </thead>
                         <tbody>
                             {users.map(u => {
-                                const isRoot = u.rol_id === 1;
+                                const isRoot = u.id_user === currentUserId;
                                 return (
                                     <tr key={u.id_user} className={isRoot ? "opacity-50" : ""}>
                                         <td>{u.name} {u.lastname}</td>
@@ -298,7 +300,7 @@ const UsersAdmin = () => {
                 {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => {
-                        const isRoot = u.rol_id === 1;
+                        const isRoot = u.id_user === currentUserId;
                         return (
                             <div key={u.id_user}
                                 className={`user-mobile-card p-3 mb-4 border-0 ${isRoot ? "border-start border-4 border-warning" : ""}`}
