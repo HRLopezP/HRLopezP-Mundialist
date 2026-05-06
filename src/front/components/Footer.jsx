@@ -16,7 +16,7 @@ export const Footer = () => {
                         <span>&copy; {new Date().getFullYear()}</span>
                     </div>
 
-                    {/* Navegación - Centrada en móvil */}
+                    {/* Navegación */}
                     <div className="d-flex align-items-center gap-4 order-1 order-md-2">
                         <Link to="/rules" className="link-custom">Reglas</Link>
                         <Link to="/ranking" className="link-custom">Ranking</Link>

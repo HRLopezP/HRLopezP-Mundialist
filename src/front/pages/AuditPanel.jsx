@@ -41,7 +41,7 @@ const AuditPanel = () => {
 
     useEffect(() => {
         fetchLogs(1, sortOrder, searchId);
-    }, [sortOrder]); // Se dispara cuando cambias el select de orden
+    }, [sortOrder]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {

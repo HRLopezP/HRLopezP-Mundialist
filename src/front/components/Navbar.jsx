@@ -42,7 +42,7 @@ export const Navbar = () => {
             <div className="container">
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
-                    {/* Ocultamos "ELITE" en pantallas muy pequeñas para ganar espacio */}
+                    {/* Ocultamos "ELITE" */}
                     <span className="brand-text">ÉLITE <span className="text-emerald d-none d-sm-inline">MUNDIALISTA</span></span>
                 </Link>
 
@@ -74,7 +74,7 @@ export const Navbar = () => {
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto align-items-center gap-2">
 
-                        {/* --- RUTAS PARA TODOS LOS LOGUEADOS --- */}
+                        {/* --- RUTAS PARA TODOS --- */}
                         {store.user && (
                             <>
                                 <li className="nav-item w-100">

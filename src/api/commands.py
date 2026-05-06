@@ -125,8 +125,6 @@ def setup_commands(app):
     # flask sync-matches    solo trae los datos de los juegos y no los roles.
 
 
-
-
 # 1. Primero crear los roles y sincronizar partidos (ya lo tienes)
 # flask init-db
 
