@@ -115,6 +115,7 @@ def setup_commands(app):
         user.rol_id = admin_rol.id_rol
         user.is_active = True
         user.is_blocked = False
+        user.is_root = True 
 
         db.session.commit()
         print(f"✅ ¡Listo! {user.name} {user.lastname} ({email}) ahora es Administrador.")

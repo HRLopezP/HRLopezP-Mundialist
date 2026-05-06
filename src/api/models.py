@@ -31,6 +31,7 @@ class User(db.Model):
     profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default=None)
     profile_public_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     total_points: Mapped[float] = mapped_column(Float, default=0.0)
+    is_root: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
@@ -63,7 +64,8 @@ class User(db.Model):
             "rol": self.rol.name_rol if self.rol else "Sin Rol",
             "rol_id": self.rol_id,
             "group_id": self.group_id,
-            "group_name": self.group.name_group if self.group else "Sin Grupo"
+            "group_name": self.group.name_group if self.group else "Sin Grupo",
+            "is_root": self.is_root 
         }
     
     

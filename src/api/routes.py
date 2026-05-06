@@ -495,15 +495,16 @@ def get_users():
 def toggle_user_status(id):
     try: 
         current_user_id = get_jwt_identity()
-        
-        if id == 1:
-            return jsonify({"msg": "El Administrador Principal es intocable"}), 403
+
         if id == int(current_user_id):
             return jsonify({"msg": "No puedes desactivar tu propia cuenta"}), 403
 
         user = User.query.get(id)
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        if user.is_root:
+            return jsonify({"msg": "Este usuario no puede ser modificado"}), 403
         
         if not user.is_active and user.group_id is None:
             return jsonify({"msg": "No puedes activar a un usuario sin asignarle un grupo primero"}), 400
@@ -515,6 +516,7 @@ def toggle_user_status(id):
         db.session.rollback()
         current_app.logger.error(f"Error al cambiar estatus del usuario {id}: {str(e)}")
         return jsonify({"msg": "Error interno al cambiar estatus"}), 500
+    
 
 # Cambiar rol
 @api.route('/users/<int:id>/role', methods=['PATCH'])
@@ -538,6 +540,9 @@ def change_user_role(id):
         user = db.session.get(User, id)
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        if user.is_root:
+            return jsonify({"msg": "Este usuario no puede ser modificado"}), 403
 
         if user.rol.name_rol == "Administrador":
             admin_count = User.query.join(Rol).filter(
@@ -571,12 +576,16 @@ def delete_user(id):
     try:
         current_user_id = get_jwt_identity()
         
-        if id == current_user_id:
+        if id == int(current_user_id):
             return jsonify({"msg": "No puedes eliminar tu propia cuenta"}), 403
 
         user = db.session.get(User, id)
+        
         if not user:
             return jsonify({"msg": "Usuario no encontrado"}), 404
+        
+        if user.is_root:
+            return jsonify({"msg": "Este usuario no puede ser modificado"}), 403
         
         db.session.delete(user)
         db.session.commit()
