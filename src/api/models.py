@@ -149,9 +149,11 @@ class AuditLog(db.Model):
     details: Mapped[str] = mapped_column(String(255), nullable=False) 
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True) 
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    match_id: Mapped[Optional[int]] = mapped_column(ForeignKey('match.id_match'), nullable=True, index=True)
     
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
     user: Mapped["User"] = relationship(back_populates="audit_logs")
+    match: Mapped[Optional["Match"]] = relationship("Match") 
 
     def serialize(self):
         return {
@@ -160,7 +162,8 @@ class AuditLog(db.Model):
             "details": self.details,
             "ip_address": self.ip_address,
             "timestamp": self.timestamp.isoformat(),
-            "user_email": self.user.email if self.user else "Sistema"
+            "user_email": self.user.email if self.user else "Sistema",
+            "match_id": self.match_id
         }
 
 

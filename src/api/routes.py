@@ -724,7 +724,8 @@ def update_match_result(match_id):
     
     audit = AuditLog(
         action="MODIFICACION", 
-        details=f"{match.home_team.name} vs {match.away_team.name} (ID {match_id}): Cambió de {old_score_str} a {home_real}-{away_real}",
+        details=f"{match.home_team.name} vs {match.away_team.name}: Cambió de {old_score_str} a {home_real}-{away_real}",
+        match_id=match_id,
         ip_address=request.remote_addr,
         user_id=get_jwt_identity()
     )
@@ -746,16 +747,19 @@ def update_match_result(match_id):
 def get_audit_logs():
     try:
         order_param = request.args.get('order', 'desc')
+        sort_by = request.args.get('sort_by', 'date') 
         match_id = request.args.get('match_id')
         query = AuditLog.query
 
         if match_id:
-            query = query.filter(AuditLog.details.contains(f"(ID {match_id})"))
+            query = query.filter(AuditLog.match_id == int(match_id))
         
-        if order_param == 'asc':
-            query = query.order_by(AuditLog.timestamp.asc())
+        if sort_by == 'match_id':
+            order_col = AuditLog.match_id
         else:
-            query = query.order_by(AuditLog.timestamp.desc())
+            order_col = AuditLog.timestamp
+
+        query = query.order_by(order_col.asc() if order_param == 'asc' else order_col.desc())
             
         return jsonify(paginate_query(query, model_name="logs")), 200
     except Exception as e:
