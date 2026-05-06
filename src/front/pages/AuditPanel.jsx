@@ -9,6 +9,7 @@ const AuditPanel = () => {
     const [loading, setLoading] = useState(true);
     const [sortOrder, setSortOrder] = useState("desc");
     const [searchId, setSearchId] = useState("");
+    const [sortBy, setSortBy] = useState("date");
 
     const [currentPage, setCurrentPage] = useState(1);
     const [paginationData, setPaginationData] = useState({
@@ -17,10 +18,10 @@ const AuditPanel = () => {
         per_page: 10
     });
 
-    const fetchLogs = async (page = 1, order = sortOrder, mId = searchId) => {
+    const fetchLogs = async (page = 1, order = sortOrder, mId = searchId, sBy = sortBy) => {
         setLoading(true);
         try {
-            const url = `/audit-logs?order=${order}&page=${page}&per_page=10${mId ? `&match_id=${mId}` : ''}`;
+            const url = `/audit-logs?order=${order}&sort_by=${sBy}&page=${page}&per_page=10${mId ? `&match_id=${mId}` : ''}`;
             const { response, data } = await apiFetch(url);
 
             if (response.ok) {
@@ -40,8 +41,8 @@ const AuditPanel = () => {
     };
 
     useEffect(() => {
-        fetchLogs(1, sortOrder, searchId);
-    }, [sortOrder]);
+        fetchLogs(1, sortOrder, searchId, sortBy);
+    }, [sortOrder, sortBy]);
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
@@ -66,7 +67,7 @@ const AuditPanel = () => {
     return (
         <div className="admin-container animate__animated animate__fadeIn">
             <Toaster position="top-center" richColors />
-            
+
             {/* ENCABEZADO CENTRADO Y RESPONSIVE */}
             <div className="text-center mb-4">
                 <h2 className="text-white mb-1 h3 fw-bold">
@@ -77,7 +78,7 @@ const AuditPanel = () => {
 
                 {/* FILTROS Y BUSCADOR */}
                 <div className="d-flex flex-column flex-md-row justify-content-center align-items-center gap-3 bg-dark-soft p-3 rounded-4 mx-auto" style={{ maxWidth: "800px" }}>
-                    
+
                     {/* Buscador por ID */}
                     <div className="input-group input-group-sm" style={{ maxWidth: "250px" }}>
                         <span className="input-group-text bg-dark border-secondary text-white">ID</span>
@@ -98,7 +99,7 @@ const AuditPanel = () => {
                     {/* Selector de Orden */}
                     <div className="d-flex align-items-center gap-2">
                         <label className="small text-dim d-none d-sm-block">Ordenar:</label>
-                        <select 
+                        <select
                             className="form-select form-select-sm bg-dark text-white border-secondary"
                             style={{ width: "160px" }}
                             value={sortOrder}
@@ -109,10 +110,24 @@ const AuditPanel = () => {
                         </select>
                     </div>
 
+                    {/* Selector de Criterio */}
+                    <div className="d-flex align-items-center gap-2">
+                        <label className="small text-dim d-none d-sm-block">Criterio:</label>
+                        <select
+                            className="form-select form-select-sm bg-dark text-white border-secondary"
+                            style={{ width: "160px" }}
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                        >
+                            <option value="date">Por fecha</option>
+                            <option value="match_id">Por ID partido</option>
+                        </select>
+                    </div>
+
                     {/* Botón Limpiar */}
-                    <button 
+                    <button
                         className="btn btn-outline-secondary btn-sm"
-                        onClick={() => { setSearchId(""); setSortOrder("desc"); fetchLogs(1, "desc", ""); }}
+                        onClick={() => { setSearchId(""); setSortOrder("desc"); setSortBy("date"); fetchLogs(1, "desc", "", "date"); }}
                     >
                         <i className="fas fa-sync-alt me-1"></i> Limpiar
                     </button>
@@ -124,6 +139,7 @@ const AuditPanel = () => {
                     <table className="table table-dark table-hover table-oxford border-0">
                         <thead>
                             <tr>
+                                <th># Partido</th>
                                 <th>Fecha</th>
                                 <th>Admin</th>
                                 <th>Acción</th>
@@ -138,6 +154,12 @@ const AuditPanel = () => {
                             ) : (
                                 logs.map((log) => (
                                     <tr key={log.id_audit} className="align-middle">
+                                        <td className="fw-bold text-center">
+                                            {log.match_id
+                                                ? <span className="badge bg-dark-soft text-emerald">#{log.match_id}</span>
+                                                : <span className="text-dim">—</span>
+                                            }
+                                        </td>
                                         <td className="small">{new Date(log.timestamp).toLocaleString()}</td>
                                         <td className="text-info fw-bold">{log.user_email}</td>
                                         <td>
