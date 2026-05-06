@@ -228,19 +228,21 @@ const UsersAdmin = () => {
                         </thead>
                         <tbody>
                             {users.map(u => {
-                                const isRoot = u.id_user === currentUserId;
+                                const isRoot = u.is_root;
+                                const isSelf = u.id_user === currentUserId;
+                                const isProtected = isRoot || isSelf;
                                 return (
                                     <tr key={u.id_user} className={isRoot ? "opacity-50" : ""}>
                                         <td>{u.name} {u.lastname}</td>
                                         <td className="small text-dim">{u.email}</td>
                                         <td>
                                             <div className="d-flex align-items-center gap-2">
-                                                <span className={`badge ${u.rol_id == 1 ? 'bg-info' : 'bg-secondary'} me-2`} style={{ fontSize: '0.7rem' }}>
+                                                <span className={`badge ${u.is_root ? 'bg-info' : 'bg-secondary'} me-2`} style={{ fontSize: '0.7rem' }}>
                                                     {u.name_rol}
                                                 </span>
                                                 <select
                                                     className="form-select form-select-sm role-select-pc"
-                                                    disabled={isRoot}
+                                                    disabled={isProtected}
                                                     value={u.rol_id}
                                                     onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
                                                 >
@@ -269,7 +271,7 @@ const UsersAdmin = () => {
                                                     <div className="form-check form-switch">
                                                         <input
                                                             className="form-check-input custom-switch" type="checkbox"
-                                                            checked={u.is_active} disabled={isRoot}
+                                                            checked={u.is_active} disabled={isProtected}
                                                             onChange={() => handleToggleStatus(u)}
                                                         />
                                                     </div>
@@ -283,7 +285,7 @@ const UsersAdmin = () => {
                                                         <i className="fa-solid fa-lock-open"></i>
                                                     </button>
                                                 )}
-                                                {!isRoot && (
+                                                {!isProtected && (
                                                     <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
                                                         <i className="fa-solid fa-trash-can"></i>
                                                     </button>
@@ -300,7 +302,9 @@ const UsersAdmin = () => {
                 {/* Vista teléfonos */}
                 <div className="d-md-none">
                     {users.map(u => {
-                        const isRoot = u.id_user === currentUserId;
+                        const isRoot = u.is_root;
+                        const isSelf = u.id_user === currentUserId;
+                        const isProtected = isRoot || isSelf;
                         return (
                             <div key={u.id_user}
                                 className={`user-mobile-card p-3 mb-4 border-0 ${isRoot ? "border-start border-4 border-warning" : ""}`}
@@ -319,7 +323,7 @@ const UsersAdmin = () => {
 
                                     {/* Acción Eliminar */}
                                     <div className="col-2 text-end">
-                                        {!isRoot && (
+                                        {!isProtected && (
                                             <button className="btn btn-link text-danger p-0" onClick={() => handleDelete(u)}>
                                                 <i className="fa-solid fa-trash-can"></i>
                                             </button>
@@ -332,7 +336,7 @@ const UsersAdmin = () => {
                                     <div className="col-8">
                                         <select
                                             className="form-select form-select-sm auth-input border-0"
-                                            disabled={isRoot}
+                                            disabled={isProtected}
                                             value={u.rol_id}
                                             onChange={(e) => handleRoleChange(u.id_user, e.target.value)}
                                         >
@@ -364,7 +368,7 @@ const UsersAdmin = () => {
                                             <div className="form-check form-switch">
                                                 <input
                                                     className="form-check-input custom-switch" type="checkbox"
-                                                    checked={u.is_active} disabled={isRoot}
+                                                    checked={u.is_active} disabled={isProtected}
                                                     onChange={() => handleToggleStatus(u)}
                                                 />
                                             </div>
