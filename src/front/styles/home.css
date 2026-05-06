@@ -147,3 +147,249 @@
     margin-right: 8px;
     color: var(--neon-blue);
 }
+
+.group-section {
+    animation-delay: 0.3s;
+}
+
+.group-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.group-sub {
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+/* ── Grid de rivales ── */
+.rivals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-top: 1.25rem;
+}
+
+/* ── Tarjeta de rival ── */
+.rival-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1rem 0.75rem;
+    text-align: center;
+    position: relative;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    cursor: default;
+}
+
+.rival-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(40, 200, 125, 0.4);
+}
+
+/* Tarjeta propia: borde verde esmeralda */
+.rival-card--me {
+    border-color: #28c87d;
+    background: rgba(40, 200, 125, 0.07);
+    box-shadow: 0 0 16px rgba(40, 200, 125, 0.15);
+}
+
+.rival-medal {
+    position: absolute;
+    top: 6px;
+    left: 8px;
+    font-size: 1rem;
+}
+
+.rival-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    margin-bottom: 0.5rem;
+}
+
+.rival-card--me .rival-avatar {
+    border-color: #28c87d;
+}
+
+.rival-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin: 0;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.rival-points {
+    font-size: 0.72rem;
+    color: #28c87d;
+    margin: 0.2rem 0 0;
+    font-weight: 700;
+}
+
+/* ── Skeleton loader ── */
+.rival-card--skeleton {
+    pointer-events: none;
+}
+
+.skeleton-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(90deg, #1a2a3a 25%, #243346 50%, #1a2a3a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    margin: 0 auto 0.5rem;
+}
+
+.skeleton-line {
+    height: 10px;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #1a2a3a 25%, #243346 50%, #1a2a3a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    margin: 0.3rem auto;
+    width: 80%;
+}
+
+.skeleton-line--short {
+    width: 50%;
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position:  200% 0; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   ALCANCÍA — PrizePoolPiggyBank
+   ══════════════════════════════════════════════════════════ */
+.prize-pool-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    background: linear-gradient(135deg, #051f36 0%, #0a2d4a 100%);
+    border: 1px solid rgba(40, 200, 125, 0.3);
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 24px rgba(40, 200, 125, 0.1);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.prize-pool-card--visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Destello de fondo */
+.prize-pool-card::before {
+    content: "";
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 180px;
+    height: 180px;
+    background: radial-gradient(circle, rgba(40, 200, 125, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* ── Wrapper del cerdo ── */
+.piggy-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.piggy-icon {
+    font-size: 2.8rem;
+    animation: piggy-bounce 2.4s ease-in-out infinite;
+    display: block;
+    line-height: 1;
+}
+
+@keyframes piggy-bounce {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%       { transform: translateY(-6px) rotate(3deg); }
+}
+
+/* ── Monedas cayendo ── */
+.coin {
+    position: absolute;
+    font-size: 0.85rem;
+    opacity: 0;
+    animation: coin-fall 2.4s ease-in infinite;
+}
+
+.coin--1 { left: 60%; animation-delay: 0s; }
+.coin--2 { left: 75%; animation-delay: 0.8s; }
+.coin--3 { left: 45%; animation-delay: 1.6s; }
+
+@keyframes coin-fall {
+    0%   { opacity: 0; transform: translateY(-18px) scale(0.7); }
+    20%  { opacity: 1; }
+    70%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(20px) scale(1); }
+}
+
+/* ── Texto de la bolsa ── */
+.prize-pool-info {
+    min-width: 0;
+}
+
+.prize-pool-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #28c87d;
+    margin: 0 0 0.2rem;
+    font-weight: 600;
+}
+
+.prize-pool-amount {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.1;
+    /* Destello en el monto */
+    animation: amount-glow 3s ease-in-out infinite;
+}
+
+@keyframes amount-glow {
+    0%, 100% { text-shadow: 0 0 8px rgba(40, 200, 125, 0); }
+    50%       { text-shadow: 0 0 18px rgba(40, 200, 125, 0.5); }
+}
+
+.prize-pool-sub {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin: 0.3rem 0 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .prize-pool-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .prize-pool-amount {
+        font-size: 1.6rem;
+    }
+
+    .rivals-grid {
+        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    }
+}
