@@ -177,16 +177,20 @@
   border-radius: 14px;
   padding: 1rem 0.75rem;
   text-align: center;
+  cursor: pointer;
   position: relative;
+  overflow: hidden;
   transition:
-    transform 0.2s ease,
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.4s ease,
     border-color 0.2s ease;
   cursor: default;
 }
 
 .rival-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(40, 200, 125, 0.4);
+    transform: translateY(-8px) scale(1.02) rotateX(2deg) rotateY(2deg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(40, 200, 125, 0.2);
+    border-color: #28c87d;
 }
 
 /* Tarjeta propia: borde verde esmeralda */
@@ -449,8 +453,11 @@
   }
 }
 
-
 @keyframes shine-attention {
-    from { box-shadow: 0 0 10px rgba(40, 200, 125, 0.2); }
-    to { box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); } /* Destello dorado sutil */
+  from {
+    box-shadow: 0 0 10px rgba(40, 200, 125, 0.2);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+  } /* Destello dorado sutil */
 }

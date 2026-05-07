@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { apiFetch } from "../utils/api";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import Pagination from "../components/Pagination.jsx";
 import "../styles/home.css";
 
+// ─── Alcancía animada ────────────────────────────────────────────────────────
 const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
     const [visible, setVisible] = useState(false);
 
@@ -12,28 +14,19 @@ const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
         return () => clearTimeout(t);
     }, []);
 
-    const formattedPool = prizePool.toLocaleString("es-MX", {
-        style: "currency",
-        currency: "MXN",
-        minimumFractionDigits: 2
-    });
-
     return (
         <div
             className={`prize-pool-card ${visible ? "prize-pool-card--visible" : ""}`}
             title={`${activeCount} participantes × $${entryFee} c/u`}
         >
-            {/* Ícono alcancía animado */}
             <div className="piggy-wrapper">
                 <span className="piggy-icon" role="img" aria-label="premio">🏆</span>
-                {/* Monedas animadas cayendo */}
                 <span className="coin coin--1">💰</span>
                 <span className="coin coin--2">💰</span>
                 <span className="coin coin--3">💰</span>
             </div>
-
             <div className="prize-pool-info">
-                <p className="prize-pool-label">Bolsa acumulada </p>
+                <p className="prize-pool-label">Bolsa acumulada</p>
                 <p className="prize-pool-amount">
                     <AnimatedNumber value={prizePool} />
                 </p>
@@ -45,7 +38,44 @@ const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
     );
 };
 
-// ─── Componente: Tarjeta de rival ────────────────────────────────────────────
+// ─── Número animado ──────────────────────────────────────────────────────────
+const AnimatedNumber = ({ value }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
+    const elementRef = useRef(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => { if (entry.isIntersecting) setHasStarted(true); },
+            { threshold: 0.5 }
+        );
+        if (elementRef.current) observer.observe(elementRef.current);
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (!hasStarted) return;
+        let start = 0;
+        const end = parseFloat(value);
+        const increment = end / (2000 / 16);
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) { setDisplayValue(end); clearInterval(timer); }
+            else setDisplayValue(start);
+        }, 16);
+        return () => clearInterval(timer);
+    }, [hasStarted, value]);
+
+    return (
+        <span ref={elementRef}>
+            {displayValue.toLocaleString("es-MX", {
+                style: "currency", currency: "MXN", minimumFractionDigits: 2
+            })}
+        </span>
+    );
+};
+
+// ─── Tarjeta de participante ─────────────────────────────────────────────────
 const RivalCard = ({ member, rank }) => {
     const medalMap = { 1: "🥇", 2: "🥈", 3: "🥉" };
     const medal = medalMap[rank] || null;
@@ -70,86 +100,35 @@ const RivalCard = ({ member, rank }) => {
     );
 };
 
-const AnimatedNumber = ({ value }) => {
-    const [displayValue, setDisplayValue] = useState(0);
-    const [hasStarted, setHasStarted] = useState(false);
-    const elementRef = React.useRef(null);
-
-    useEffect(() => {
-        // Configuramos el "sensor" para detectar cuando el elemento entra en vista
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setHasStarted(true);
-                }
-            },
-            { threshold: 0.5 } // Se activa cuando el 50% del elemento es visible
-        );
-
-        if (elementRef.current) {
-            observer.observe(elementRef.current);
-        }
-
-        return () => observer.disconnect();
-    }, []);
-
-    useEffect(() => {
-        if (!hasStarted) return;
-
-        let start = 0;
-        const end = parseFloat(value);
-        let totalDuration = 2000; // 2 segundos para que se note más el movimiento
-        let increment = end / (totalDuration / 16);
-
-        const timer = setInterval(() => {
-            start += increment;
-            if (start >= end) {
-                setDisplayValue(end);
-                clearInterval(timer);
-            } else {
-                setDisplayValue(start);
-            }
-        }, 16);
-
-        return () => clearInterval(timer);
-    }, [hasStarted, value]);
-
-    return (
-        <span ref={elementRef}>
-            {displayValue.toLocaleString("es-MX", {
-                style: "currency",
-                currency: "MXN",
-                minimumFractionDigits: 2
-            })}
-        </span>
-    );
-};
-
-// ─── Componente principal: Home ──────────────────────────────────────────────
+// ─── Home principal ──────────────────────────────────────────────────────────
 export const Home = () => {
     const { store } = useGlobalReducer();
-    const isLoggedIn = !!store.user;
-    const isAdmin = store.user?.rol === "Administrador";
+    const isLoggedIn  = !!store.user;
+    const isAdmin     = store.user?.rol === "Administrador";
 
-    const [groupInfo, setGroupInfo] = useState(null);
+    const [groupInfo,    setGroupInfo]    = useState(null);
     const [loadingGroup, setLoadingGroup] = useState(false);
-    const [groups, setGroups] = useState([]);
-    const [activeGroup, setActiveGroup] = useState(null);
+    const [groups,       setGroups]       = useState([]);
+    const [activeGroup,  setActiveGroup]  = useState(null);
 
+    // Paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const PER_PAGE = 10;
+
+    // ── Reacciona a login / logout ───────────────────────────────────────────
     useEffect(() => {
         if (!isLoggedIn) {
             setGroupInfo(null);
             setGroups([]);
             setActiveGroup(null);
+            setCurrentPage(1);
             return;
         }
-        if (isAdmin) {
-            loadAdminGroups();
-        } else {
-            fetchGroupInfo(null);
-        }
+        if (isAdmin) loadAdminGroups();
+        else fetchGroupInfo(null, 1);
     }, [isLoggedIn, store.user?.id_user]);
 
+    // ── Admin: cargar lista de grupos ────────────────────────────────────────
     const loadAdminGroups = async () => {
         try {
             const { response, data } = await apiFetch("/groups");
@@ -160,23 +139,26 @@ export const Home = () => {
                     : data[0].id_group;
                 setActiveGroup(defaultId);
             }
-        } catch (_) { }
+        } catch (_) {}
     };
 
-
+    // ── Cuando admin cambia de tab → resetear página ─────────────────────────
     useEffect(() => {
         if (isAdmin && activeGroup !== null) {
-            fetchGroupInfo(activeGroup);
+            setCurrentPage(1);
+            fetchGroupInfo(activeGroup, 1);
         }
     }, [activeGroup]);
 
-
-    const fetchGroupInfo = async (groupId) => {
+    // ── Fetch principal ──────────────────────────────────────────────────────
+    const fetchGroupInfo = async (groupId, page = currentPage) => {
         setLoadingGroup(true);
         try {
-            const url = (isAdmin && groupId)
+            const base = (isAdmin && groupId)
                 ? `/group/my-info?group_id=${groupId}`
                 : "/group/my-info";
+            const url = `${base}${base.includes("?") ? "&" : "?"}page=${page}&per_page=${PER_PAGE}`;
+
             const { response, data } = await apiFetch(url);
             if (response.ok) setGroupInfo(data);
             else setGroupInfo(null);
@@ -187,14 +169,25 @@ export const Home = () => {
         }
     };
 
+    // ── Cambio de página ─────────────────────────────────────────────────────
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        fetchGroupInfo(isAdmin ? activeGroup : null, page);
+        // Scroll suave hasta la sección de rivales
+        document.getElementById("rivals-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
     const rivals = groupInfo?.members?.filter((m) => !m.is_me) ?? [];
+
+    // Rango real de items mostrados (para el label de Pagination)
+    const shownCount = groupInfo?.members?.length ?? 0;
 
     return (
         <div className="container-fluid pb-5 animate__animated animate__fadeIn">
             <div className="row justify-content-center mt-4">
                 <div className="col-12 col-lg-9">
 
-                    {/* Banner */}
+                    {/* ── Banner ── */}
                     <div className="banner-container shadow-lg">
                         <img
                             src="https://res.cloudinary.com/dowqpndnq/image/upload/v1776978362/Home_elite_idjkpm.png"
@@ -224,11 +217,11 @@ export const Home = () => {
                         </div>
                     </div>
 
-                    {/* Sección grupo: SOLO si hay sesión activa */}
+                    {/* ── Sección grupo ── */}
                     {isLoggedIn && (
-                        <div className="group-section mt-5 animate__animated animate__fadeInUp">
+                        <div id="rivals-section" className="group-section mt-5 animate__animated animate__fadeInUp">
 
-                            {/* Tabs de grupos (solo admin) */}
+                            {/* Tabs admin */}
                             {isAdmin && groups.length > 0 && (
                                 <div className="group-tabs-container mb-4">
                                     {groups.map(g => (
@@ -246,7 +239,7 @@ export const Home = () => {
                             {/* Skeleton */}
                             {loadingGroup && (
                                 <div className="rivals-grid">
-                                    {[1, 2, 3].map((i) => (
+                                    {[1, 2, 3, 4, 5].map((i) => (
                                         <div key={i} className="rival-card rival-card--skeleton">
                                             <div className="skeleton-avatar"></div>
                                             <div className="skeleton-line"></div>
@@ -256,9 +249,10 @@ export const Home = () => {
                                 </div>
                             )}
 
-                            {/* Datos del grupo */}
+                            {/* Contenido */}
                             {!loadingGroup && groupInfo && (
                                 <>
+                                    {/* Bolsa */}
                                     {groupInfo.entry_fee > 0 && (
                                         <PrizePoolPiggyBank
                                             prizePool={groupInfo.prize_pool}
@@ -267,33 +261,52 @@ export const Home = () => {
                                         />
                                     )}
 
+                                    {/* Encabezado */}
                                     <div className="group-header mt-4">
                                         <h3 className="group-title">
                                             <i className="fa-solid fa-people-group me-2 text-emerald"></i>
-                                            Jugadores listos para · <span className="text-emerald">La Élite Mundialista</span>
+                                            Jugadores listos para ·{" "}
+                                            <span className="text-emerald">La Élite Mundialista</span>
                                         </h3>
                                         <p className="group-sub text-dim">
                                             {rivals.length > 0
-                                                ? `Tienes ${rivals.length} rival${rivals.length !== 1 ? "es" : ""} expertos. ¡Supéralos!`
+                                                ? `Tienes ${groupInfo.active_count - 1} rival${groupInfo.active_count - 1 !== 1 ? "es" : ""} expertos. ¡Supéralos!`
                                                 : "Aún eres el único en tu grupo. ¡Espera a tus rivales!"}
                                         </p>
                                     </div>
 
+                                    {/* Grid de tarjetas */}
                                     {groupInfo.members.length > 0 && (
                                         <div className="rivals-grid">
-                                            {groupInfo.members.map((member, index) => (
-                                                <RivalCard
-                                                    key={member.id_user}
-                                                    member={member}
-                                                    rank={index + 1}
-                                                />
-                                            ))}
+                                            {groupInfo.members.map((member, index) => {
+                                                // El rank real considera la página actual
+                                                const globalRank = (currentPage - 1) * PER_PAGE + index + 1;
+                                                return (
+                                                    <RivalCard
+                                                        key={member.id_user}
+                                                        member={member}
+                                                        rank={globalRank}
+                                                    />
+                                                );
+                                            })}
                                         </div>
+                                    )}
+
+                                    {/* Paginación — solo si hay más de una página */}
+                                    {groupInfo.pages > 1 && (
+                                        <Pagination
+                                            total={groupInfo.active_count}
+                                            pages={groupInfo.pages}
+                                            currentPage={currentPage}
+                                            onPageChange={handlePageChange}
+                                            perPage={PER_PAGE}
+                                            itemsCount={shownCount}
+                                        />
                                     )}
                                 </>
                             )}
 
-                            {/* Sin grupo asignado */}
+                            {/* Sin grupo */}
                             {!loadingGroup && !groupInfo && (
                                 <p className="text-dim text-center py-3">
                                     Aún no tienes un grupo asignado.

@@ -1095,13 +1095,11 @@ def get_my_group_info():
 
         is_admin = current_user.rol.name_rol == "Administrador"
 
-        # Admin puede consultar cualquier grupo vía ?group_id=X
         if is_admin:
             group_id = request.args.get("group_id", type=int)
             if not group_id:
                 return jsonify({"msg": "Indica un group_id"}), 400
         else:
-            # Participante: siempre su propio grupo (seguridad: no acepta query param)
             group_id = current_user.group_id
 
         if not group_id:
@@ -1111,38 +1109,39 @@ def get_my_group_info():
         if not group:
             return jsonify({"msg": "Grupo no encontrado"}), 404
 
-        # Seguridad extra: participante no puede ver grupos ajenos
         if not is_admin and current_user.group_id != group_id:
             return jsonify({"msg": "No tienes acceso a este grupo"}), 403
 
-        active_members = [u for u in group.users if u.is_active]
+        active_count = User.query.filter_by(group_id=group_id, is_active=True).count()
+        prize_pool = round(group.entry_fee * active_count, 2)
 
-        def get_avatar(u):
-            if u.profile:
-                return u.profile
-            initials = f"{u.name[0]}{u.lastname[0]}".upper()
-            return f"https://ui-avatars.com/api/?name={initials}&size=128&background=random&rounded=true"
+        members_query = User.query.filter_by(group_id=group_id, is_active=True).order_by(User.total_points.desc())
 
-        members_data = [
-            {
-                "id_user": u.id_user,
-                "name": u.name,
-                "lastname": u.lastname,
-                "profile": get_avatar(u),
-                "total_points": u.total_points,
-                "is_me": u.id_user == int(user_id)
-            }
-            for u in sorted(active_members, key=lambda u: u.total_points, reverse=True)
-        ]
+        paginated_data = paginate_query(members_query, model_name="members")
 
-        prize_pool = round(group.entry_fee * len(active_members), 2)
+        def get_avatar(u_data):
+
+            initials = f"{u_data['name'][0]}{u_data['lastname'][0]}".upper()
+            return u_data.get('profile') or f"https://ui-avatars.com/api/?name={initials}&size=128&background=random&rounded=true"
+
+        formatted_members = []
+        for u in paginated_data["members"]:
+
+            u["is_me"] = u["id_user"] == int(user_id)
+ 
+            if not u.get("profile"):
+                u["profile"] = f"https://ui-avatars.com/api/?name={u['name'][0]}{u['lastname'][0]}&size=128&background=random&rounded=true"
+            formatted_members.append(u)
 
         return jsonify({
             "group_name": group.name_group,
             "entry_fee": group.entry_fee,
-            "active_count": len(active_members),
+            "active_count": active_count,
             "prize_pool": prize_pool,
-            "members": members_data
+            "members": formatted_members, 
+            "total": paginated_data["total"],
+            "pages": paginated_data["pages"],
+            "current_page": paginated_data["current_page"]
         }), 200
 
     except Exception as e:
