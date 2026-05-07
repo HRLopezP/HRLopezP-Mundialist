@@ -1090,13 +1090,30 @@ def get_my_group_info():
     try:
         user_id = get_jwt_identity()
         current_user = db.session.get(User, user_id)
+        if not current_user:
+            return jsonify({"msg": "Usuario no encontrado"}), 404
 
-        if not current_user or not current_user.group_id:
+        is_admin = current_user.rol.name_rol == "Administrador"
+
+        # Admin puede consultar cualquier grupo vía ?group_id=X
+        if is_admin:
+            group_id = request.args.get("group_id", type=int)
+            if not group_id:
+                return jsonify({"msg": "Indica un group_id"}), 400
+        else:
+            # Participante: siempre su propio grupo (seguridad: no acepta query param)
+            group_id = current_user.group_id
+
+        if not group_id:
             return jsonify({"msg": "No perteneces a ningún grupo"}), 404
 
-        group = db.session.get(Group, current_user.group_id)
+        group = db.session.get(Group, group_id)
         if not group:
             return jsonify({"msg": "Grupo no encontrado"}), 404
+
+        # Seguridad extra: participante no puede ver grupos ajenos
+        if not is_admin and current_user.group_id != group_id:
+            return jsonify({"msg": "No tienes acceso a este grupo"}), 403
 
         active_members = [u for u in group.users if u.is_active]
 
@@ -1129,5 +1146,5 @@ def get_my_group_info():
         }), 200
 
     except Exception as e:
-        current_app.logger.error(f"Error en /group/my-info para user {user_id}: {str(e)}")
+        current_app.logger.error(f"Error en /group/my-info: {str(e)}")
         return jsonify({"msg": "Error interno al cargar la info del grupo"}), 500

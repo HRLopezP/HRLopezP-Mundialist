@@ -271,6 +271,7 @@
 .prize-pool-card {
     display: flex;
     align-items: center;
+    justify-content: center;   /* ← centra el contenido interno */
     gap: 1.25rem;
     background: linear-gradient(135deg, #051f36 0%, #0a2d4a 100%);
     border: 1px solid rgba(40, 200, 125, 0.3);
@@ -282,6 +283,9 @@
     transition: opacity 0.5s ease, transform 0.5s ease;
     position: relative;
     overflow: hidden;
+    /* Centrar la card dentro del contenedor */
+    max-width: 480px;
+    margin: 0 auto;
 }
 
 .prize-pool-card--visible {
@@ -383,6 +387,7 @@
     .prize-pool-card {
         flex-direction: column;
         text-align: center;
+        max-width: 100%;
     }
 
     .prize-pool-amount {
