@@ -294,7 +294,7 @@ def update_user_photo():
         url, public_id = CloudinaryService.upload_file(file)
         
         if url:
-            # Si tenía una foto vieja con ID, la borramos
+            # Si tenía una foto vieja con ID, se borra
             if user.profile_public_id:
                 CloudinaryService.delete_file(user.profile_public_id)
             

@@ -42,7 +42,7 @@ export const Navbar = () => {
             <div className="container">
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
-                    {/* Ocultamos "ELITE" */}
+                    {/* Ocultamos "Mundialista" */}
                     <span className="brand-text">ÉLITE <span className="text-emerald d-none d-sm-inline">MUNDIALISTA</span></span>
                 </Link>
 

@@ -6,7 +6,14 @@ import Pagination from "../components/Pagination.jsx";
 import { getRolFromToken } from "../utils/auth";
 import "../styles/home.css";
 
-// ─── Alcancía animada ────────────────────────────────────────────────────────
+const getOptimizedImage = (url) => {
+    if (!url || !url.includes("cloudinary.com")) return url;
+    const transformations = "f_auto,q_auto,w_256,h_256,c_fill,g_face";
+    
+    return url.replace("/upload/", `/upload/${transformations}/`);
+};
+
+// Copa 
 const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
     const [visible, setVisible] = useState(false);
 
@@ -39,7 +46,7 @@ const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
     );
 };
 
-// ─── Número animado ──────────────────────────────────────────────────────────
+// Número animado 
 const AnimatedNumber = ({ value }) => {
     const [displayValue, setDisplayValue] = useState(0);
     const [hasStarted, setHasStarted] = useState(false);
@@ -76,16 +83,18 @@ const AnimatedNumber = ({ value }) => {
     );
 };
 
-// ─── Tarjeta de participante ─────────────────────────────────────────────────
+// Card de cada jugador
 const RivalCard = ({ member, rank }) => {
     const medalMap = { 1: "🥇", 2: "🥈", 3: "🥉" };
     const medal = medalMap[rank] || null;
+    
+    const optimizedProfile = getOptimizedImage(member.profile);
 
     return (
         <div className={`rival-card ${member.is_me ? "rival-card--me" : ""}`}>
             {medal && <span className="rival-medal">{medal}</span>}
             <img
-                src={member.profile}
+                src={optimizedProfile}
                 alt={`${member.name} ${member.lastname}`}
                 className="rival-avatar"
                 onError={(e) => {
@@ -101,7 +110,7 @@ const RivalCard = ({ member, rank }) => {
     );
 };
 
-// ─── Home principal ──────────────────────────────────────────────────────────
+// Home principal
 export const Home = () => {
     const { store } = useGlobalReducer();
     const isLoggedIn  = !!store.user;
@@ -116,7 +125,7 @@ export const Home = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const PER_PAGE = 9;
 
-    // ── Reacciona a login / logout ───────────────────────────────────────────
+    // ── Reacciona a login / logout 
     useEffect(() => {
         if (!isLoggedIn) {
             setGroupInfo(null);
@@ -129,7 +138,7 @@ export const Home = () => {
         else fetchGroupInfo(null, 1);
     }, [isLoggedIn, store.user?.id_user]);
 
-    // ── Admin: cargar lista de grupos ────────────────────────────────────────
+    // Admin: cargar lista de grupos
     const loadAdminGroups = async () => {
         try {
             const { response, data } = await apiFetch("/groups");
@@ -143,7 +152,7 @@ export const Home = () => {
         } catch (_) {}
     };
 
-    // ── Cuando admin cambia de tab → resetear página ─────────────────────────
+    //Cuando admin cambia de tab, resetear página 
     useEffect(() => {
         if (isAdmin && activeGroup !== null) {
             setCurrentPage(1);
@@ -151,7 +160,6 @@ export const Home = () => {
         }
     }, [activeGroup]);
 
-    // ── Fetch principal ──────────────────────────────────────────────────────
     const fetchGroupInfo = async (groupId, page = currentPage) => {
         setLoadingGroup(true);
         try {
@@ -170,17 +178,15 @@ export const Home = () => {
         }
     };
 
-    // ── Cambio de página ─────────────────────────────────────────────────────
+
     const handlePageChange = (page) => {
         setCurrentPage(page);
         fetchGroupInfo(isAdmin ? activeGroup : null, page);
-        // Scroll suave hasta la sección de rivales
         document.getElementById("rivals-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     const rivals = groupInfo?.members?.filter((m) => !m.is_me) ?? [];
 
-    // Rango real de items mostrados (para el label de Pagination)
     const shownCount = groupInfo?.members?.length ?? 0;
 
     return (
@@ -188,7 +194,7 @@ export const Home = () => {
             <div className="row justify-content-center mt-4">
                 <div className="col-12 col-lg-9">
 
-                    {/* ── Banner ── */}
+                    {/* Banner */}
                     <div className="banner-container shadow-lg">
                         <img
                             src="https://res.cloudinary.com/dowqpndnq/image/upload/v1776978362/Home_elite_idjkpm.png"
@@ -218,7 +224,7 @@ export const Home = () => {
                         </div>
                     </div>
 
-                    {/* ── Sección grupo ── */}
+                    {/* Sección grupo */}
                     {isLoggedIn && (
                         <div id="rivals-section" className="group-section mt-5 animate__animated animate__fadeInUp">
 
@@ -237,7 +243,6 @@ export const Home = () => {
                                 </div>
                             )}
 
-                            {/* Skeleton */}
                             {loadingGroup && (
                                 <div className="rivals-grid">
                                     {[1, 2, 3, 4, 5].map((i) => (
@@ -250,7 +255,6 @@ export const Home = () => {
                                 </div>
                             )}
 
-                            {/* Contenido */}
                             {!loadingGroup && groupInfo && (
                                 <>
                                     {/* Bolsa */}
@@ -293,7 +297,7 @@ export const Home = () => {
                                         </div>
                                     )}
 
-                                    {/* Paginación — solo si hay más de una página */}
+                                    {/* Paginación */}
                                     {groupInfo.pages > 1 && (
                                         <Pagination
                                             total={groupInfo.active_count}
@@ -307,7 +311,6 @@ export const Home = () => {
                                 </>
                             )}
 
-                            {/* Sin grupo */}
                             {!loadingGroup && !groupInfo && (
                                 <p className="text-dim text-center py-3">
                                     Aún no tienes un grupo asignado.

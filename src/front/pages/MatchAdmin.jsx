@@ -52,7 +52,7 @@ const MatchAdmin = () => {
             return;
         }
 
-        const isUpdate = match.home_score !== null && match.away_score !== null; // Determina si es modif.
+        const isUpdate = match.home_score !== null && match.away_score !== null; 
 
         const confirm = await Swal.fire({
             title: '¿Confirmar resultado oficial?',
@@ -166,7 +166,7 @@ const MatchAdmin = () => {
                                     </div>
                                 </div>
 
-                                {/* BOTÓN DINÁMICO Y AJUSTADO */}
+                                {/* BOTÓN DINÁMICO*/}
                                 <button
                                     className={`btn mt-4 py-2 fw-bold transition-all mx-auto d-block ${hasResult ? 'btn-outline-info' : 'btn-emerald'}`}
                                     style={{ width: "75%", maxWidth: "280px" }}

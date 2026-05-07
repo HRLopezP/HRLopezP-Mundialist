@@ -162,7 +162,6 @@
   margin-top: 0.25rem;
 }
 
-/* ── Grid de rivales ── */
 .rivals-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -170,7 +169,6 @@
   margin-top: 1.25rem;
 }
 
-/* ── Tarjeta de rival ── */
 .rival-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -193,7 +191,6 @@
     border-color: #28c87d;
 }
 
-/* Tarjeta propia: borde verde esmeralda */
 .rival-card--me {
   border-color: #28c87d;
   background: rgba(40, 200, 125, 0.07);
@@ -236,7 +233,6 @@
   font-weight: 700;
 }
 
-/* ── Skeleton loader ── */
 .rival-card--skeleton {
   pointer-events: none;
 }
@@ -274,13 +270,11 @@
   }
 }
 
-/* ══════════════════════════════════════════════════════════
-   ALCANCÍA — PrizePoolPiggyBank
-   ══════════════════════════════════════════════════════════ */
+
 .prize-pool-card {
   display: flex;
   align-items: center;
-  justify-content: center; /* ← centra el contenido interno */
+  justify-content: center; 
   gap: 1.25rem;
   background: linear-gradient(135deg, #051f36 0%, #0a2d4a 100%);
   border: 1px solid rgba(40, 200, 125, 0.3);
@@ -294,7 +288,6 @@
     transform 0.5s ease;
   position: relative;
   overflow: hidden;
-  /* Centrar la card dentro del contenedor */
   max-width: 480px;
   margin: 0 auto;
 }
@@ -305,7 +298,6 @@
   animation: shine-attention 3s infinite alternate;
 }
 
-/* Destello de fondo */
 .prize-pool-card::before {
   content: "";
   position: absolute;
@@ -321,7 +313,6 @@
   pointer-events: none;
 }
 
-/* ── Wrapper del cerdo ── */
 .piggy-wrapper {
   position: relative;
   width: 90px;
@@ -329,8 +320,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1); /* Fondo blanco semi-transparente */
-  backdrop-filter: blur(10px); /* El efecto de desenfoque de cristal */
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px); 
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -339,7 +330,7 @@
 
 .piggy-icon {
   font-size: 3.7rem;
-  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6)); /* Brillo dorado */
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6)); 
 }
 
 @keyframes piggy-bounce {
@@ -352,7 +343,6 @@
   }
 }
 
-/* ── Monedas cayendo ── */
 .coin {
   position: absolute;
   font-size: 0.85rem;
@@ -390,7 +380,7 @@
   }
 }
 
-/* ── Texto de la bolsa ── */
+
 .prize-pool-info {
   min-width: 0;
 }
@@ -405,17 +395,16 @@
 }
 
 .prize-pool-amount {
-  font-size: 2.5rem; /* Lo subimos un poco más para jerarquía */
+  font-size: 2.5rem; 
   font-weight: 800;
   margin: 0;
   line-height: 1.1;
-  /* Efecto de Gradiente Dorado */
   background: linear-gradient(135deg, #ffd700 0%, #fdb931 50%, #8a6e2f 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(
     0px 2px 4px rgba(0, 0, 0, 0.3)
-  ); /* Para que resalte sobre el fondo */
+  ); 
 }
 
 @keyframes amount-glow {
@@ -434,7 +423,7 @@
   margin: 0.3rem 0 0;
 }
 
-/* ── Responsive ── */
+
 @media (max-width: 768px) {
   .prize-pool-card {
     flex-direction: column;
@@ -459,5 +448,5 @@
   }
   to {
     box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
-  } /* Destello dorado sutil */
+  } 
 }
