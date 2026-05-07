@@ -23,9 +23,9 @@ NAME_REGEX = re.compile(r"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s\-']+$")
 def val_name(text):
     return bool(NAME_REGEX.match(text))
 
-def paginate_query(query, model_name="items"):
+def paginate_query(query, model_name="items", default_per_page=10):
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    per_page = request.args.get('per_page', default_per_page, type=int)
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
@@ -1117,7 +1117,7 @@ def get_my_group_info():
 
         members_query = User.query.filter_by(group_id=group_id, is_active=True).order_by(User.total_points.desc())
 
-        paginated_data = paginate_query(members_query, model_name="members")
+        paginated_data = paginate_query(members_query, model_name="members", default_per_page=9)
 
         def get_avatar(u_data):
 

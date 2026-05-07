@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { apiFetch } from "../utils/api";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import Pagination from "../components/Pagination.jsx";
+import { getRolFromToken } from "../utils/auth";
 import "../styles/home.css";
 
 // ─── Alcancía animada ────────────────────────────────────────────────────────
@@ -104,7 +105,7 @@ const RivalCard = ({ member, rank }) => {
 export const Home = () => {
     const { store } = useGlobalReducer();
     const isLoggedIn  = !!store.user;
-    const isAdmin     = store.user?.rol === "Administrador";
+    const isAdmin = getRolFromToken() === "Administrador"; 
 
     const [groupInfo,    setGroupInfo]    = useState(null);
     const [loadingGroup, setLoadingGroup] = useState(false);
@@ -113,7 +114,7 @@ export const Home = () => {
 
     // Paginación
     const [currentPage, setCurrentPage] = useState(1);
-    const PER_PAGE = 10;
+    const PER_PAGE = 9;
 
     // ── Reacciona a login / logout ───────────────────────────────────────────
     useEffect(() => {
