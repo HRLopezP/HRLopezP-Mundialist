@@ -25,7 +25,7 @@ const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
         >
             {/* Ícono alcancía animado */}
             <div className="piggy-wrapper">
-                <span className="piggy-icon" role="img" aria-label="alcancía">🐷</span>
+                <span className="piggy-icon" role="img" aria-label="premio">🏆</span>
                 {/* Monedas animadas cayendo */}
                 <span className="coin coin--1">💰</span>
                 <span className="coin coin--2">💰</span>
@@ -34,7 +34,9 @@ const PrizePoolPiggyBank = ({ prizePool, entryFee, activeCount }) => {
 
             <div className="prize-pool-info">
                 <p className="prize-pool-label">Bolsa acumulada </p>
-                <p className="prize-pool-amount">{formattedPool}</p>
+                <p className="prize-pool-amount">
+                    <AnimatedNumber value={prizePool} />
+                </p>
                 <p className="prize-pool-sub">
                     {activeCount} participantes × ${entryFee.toFixed(2)} c/u
                 </p>
@@ -65,6 +67,61 @@ const RivalCard = ({ member, rank }) => {
             </p>
             <p className="rival-points">{member.total_points} pts</p>
         </div>
+    );
+};
+
+const AnimatedNumber = ({ value }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
+    const elementRef = React.useRef(null);
+
+    useEffect(() => {
+        // Configuramos el "sensor" para detectar cuando el elemento entra en vista
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setHasStarted(true);
+                }
+            },
+            { threshold: 0.5 } // Se activa cuando el 50% del elemento es visible
+        );
+
+        if (elementRef.current) {
+            observer.observe(elementRef.current);
+        }
+
+        return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+        if (!hasStarted) return;
+
+        let start = 0;
+        const end = parseFloat(value);
+        let totalDuration = 2000; // 2 segundos para que se note más el movimiento
+        let increment = end / (totalDuration / 16);
+
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+                setDisplayValue(end);
+                clearInterval(timer);
+            } else {
+                setDisplayValue(start);
+            }
+        }, 16);
+
+        return () => clearInterval(timer);
+    }, [hasStarted, value]);
+
+    return (
+        <span ref={elementRef}>
+            {displayValue.toLocaleString("es-MX", {
+                style: "currency",
+                currency: "MXN",
+                minimumFractionDigits: 2
+            })}
+        </span>
     );
 };
 
@@ -129,8 +186,6 @@ export const Home = () => {
             setLoadingGroup(false);
         }
     };
-
-
 
     const rivals = groupInfo?.members?.filter((m) => !m.is_me) ?? [];
 
