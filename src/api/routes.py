@@ -1126,12 +1126,22 @@ def get_my_group_info():
 
         formatted_members = []
         for u in paginated_data["members"]:
+            clean_member = {
+                "id_user": u["id_user"],
+                "name": u["name"],
+                "lastname": u["lastname"],
+                "total_points": u["total_points"],
+                "rol": u["rol"],
+                "is_me": u["id_user"] == int(user_id)
+            }
 
-            u["is_me"] = u["id_user"] == int(user_id)
- 
             if not u.get("profile"):
-                u["profile"] = f"https://ui-avatars.com/api/?name={u['name'][0]}{u['lastname'][0]}&size=128&background=random&rounded=true"
-            formatted_members.append(u)
+                initials = f"{u['name'][0]}{u['lastname'][0]}".upper()
+                clean_member["profile"] = f"https://ui-avatars.com/api/?name={initials}&size=128&background=random&rounded=true"
+            else:
+                clean_member["profile"] = u["profile"]
+
+            formatted_members.append(clean_member)
 
         return jsonify({
             "group_name": group.name_group,
