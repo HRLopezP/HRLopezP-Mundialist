@@ -14,6 +14,9 @@ const Ranking = () => {
     const [groups, setGroups] = useState([]);
     const [activeGroup, setActiveGroup] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [paginationData, setPaginationData] = useState({ total: 0, pages: 0 });
+    const PER_PAGE = 12;
 
     const [auditData, setAuditData] = useState({ predictions: [], total: 0, pages: 1, current_page: 1 });
     const [selectedUser, setSelectedUser] = useState(null);
@@ -23,7 +26,10 @@ const Ranking = () => {
     }, []);
 
     useEffect(() => {
-        if (activeGroup !== null) loadRanking();
+        if (activeGroup !== null) {
+            setCurrentPage(1);
+            loadRanking(1);
+        }
     }, [activeGroup]);
 
     const initData = async () => {
@@ -39,12 +45,19 @@ const Ranking = () => {
         }
     };
 
-    const loadRanking = async () => {
-        const url = (isAdmin && activeGroup)
+    const loadRanking = async (page = 1) => {
+        const base = (isAdmin && activeGroup)
             ? `/ranking?group_id=${activeGroup}`
             : "/ranking";
-        const { response, data } = await apiFetch(url);
-        if (response.ok) setRanking(data);
+        const url = `${base}&page=${page}&per_page=${PER_PAGE}`;
+        const finalUrl = url.includes("?") ? url : url.replace("&", "?");
+
+        const { response, data } = await apiFetch(finalUrl);
+        if (response.ok) {
+            setRanking(data.ranking);
+            setPaginationData({ total: data.total, pages: data.pages });
+            setCurrentPage(data.current_page);
+        }
         setLoading(false);
     };
 
@@ -71,6 +84,12 @@ const Ranking = () => {
         } catch (error) {
             toast.error("Error al cargar la auditoría");
         }
+    };
+
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
+        loadRanking(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     const getAuditHTML = (user, currentData) => {
@@ -213,17 +232,27 @@ const Ranking = () => {
                         <tbody>
                             {ranking.map((u, i) => (
                                 <tr key={u.id_user} className="align-middle">
-                                    <td><div className="position-container me-3">
-                                        {i === 0 ? (
-                                            <span><small className='text-warning'><b>1° </b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
-                                        ) : i === 1 ? (
-                                            <span><small className='text-info'><b>2° </b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
-                                        ) : i === 2 ? (
-                                            <span><small className='text-danger'><b>3° </b></small><i className="fa-solid fa-medal fs-2 text-danger"></i></span>
-                                        ) : (
-                                            <span><small className='text-secondary'><b>{i + 1}° </b></small><i className="fa-solid fa-award fs-2 text-secondary"></i></span>
-                                        )}
-                                    </div></td>
+                                    <td>
+                                        <div className="position-container me-3">
+                                            {/* Calculamos la posición global real */}
+                                            {(() => {
+                                                const globalRank = ((currentPage - 1) * PER_PAGE) + i + 1;
+
+                                                if (globalRank === 1) return (
+                                                    <span><small className='text-warning'><b>1° </b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
+                                                );
+                                                if (globalRank === 2) return (
+                                                    <span><small className='text-info'><b>2° </b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
+                                                );
+                                                if (globalRank === 3) return (
+                                                    <span><small className='text-danger'><b>3° </b></small><i className="fa-solid fa-medal fs-2 text-danger"></i></span>
+                                                );
+                                                return (
+                                                    <span><small className='text-secondary'><b>{globalRank}° </b></small><i className="fa-solid fa-award fs-2 text-secondary"></i></span>
+                                                );
+                                            })()}
+                                        </div>
+                                    </td>
                                     <td>{u.username}</td>
                                     <td className="text-center text-success">{u.exact_hits}</td>
                                     <td className="text-center text-warning">{u.trend_hits}</td>
@@ -250,15 +279,22 @@ const Ranking = () => {
                                 {/* Columna Izquierda: Posición y Nombre */}
                                 <div className="col-7 d-flex align-items-center">
                                     <div className="position-container me-3">
-                                        {i === 0 ? (
-                                            <span><small className='text-warning fs-5'><b>1°</b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
-                                        ) : i === 1 ? (
-                                            <span><small className='text-info fs-5'><b>2°</b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
-                                        ) : i === 2 ? (
-                                            <span><small className='text-secondary fs-5'><b>3°</b></small><i className="fa-solid fa-medal fs-2 text-secondary"></i></span>
-                                        ) : (
-                                            <span><small className='text-danger fs-6'><b>{i + 1}°</b></small><i className="fa-solid fa-award fs-2 text-danger"></i></span>
-                                        )}
+                                        {(() => {
+                                            const globalRank = ((currentPage - 1) * PER_PAGE) + i + 1;
+
+                                            if (globalRank === 1) return (
+                                                <span><small className='text-warning fs-5'><b>1°</b></small><i className="fa-solid fa-trophy fs-2 text-warning"></i></span>
+                                            );
+                                            if (globalRank === 2) return (
+                                                <span><small className='text-info fs-5'><b>2°</b></small><i className="fa-solid fa-medal fs-2 text-info"></i></span>
+                                            );
+                                            if (globalRank === 3) return (
+                                                <span><small className='text-secondary fs-5'><b>3°</b></small><i className="fa-solid fa-medal fs-2 text-secondary"></i></span>
+                                            );
+                                            return (
+                                                <span><small className='text-danger fs-6'><b>{globalRank}°</b></small><i className="fa-solid fa-award fs-2 text-danger"></i></span>
+                                            );
+                                        })()}
                                     </div>
 
                                     <div className="d-flex flex-column justify-content-center">
@@ -287,6 +323,16 @@ const Ranking = () => {
                         </div>
                     ))}
                 </div>
+                {paginationData.pages > 1 && (
+                    <Pagination
+                        total={paginationData.total}
+                        pages={paginationData.pages}
+                        currentPage={currentPage}
+                        onPageChange={handlePageChange}
+                        perPage={PER_PAGE}
+                        itemsCount={ranking.length}
+                    />
+                )}
             </div>
             {ranking.length === 0 && !loading && (
                 <div className="admin-card p-5 text-center text-dim">

@@ -15,6 +15,7 @@ import re
 import csv
 from io import BytesIO
 import openpyxl
+import math
 
 api = Blueprint('api', __name__)
 
@@ -780,7 +781,7 @@ def get_audit_logs():
 
 
 #Función auxiliar para el ranking
-def get_ranking_by_group(group_id):
+def get_ranking_by_group(group_id, page=1, per_page=12):
     ranking_data = db.session.query(
         User,
         func.sum(Prediction.points_earned).label('total_points'),
@@ -789,6 +790,7 @@ def get_ranking_by_group(group_id):
     ).join(Prediction, User.id_user == Prediction.user_id, isouter=True)\
      .filter(User.is_active == True, User.group_id == group_id)\
      .group_by(User.id_user)\
+     .order_by(func.sum(Prediction.points_earned).desc())\
      .all()
 
     ranking_list = []
@@ -799,14 +801,26 @@ def get_ranking_by_group(group_id):
             "total_points": int(total_points or 0),
             "exact_hits": exact_hits,
             "trend_hits": trend_hits,
-            "group_name": user.group.name_group if user.group else "Sin Grupo"
+            "group_name": user.group.name_group if user.group else ""
         })
 
     ranking_list.sort(
         key=lambda x: (x['total_points'], x['exact_hits'], x['trend_hits']),
         reverse=True
     )
-    return ranking_list
+
+    total = len(ranking_list)
+    pages = math.ceil(total / per_page) if per_page > 0 else 1
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    return {
+        "ranking": ranking_list[start:end],
+        "total": total,
+        "pages": pages,
+        "current_page": page,
+        "per_page": per_page
+    }
 
 
 # Ver el ranking actualizado
@@ -817,30 +831,32 @@ def get_ranking():
         current_user = db.session.get(User, get_jwt_identity())
         is_admin = current_user.rol.name_rol == "Administrador"
         requested_group_id = request.args.get('group_id', type=int)
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 12, type=int)
 
         if not is_admin:
             target_group_id = current_user.group_id
             if not target_group_id:
                 return jsonify({"msg": "No perteneces a ningún grupo todavía"}), 400
-
-            ranking_list = get_ranking_by_group(target_group_id)
-            return jsonify(ranking_list), 200
+            return jsonify(get_ranking_by_group(target_group_id, page, per_page)), 200
 
         else:
             if requested_group_id:
                 if not db.session.get(Group, requested_group_id):
                     return jsonify({"msg": "El grupo especificado no existe"}), 404
-                ranking_list = get_ranking_by_group(requested_group_id)
-                return jsonify(ranking_list), 200
+                return jsonify(get_ranking_by_group(requested_group_id, page, per_page)), 200
 
             all_groups = Group.query.all()
             response = []
             for group in all_groups:
-                ranking_list = get_ranking_by_group(group.id_group)
+                result = get_ranking_by_group(group.id_group, page, per_page)
                 response.append({
                     "group_id": group.id_group,
                     "group_name": group.name_group,
-                    "ranking": ranking_list
+                    "ranking": result["ranking"],
+                    "total": result["total"],
+                    "pages": result["pages"],
+                    "current_page": result["current_page"]
                 })
             return jsonify(response), 200
 
