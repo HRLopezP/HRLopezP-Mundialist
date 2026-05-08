@@ -908,7 +908,7 @@ def get_user_predictions_detail(user_id):
         return jsonify({"msg": "Error interno al cargar el historial de predicciones"}), 500
 
 
-#Ver las prediccio@nes de menos 24 horas y sin finalizar
+#Ver los juegos de menos 24 horas y sin finalizar
 @api.route('/transparency-wall', methods=['GET'])
 @jwt_required()
 def get_transparency_wall():
@@ -924,9 +924,7 @@ def get_transparency_wall():
         if is_admin and not db.session.get(Group, target_group_id):
             return jsonify({"msg": "El grupo especificado no existe"}), 404
 
-        page     = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
-
+        PER_PAGE   = 10
         ahora      = datetime.now(timezone.utc)
         limite_24h = ahora + timedelta(hours=24)
 
@@ -948,28 +946,28 @@ def get_transparency_wall():
                 User.is_active == True
             )
 
-            total_preds = preds_query.count()
-            pages       = math.ceil(total_preds / per_page) if per_page > 0 else 1
-            preds_page  = preds_query.offset((page - 1) * per_page).limit(per_page).all()
+            total = preds_query.count()
+            pages = math.ceil(total / PER_PAGE) if PER_PAGE > 0 else 1
+            preds = preds_query.limit(PER_PAGE).all() 
 
             results.append({
-                "id_match":   m.id_match,
-                "home_team":  m.home_team.name,
-                "away_team":  m.away_team.name,
-                "home_flag":  m.home_team.flag_url,
-                "away_flag":  m.away_team.flag_url,
-                "match_date": m.match_date.isoformat(),
-                "predictions_total":        total_preds,
+                "id_match":                 m.id_match,
+                "home_team":                m.home_team.name,
+                "away_team":                m.away_team.name,
+                "home_flag":                m.home_team.flag_url,
+                "away_flag":                m.away_team.flag_url,
+                "match_date":               m.match_date.isoformat(),
+                "predictions_total":        total,
                 "predictions_pages":        pages,
-                "predictions_current_page": page,
-                "predictions_per_page":     per_page,
-                "predictions": [
+                "predictions_current_page": 1,
+                "predictions_per_page":     PER_PAGE,
+                "predictions":              [
                     {
                         "user":    f"{p.user.name} {p.user.lastname}",
                         "user_id": p.user_id,
                         "h_score": p.predicted_home_score,
                         "a_score": p.predicted_away_score
-                    } for p in preds_page
+                    } for p in preds
                 ]
             })
 
@@ -977,6 +975,68 @@ def get_transparency_wall():
 
     except Exception as e:
         current_app.logger.error(f"Error en el Muro de Transparencia: {str(e)}")
+        return jsonify({"msg": "Error interno del servidor"}), 500
+
+#Ver las predicciones de menos 24 horas y sin finalizar
+@api.route('/transparency-wall/<int:match_id>/predictions', methods=['GET'])
+@jwt_required()
+def get_match_predictions(match_id):
+    try:
+        user = db.session.get(User, get_jwt_identity())
+        is_admin = user.rol.name_rol == "Administrador"
+
+        target_group_id = request.args.get('group_id', user.group_id, type=int) if is_admin else user.group_id
+
+        if not target_group_id:
+            return jsonify({"msg": "Debes pertenecer a un grupo para ver las predicciones"}), 400
+
+        match = db.session.get(Match, match_id)
+        if not match:
+            return jsonify({"msg": "Partido no encontrado"}), 404
+
+        if is_admin and not db.session.get(Group, target_group_id):
+            return jsonify({"msg": "El grupo especificado no existe"}), 404
+
+        page = request.args.get('page', 1, type=int)
+        per_page = min(max(request.args.get('per_page', 10, type=int), 5), 25)
+        search = request.args.get('search', '', type=str).strip()
+     
+        preds_query = Prediction.query.join(User).options(
+            joinedload(Prediction.user)
+        ).filter(
+            Prediction.match_id == match_id,
+            User.group_id == target_group_id,
+            User.is_active == True
+        )
+
+        if search:
+            preds_query = preds_query.filter(
+                (User.name.ilike(f"%{search}%")) |
+                (User.lastname.ilike(f"%{search}%"))
+            )
+
+        total = preds_query.count()
+        pages = math.ceil(total / per_page) if total > 0 else 1
+        preds = preds_query.offset((page - 1) * per_page).limit(per_page).all()
+
+        return jsonify({
+            "match_id": match_id,
+            "total": total,
+            "pages": pages,
+            "current_page": page,
+            "per_page": per_page,
+            "predictions": [
+                {
+                    "user": f"{p.user.name} {p.user.lastname}",
+                    "user_id": p.user_id,
+                    "h_score": p.predicted_home_score,
+                    "a_score": p.predicted_away_score
+                } for p in preds
+            ]
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error al paginar predicciones del partido {match_id}: {str(e)}")
         return jsonify({"msg": "Error interno del servidor"}), 500
     
     

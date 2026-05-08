@@ -1,8 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
 import { generateTransparencyReport } from "../utils/transparencyPdf";
-import Pagination from "../components/Pagination";
 import { Toaster, toast } from "sonner";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { getRolFromToken } from "../utils/auth";
@@ -12,15 +11,52 @@ const TransparencyWall = () => {
     const { store } = useGlobalReducer();
     const isAdmin = getRolFromToken() === "Administrador";
 
-    const [matches, setMatches]       = useState([]);
-    const [groups, setGroups]         = useState([]);
+    const [matches, setMatches] = useState([]);
+    const [groups, setGroups] = useState([]);
     const [activeGroup, setActiveGroup] = useState(null);
-    const [loading, setLoading]       = useState(true);
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const debounceRef = useRef(null);
 
-    const [pagesMap, setPagesMap] = useState({});
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        // Debounce: espera 400ms después del último teclazo
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            searchAllMatches(value.trim());
+        }, 400);
+    };
 
-    const PER_PAGE = 10;
+    // Nueva función que busca en todos los partidos activos
+    const searchAllMatches = useCallback(async (search) => {
+        if (matches.length === 0) return;
+        try {
+            const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
+            const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
+
+            const requests = matches.map(m =>
+                apiFetch(`/transparency-wall/${m.id_match}/predictions?page=1&per_page=10${groupParam}${searchParam}`)
+            );
+            const responses = await Promise.all(requests);
+
+            setMatches(prev =>
+                prev.map((m, i) => {
+                    const { response, data } = responses[i];
+                    if (!response.ok) return m;
+                    return {
+                        ...m,
+                        predictions: data.predictions,
+                        predictions_current_page: data.current_page,
+                        predictions_pages: data.pages,
+                        predictions_total: data.total,
+                    };
+                })
+            );
+        } catch {
+            toast.error("Error al buscar");
+        }
+    }, [matches, isAdmin, activeGroup]);
+
 
     useEffect(() => {
         const initTransparency = async () => {
@@ -38,25 +74,17 @@ const TransparencyWall = () => {
         initTransparency();
     }, [store.user]);
 
-
     useEffect(() => {
-        if (activeGroup !== null) {
-            setPagesMap({});   
-            loadData(1);
-        }
+        if (activeGroup !== null) loadWall();
     }, [activeGroup]);
 
-    const loadData = async (page = 1) => {
+    const loadWall = async () => {
         try {
             setLoading(true);
-            const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
-            const url = `/transparency-wall?page=${page}&per_page=${PER_PAGE}${groupParam}`;
-            const { response, data } = await apiFetch(url);
+            const groupParam = isAdmin && activeGroup ? `?group_id=${activeGroup}` : "";
+            const { response, data } = await apiFetch(`/transparency-wall${groupParam}`);
             if (response.ok) {
                 setMatches(data);
-                const initialPages = {};
-                data.forEach(m => { initialPages[m.id_match] = page; });
-                setPagesMap(initialPages);
             } else {
                 toast.error("Error al cargar el muro");
             }
@@ -70,35 +98,34 @@ const TransparencyWall = () => {
     const handleMatchPageChange = useCallback(async (matchId, newPage) => {
         try {
             const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
-            const url = `/transparency-wall?page=${newPage}&per_page=${PER_PAGE}${groupParam}`;
+            const url = `/transparency-wall/${matchId}/predictions?page=${newPage}&per_page=10${groupParam}`;
             const { response, data } = await apiFetch(url);
             if (response.ok) {
-                const updatedMatch = data.find(m => m.id_match === matchId);
-                if (updatedMatch) {
-                    setMatches(prev =>
-                        prev.map(m => m.id_match === matchId ? updatedMatch : m)
-                    );
-                    setPagesMap(prev => ({ ...prev, [matchId]: newPage }));
-                }
+                setMatches(prev =>
+                    prev.map(m => m.id_match === matchId
+                        ? {
+                            ...m,
+                            predictions: data.predictions,
+                            predictions_current_page: data.current_page,
+                            predictions_pages: data.pages,
+                            predictions_total: data.total,
+                        }
+                        : m
+                    )
+                );
             }
         } catch {
             toast.error("Error al cambiar de página");
         }
     }, [isAdmin, activeGroup]);
 
-
-    const filteredMatches = matches
-        .map(match => ({
-            ...match,
-            predictions: match.predictions.filter(p =>
-                p.user.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-        }))
-        .filter(match => match.predictions.length > 0 || searchTerm === "");
+    const filteredMatches = searchTerm.trim()
+        ? matches.filter(m => m.predictions.length > 0)
+        : matches;
 
     if (loading) return (
         <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-info" role="status"></div>
+            <div className="spinner-border text-info" role="status" />
         </div>
     );
 
@@ -125,59 +152,42 @@ const TransparencyWall = () => {
                 )}
             </div>
 
-            {/* Buscador y Botón PDF */}
             <div className="row justify-content-center align-items-center g-3 mb-4">
                 <div className="col-12 col-md-6">
-                    <div className="position-relative">
-                        <input
-                            type="text"
-                            className="form-control search-input-glass"
-                            placeholder="Buscar rival por nombre..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        className="form-control search-input-glass"
+                        placeholder="Buscar rival por nombre..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
                 </div>
                 <div className="col-12 text-center d-flex justify-content-between align-items-center gap-2">
                     <p className="text-dim mb-0 small">
-                        <i className="fas fa-info-circle me-1 text-info"></i>
+                        <i className="fas fa-info-circle me-1 text-info" />
                         Haz click para auditar
                     </p>
-                    {!loading && matches.length > 0 && (
+                    {matches.length > 0 && (
                         <button
                             className="btn btn-sm btn-outline-info rounded-pill px-3 py-1"
                             style={{ fontSize: '0.75rem', borderWidth: '1px' }}
                             onClick={() => generateTransparencyReport(filteredMatches)}
                         >
-                            <i className="fas fa-file-pdf me-1"></i> DESCARGAR PDF
+                            <i className="fas fa-file-pdf me-1" /> DESCARGAR PDF
                         </button>
                     )}
                 </div>
             </div>
 
-            {/* Partidos con paginación individual por partido */}
             <div className="accordion accordion-flush bg-transparent" id="transparencyWall">
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                        <div key={match.id_match}>
-                            <GameMatchCard match={match} index={index} />
-
-                            {/* Paginación debajo de cada partido */}
-                            {match.predictions_pages > 1 && (
-                                <div className="px-3 pb-3">
-                                    <Pagination
-                                        total={match.predictions_total}
-                                        pages={match.predictions_pages}
-                                        currentPage={pagesMap[match.id_match] || 1}
-                                        perPage={PER_PAGE}
-                                        itemsCount={match.predictions.length}
-                                        onPageChange={(newPage) =>
-                                            handleMatchPageChange(match.id_match, newPage)
-                                        }
-                                    />
-                                </div>
-                            )}
-                        </div>
+                        <GameMatchCard
+                            key={match.id_match}
+                            match={match}
+                            index={index}
+                            onPageChange={handleMatchPageChange}
+                        />
                     ))
                 ) : (
                     <div className="alert bg-dark text-info border-info text-center mt-5">
