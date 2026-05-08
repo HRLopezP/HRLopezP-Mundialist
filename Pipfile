@@ -21,6 +21,7 @@ python-dotenv = "*"
 flask-cors = "*"
 gunicorn = "*"
 sqlalchemy = "*"
+openpyxl = "*"
 
 [requires]
 python_version = "3.13"

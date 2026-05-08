@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, url_for, Blueprint, json, current_app
+from flask import Flask, Response, send_file, request, jsonify, url_for, Blueprint, json, current_app
 from api.models import db, User, Rol, Match, Prediction, AuditLog, Group
 from sqlalchemy.orm import joinedload
 from api.utils import generate_sitemap, APIException, val_email, val_password, generate_reset_token, confirm_reset_token, allowed_file
@@ -12,6 +12,9 @@ from api.emails import send_password_reset_email
 from .cloudinary_service import CloudinaryService
 from .manager_decorator import manager_required
 import re
+import csv
+from io import BytesIO
+import openpyxl
 
 api = Blueprint('api', __name__)
 
@@ -1157,3 +1160,90 @@ def get_my_group_info():
     except Exception as e:
         current_app.logger.error(f"Error en /group/my-info: {str(e)}")
         return jsonify({"msg": "Error interno al cargar la info del grupo"}), 500
+
+
+@api.route('/admin/export-master-backup', methods=['GET'])
+@jwt_required()
+@manager_required
+def export_master_backup():
+    try:
+        wb = openpyxl.Workbook()
+        ws1 = wb.active
+        ws1.title = "Predicciones Completas"
+
+        ws1.append([
+            "Grupo", "Usuario", "Email", "Partido",
+            "Fecha Partido", "Predicción", "Resultado Real",
+            "Puntos Ganados", "Estado", "Creada"
+        ])
+
+        usuarios = User.query.filter_by(is_active=True).all()
+        partidos = Match.query.order_by(Match.match_date.asc()).all()
+
+        for u in usuarios:
+            nombre_grupo = u.group.name_group if u.group else "Sin grupo"
+            nombre_completo = f"{u.name} {u.lastname}"
+            
+            for p in partidos:
+                pred = Prediction.query.filter_by(user_id=u.id_user, match_id=p.id_match).first()
+
+                res_h = p.home_score if p.home_score is not None else "-"
+                res_a = p.away_score if p.away_score is not None else "-"
+                
+                if pred:
+                    jugada = f"{pred.predicted_home_score} - {pred.predicted_away_score}"
+                    puntos = pred.points_earned
+                    fecha_mod = pred.created_at.strftime("%Y-%m-%d %H:%M")
+                else:
+                    jugada = "NO REALIZADA"
+                    puntos = 0
+                    fecha_mod = "-"
+
+                ws1.append([
+                    nombre_grupo,
+                    nombre_completo,
+                    u.email,
+                    f"{p.home_team.name} vs {p.away_team.name}",
+                    p.match_date.strftime("%Y-%m-%d %H:%M"),
+                    jugada,
+                    f"{res_h} - {res_a}",
+                    puntos,
+                    p.status,
+                    fecha_mod
+                ])
+
+        ws2 = wb.create_sheet("Ranking General")
+        ws2.append(["Grupo", "Posición", "Usuario", "Email", "Puntos Totales"])
+        
+        groups = Group.query.all()
+        for group in groups:
+            users = User.query.filter_by(
+                group_id=group.id_group, is_active=True
+            ).order_by(User.total_points.desc()).all()
+            
+            for pos, user in enumerate(users, 1):
+                ws2.append([
+                    group.name_group, 
+                    pos,
+                    f"{user.name} {user.lastname}",
+                    user.email,
+                    user.total_points
+                ])
+
+
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+
+        filename = f"RESPALDO_QUINIELA_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        current_app.logger.error(f"Error en Excel: {str(e)}")
+        return jsonify({"msg": "Error al generar el respaldo"}), 500

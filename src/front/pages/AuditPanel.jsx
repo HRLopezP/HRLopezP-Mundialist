@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { apiFetch } from "../utils/api.js";
 import Pagination from "../components/Pagination.jsx";
 import { Toaster, toast } from "sonner";
+import ExportBackupButton from "../components/ExportBackupButton.jsx"
 import "../styles/admin.css";
 
 const AuditPanel = () => {
@@ -131,6 +132,8 @@ const AuditPanel = () => {
                     >
                         <i className="fas fa-sync-alt me-1"></i> Limpiar
                     </button>
+
+                    <ExportBackupButton />
                 </div>
             </div>
 
