@@ -1175,7 +1175,7 @@ def export_master_backup():
         ws1.append([
             "Grupo", "Usuario", "Email", "Partido",
             "Fecha Partido", "Predicción", "Resultado Real",
-            "Puntos Ganados", "Estado", "Creado"
+            "Puntos Ganados", "Estado", "Fecha Registro", "Última Modificación"
         ])
 
         usuarios = User.query.filter_by(is_active=True)\
@@ -1201,11 +1201,13 @@ def export_master_backup():
                 if pred:
                     jugada = f"{pred.predicted_home_score} - {pred.predicted_away_score}"
                     puntos = pred.points_earned
-                    fecha_mod = pred.created_at.strftime("%Y-%m-%d %H:%M")
+                    fecha_creacion = pred.created_at.strftime("%Y-%m-%d %H:%M")
+                    fecha_modificacion = pred.updated_at.strftime("%Y-%m-%d %H:%M")
                 else:
                     jugada = "NO REALIZADA"
                     puntos = 0
-                    fecha_mod = "-"
+                    fecha_creacion = "-"
+                    fecha_modificacion = "-"
 
                 ws1.append([
                     nombre_grupo,
@@ -1217,7 +1219,8 @@ def export_master_backup():
                     f"{res_h} - {res_a}",
                     puntos,
                     p.status,
-                    fecha_mod
+                    fecha_creacion,
+                    fecha_modificacion
                 ])
 
         ws2 = wb.create_sheet("Ranking General")

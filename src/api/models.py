@@ -124,7 +124,8 @@ class Prediction(db.Model):
     predicted_away_score: Mapped[int] = mapped_column(Integer, nullable=False)
     points_earned: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
     match_id: Mapped[int] = mapped_column(ForeignKey('match.id_match'), nullable=False)
     
@@ -138,6 +139,7 @@ class Prediction(db.Model):
             "predicted_away_score": self.predicted_away_score,
             "points_earned": self.points_earned,
             "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
             "user_id": self.user_id,
             "match_id": self.match_id,
             "match_details": f"{self.match.home_team.name} vs {self.match.away_team.name}" if self.match else None
