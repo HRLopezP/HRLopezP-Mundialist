@@ -915,20 +915,23 @@ def get_transparency_wall():
     try:
         user = db.session.get(User, get_jwt_identity())
         is_admin = user.rol.name_rol == "Administrador"
-        
+
         target_group_id = request.args.get('group_id', user.group_id, type=int) if is_admin else user.group_id
 
         if not target_group_id:
             return jsonify({"msg": "Debes pertenecer a un grupo para ver el muro"}), 400
-        
+
         if is_admin and not db.session.get(Group, target_group_id):
             return jsonify({"msg": "El grupo especificado no existe"}), 404
 
-        ahora = datetime.now(timezone.utc)
+        page     = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+
+        ahora      = datetime.now(timezone.utc)
         limite_24h = ahora + timedelta(hours=24)
 
         matches = Match.query.options(
-            joinedload(Match.home_team), 
+            joinedload(Match.home_team),
             joinedload(Match.away_team)
         ).filter(
             Match.match_date <= limite_24h,
@@ -937,35 +940,45 @@ def get_transparency_wall():
 
         results = []
         for m in matches:
-            preds = Prediction.query.join(User).options(
+            preds_query = Prediction.query.join(User).options(
                 joinedload(Prediction.user)
             ).filter(
                 Prediction.match_id == m.id_match,
                 User.group_id == target_group_id,
                 User.is_active == True
-            ).all()
-            
+            )
+
+            total_preds = preds_query.count()
+            pages       = math.ceil(total_preds / per_page) if per_page > 0 else 1
+            preds_page  = preds_query.offset((page - 1) * per_page).limit(per_page).all()
+
             results.append({
-                "id_match": m.id_match,
-                "home_team": m.home_team.name,
-                "away_team": m.away_team.name,
-                "home_flag": m.home_team.flag_url,
-                "away_flag": m.away_team.flag_url,
+                "id_match":   m.id_match,
+                "home_team":  m.home_team.name,
+                "away_team":  m.away_team.name,
+                "home_flag":  m.home_team.flag_url,
+                "away_flag":  m.away_team.flag_url,
                 "match_date": m.match_date.isoformat(),
+                "predictions_total":        total_preds,
+                "predictions_pages":        pages,
+                "predictions_current_page": page,
+                "predictions_per_page":     per_page,
                 "predictions": [
                     {
-                        "user": f"{p.user.name} {p.user.lastname}",
+                        "user":    f"{p.user.name} {p.user.lastname}",
                         "user_id": p.user_id,
                         "h_score": p.predicted_home_score,
                         "a_score": p.predicted_away_score
-                    } for p in preds
+                    } for p in preds_page
                 ]
             })
 
         return jsonify(results), 200
+
     except Exception as e:
         current_app.logger.error(f"Error en el Muro de Transparencia: {str(e)}")
         return jsonify({"msg": "Error interno del servidor"}), 500
+    
     
 
 # Ver todos los grupos
