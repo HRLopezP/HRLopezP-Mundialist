@@ -1356,3 +1356,105 @@ def export_master_backup():
     except Exception as e:
         current_app.logger.error(f"Error en Excel: {str(e)}")
         return jsonify({"msg": "Error al generar el respaldo"}), 500
+
+
+#Obtener pdf del muro
+@api.route('/transparency-wall/export', methods=['GET'])
+@jwt_required()
+def export_transparency_wall():
+    try:
+        user = db.session.get(User, get_jwt_identity())
+        is_admin = user.rol.name_rol == "Administrador"
+
+        target_group_id = request.args.get('group_id', user.group_id, type=int) if is_admin else user.group_id
+
+        if not target_group_id:
+            return jsonify({"msg": "Debes pertenecer a un grupo para exportar"}), 400
+
+        if is_admin and not db.session.get(Group, target_group_id):
+            return jsonify({"msg": "El grupo especificado no existe"}), 404
+
+        ahora      = datetime.now(timezone.utc)
+        limite_24h = ahora + timedelta(hours=24)
+
+        matches = Match.query.options(
+            joinedload(Match.home_team),
+            joinedload(Match.away_team)
+        ).filter(
+            Match.match_date <= limite_24h,
+            Match.home_score == None
+        ).order_by(Match.match_date.asc()).all()
+
+        results = []
+        for m in matches:
+            preds = Prediction.query.join(User).options(
+                joinedload(Prediction.user)
+            ).filter(
+                Prediction.match_id == m.id_match,
+                User.group_id == target_group_id,
+                User.is_active == True
+            ).all()  
+
+            if not preds:
+                continue  
+
+            results.append({
+                "id_match":   m.id_match,
+                "home_team":  m.home_team.name,
+                "away_team":  m.away_team.name,
+                "home_flag":  m.home_team.flag_url,
+                "away_flag":  m.away_team.flag_url,
+                "match_date": m.match_date.isoformat(),
+                "predictions": [
+                    {
+                        "user":    f"{p.user.name} {p.user.lastname}",
+                        "user_id": p.user_id,
+                        "h_score": p.predicted_home_score,
+                        "a_score": p.predicted_away_score
+                    } for p in preds
+                ]
+            })
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error al exportar el Muro de Transparencia: {str(e)}")
+        return jsonify({"msg": "Error interno del servidor"}), 500
+
+#Obtener pdf del ranking
+@api.route('/ranking/export', methods=['GET'])
+@jwt_required()
+def export_ranking():
+    try:
+        current_user = db.session.get(User, get_jwt_identity())
+        is_admin = current_user.rol.name_rol == "Administrador"
+        requested_group_id = request.args.get('group_id', type=int)
+
+        if not is_admin:
+            target_group_id = current_user.group_id
+            if not target_group_id:
+                return jsonify({"msg": "No perteneces a ningún grupo todavía"}), 400
+            result = get_ranking_by_group(target_group_id, page=1, per_page=9999)
+            return jsonify(result["ranking"]), 200
+
+        else:
+            if requested_group_id:
+                if not db.session.get(Group, requested_group_id):
+                    return jsonify({"msg": "El grupo especificado no existe"}), 404
+                result = get_ranking_by_group(requested_group_id, page=1, per_page=9999)
+                return jsonify(result["ranking"]), 200
+
+            all_groups = Group.query.all()
+            response = []
+            for group in all_groups:
+                result = get_ranking_by_group(group.id_group, page=1, per_page=9999)
+                response.append({
+                    "group_id":   group.id_group,
+                    "group_name": group.name_group,
+                    "ranking":    result["ranking"]
+                })
+            return jsonify(response), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error al exportar el Ranking: {str(e)}")
+        return jsonify({"msg": "Error interno al exportar el ranking"}), 500

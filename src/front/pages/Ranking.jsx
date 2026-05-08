@@ -20,6 +20,7 @@ const Ranking = () => {
 
     const [auditData, setAuditData] = useState({ predictions: [], total: 0, pages: 1, current_page: 1 });
     const [selectedUser, setSelectedUser] = useState(null);
+    const [exportingPdf, setExportingPdf] = useState(false);
 
     useEffect(() => {
         initData();
@@ -90,6 +91,24 @@ const Ranking = () => {
         setCurrentPage(page);
         loadRanking(page);
         window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+
+    const handleDownloadRankingPdf = async () => {
+        try {
+            setExportingPdf(true);
+            const groupParam = isAdmin && activeGroup ? `?group_id=${activeGroup}` : "";
+            const { response, data } = await apiFetch(`/ranking/export${groupParam}`);
+            if (!response.ok) {
+                toast.error("Error al generar el reporte");
+                return;
+            }
+            generateRankingReport(data);
+        } catch {
+            toast.error("Error de conexión al exportar");
+        } finally {
+            setExportingPdf(false);
+        }
     };
 
     const getAuditHTML = (user, currentData) => {
@@ -209,9 +228,13 @@ const Ranking = () => {
                 <div className='d-flex justify-content-start'>
                     <button
                         className="btn btn-sm btn-primary rounded-pill px-4 mt-2"
-                        onClick={() => generateRankingReport(ranking)}
+                        onClick={handleDownloadRankingPdf}
+                        disabled={exportingPdf}
                     >
-                        <i className="fas fa-file-pdf me-2"></i> DESCARGAR RANKING
+                        {exportingPdf
+                            ? <><span className="spinner-border spinner-border-sm me-2" role="status" /> Generando...</>
+                            : <><i className="fas fa-file-pdf me-2" /> DESCARGAR RANKING</>
+                        }
                     </button>
                 </div>
             </div>

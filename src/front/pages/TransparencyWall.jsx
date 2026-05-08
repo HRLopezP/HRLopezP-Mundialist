@@ -18,16 +18,33 @@ const TransparencyWall = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const debounceRef = useRef(null);
 
+    const [exportingPdf, setExportingPdf] = useState(false);
+
+    const handleDownloadPdf = async () => {
+        try {
+            setExportingPdf(true);
+            const groupParam = isAdmin && activeGroup ? `?group_id=${activeGroup}` : "";
+            const { response, data } = await apiFetch(`/transparency-wall/export${groupParam}`);
+            if (!response.ok) {
+                toast.error("Error al generar el reporte");
+                return;
+            }
+            generateTransparencyReport(data);
+        } catch {
+            toast.error("Error de conexión al exportar");
+        } finally {
+            setExportingPdf(false);
+        }
+    };
+
     const handleSearch = (value) => {
         setSearchTerm(value);
-        // Debounce: espera 400ms después del último teclazo
         clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => {
             searchAllMatches(value.trim());
         }, 400);
     };
 
-    // Nueva función que busca en todos los partidos activos
     const searchAllMatches = useCallback(async (search) => {
         if (matches.length === 0) return;
         try {
@@ -171,9 +188,13 @@ const TransparencyWall = () => {
                         <button
                             className="btn btn-sm btn-outline-info rounded-pill px-3 py-1"
                             style={{ fontSize: '0.75rem', borderWidth: '1px' }}
-                            onClick={() => generateTransparencyReport(filteredMatches)}
+                            onClick={handleDownloadPdf}
+                            disabled={exportingPdf}
                         >
-                            <i className="fas fa-file-pdf me-1" /> DESCARGAR PDF
+                            {exportingPdf
+                                ? <><span className="spinner-border spinner-border-sm me-1" role="status" /> Generando...</>
+                                : <><i className="fas fa-file-pdf me-1" /> DESCARGAR PDF</>
+                            }
                         </button>
                     )}
                 </div>
