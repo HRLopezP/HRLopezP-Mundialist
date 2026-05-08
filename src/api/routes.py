@@ -977,7 +977,16 @@ def create_group():
         if Group.query.filter_by(name_group=data["name_group"]).first():
             return jsonify({"msg": "Este grupo ya existe"}), 400
 
-        new_group = Group(name_group=data["name_group"])
+        fee = data.get("entry_fee", 0.0)
+
+        if not isinstance(fee, (int, float)) or fee < 0:
+            return jsonify({"msg": "La cuota debe ser un número positivo"}), 400
+        
+        new_group = Group(
+            name_group=data["name_group"].strip(),
+            entry_fee=float(fee)
+        )
+
         db.session.add(new_group)
         db.session.commit()
         return jsonify({"msg": "Grupo creado con éxito", "group": new_group.serialize()}), 201
