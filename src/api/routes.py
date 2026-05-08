@@ -1167,6 +1167,7 @@ def get_my_group_info():
 @manager_required
 def export_master_backup():
     try:
+        import openpyxl
         wb = openpyxl.Workbook()
         ws1 = wb.active
         ws1.title = "Predicciones Completas"
@@ -1174,18 +1175,25 @@ def export_master_backup():
         ws1.append([
             "Grupo", "Usuario", "Email", "Partido",
             "Fecha Partido", "Predicción", "Resultado Real",
-            "Puntos Ganados", "Estado", "Creada"
+            "Puntos Ganados", "Estado", "Creado"
         ])
 
-        usuarios = User.query.filter_by(is_active=True).all()
+        usuarios = User.query.filter_by(is_active=True)\
+            .order_by(User.group_id, User.lastname).all()
         partidos = Match.query.order_by(Match.match_date.asc()).all()
+
+        todas_predicciones = Prediction.query.all()
+
+        pred_map = {
+            (p.user_id, p.match_id): p for p in todas_predicciones
+        }
 
         for u in usuarios:
             nombre_grupo = u.group.name_group if u.group else "Sin grupo"
             nombre_completo = f"{u.name} {u.lastname}"
             
             for p in partidos:
-                pred = Prediction.query.filter_by(user_id=u.id_user, match_id=p.id_match).first()
+                pred = pred_map.get((u.id_user, p.id_match))
 
                 res_h = p.home_score if p.home_score is not None else "-"
                 res_a = p.away_score if p.away_score is not None else "-"

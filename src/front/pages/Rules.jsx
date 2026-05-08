@@ -103,9 +103,30 @@ const Rules = () => {
                                             <i className="fa-solid fa-magnifying-glass-chart me-2 text-info"></i> También puedes ver los resultados de otros jugadores desde el <strong>Ranking</strong> en el botón de <strong>Auditoría</strong>.
                                         </li>
                                         <li className="list-group-item bg-transparent text-white border-0">
-                                            <i className="fa-solid fa-calendar-check me-2 text-emerald"></i> Predice todos los juegos pronto para evitar olvidos por la regla de las 24h.
+                                            <i className="fa-solid fa-calendar-check me-2 text-emerald"></i> Predice todos los juegos pronto para evitar olvidos por la regla de las 24h y tener respaldo de tus predicciones, lo cual ayudaría al plan de contingencia.
                                         </li>
                                     </ul>
+                                    <div className="custom-contingency-alert mt-4">
+                                        <div className="d-flex align-items-center p-3 rounded-3"
+                                            style={{
+                                                background: 'rgba(40, 200, 125, 0.1)', // Fondo esmeralda muy suave
+                                                border: '1px solid var(--pitch-green)', // Borde verde esmeralda
+                                                color: 'white'
+                                            }}>
+                                            <div className="me-3 d-flex align-items-center justify-content-center bg-emerald rounded-circle"
+                                                style={{ width: '45px', height: '45px', minWidth: '45px' }}>
+                                                <i className="fa-solid fa-shield-halved text-white fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <strong className="text-emerald d-block mb-1">
+                                                    <i className="fa-solid fa-lock me-1"></i> Plan de Contingencia:
+                                                </strong>
+                                                <span className="small text-dim italic">
+                                                    "En caso de inconveniente técnico, todas las predicciones están respaldadas en tiempo real y los resultados serán validados manualmente por la administración si es necesario."
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
