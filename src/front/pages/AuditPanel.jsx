@@ -132,9 +132,10 @@ const AuditPanel = () => {
                     >
                         <i className="fas fa-sync-alt me-1"></i> Limpiar
                     </button>
-
-                    <ExportBackupButton />
                 </div>
+            </div>
+            <div className="mb-4">
+                <ExportBackupButton />
             </div>
 
             <div className="admin-card p-4 shadow">

@@ -48,7 +48,7 @@ const ExportBackupButton = () => {
         <button
             onClick={handleDownload}
             disabled={loading}
-            className="btn btn-outline-emerald btn-sm d-flex align-items-center gap-2"
+            className="btn btn-emerald btn-sm d-flex align-items-center gap-2"
             title="Exportar todas las predicciones a Excel"
         >
             {loading ? (
