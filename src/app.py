@@ -56,11 +56,7 @@ app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
-
-# add the admin
-# setup_admin(app)
-
-if os.getenv("ADMIN_ENABLED") == "True":
+if os.getenv("ADMIN_ENABLED", "False") == "True":
     setup_admin(app)
 
 # add the admin

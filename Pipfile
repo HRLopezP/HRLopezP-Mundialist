@@ -22,6 +22,7 @@ flask-cors = "*"
 gunicorn = "*"
 sqlalchemy = "*"
 openpyxl = "*"
+flask-mail = "*"
 
 [requires]
 python_version = "3.13"
