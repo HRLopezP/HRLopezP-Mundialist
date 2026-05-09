@@ -1,23 +1,87 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { apiFetch } from "../utils/api";
 import { GameMatchCard } from "../components/GameMatchCard";
 import { generateTransparencyReport } from "../utils/transparencyPdf";
 import { Toaster, toast } from "sonner";
-import useGlobalReducer from "../hooks/useGlobalReducer"
+import useGlobalReducer from "../hooks/useGlobalReducer";
+import { getRolFromToken } from "../utils/auth";
 import "../styles/Predictions.css";
 
 const TransparencyWall = () => {
     const { store } = useGlobalReducer();
+    const isAdmin = getRolFromToken() === "Administrador";
+
     const [matches, setMatches] = useState([]);
     const [groups, setGroups] = useState([]);
     const [activeGroup, setActiveGroup] = useState(null);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const debounceRef = useRef(null);
+
+    const [exportingPdf, setExportingPdf] = useState(false);
+
+    const handleDownloadPdf = async () => {
+        try {
+            setExportingPdf(true);
+            const groupParam = isAdmin && activeGroup ? `?group_id=${activeGroup}` : "";
+            const { response, data } = await apiFetch(`/transparency-wall/export${groupParam}`);
+            if (!response.ok) {
+                toast.error("Error al generar el reporte");
+                return;
+            }
+            generateTransparencyReport(data);
+        } catch {
+            toast.error("Error de conexión al exportar");
+        } finally {
+            setExportingPdf(false);
+        }
+    };
+
+    const handleSearch = (value) => {
+        setSearchTerm(value);
+        clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => {
+            searchAllMatches(value.trim());
+        }, 400);
+    };
+
+    const matchesRef = useRef(matches);
+    useEffect(() => { matchesRef.current = matches; }, [matches]);
+
+    const searchAllMatches = useCallback(async (search) => {
+        if (matchesRef.current.length === 0) return; 
+        try {
+            const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
+            const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
+
+            const requests = matchesRef.current.map(m => 
+                apiFetch(`/transparency-wall/${m.id_match}/predictions?page=1&per_page=10${groupParam}${searchParam}`)
+            );
+            const responses = await Promise.all(requests);
+
+            setMatches(prev =>
+                prev.map((m, i) => {
+                    const { response, data } = responses[i];
+                    if (!response.ok) return m;
+                    return {
+                        ...m,
+                        predictions: data.predictions,
+                        predictions_current_page: data.current_page,
+                        predictions_pages: data.pages,
+                        predictions_total: data.total,
+                    };
+                })
+            );
+        } catch {
+            toast.error("Error al buscar");
+        }
+    }, [isAdmin, activeGroup]);
+
 
     useEffect(() => {
         const initTransparency = async () => {
             setLoading(true);
-            if (store.user?.rol === "Administrador") {
+            if (isAdmin) {
                 const { response, data } = await apiFetch("/groups");
                 if (response.ok) {
                     setGroups(data);
@@ -30,40 +94,58 @@ const TransparencyWall = () => {
         initTransparency();
     }, [store.user]);
 
-
     useEffect(() => {
-        if (activeGroup !== null) {
-            loadData();
-        }
+        if (activeGroup !== null) loadWall();
     }, [activeGroup]);
 
-    const loadData = async () => {
+    const loadWall = async () => {
         try {
-            const url = activeGroup ? `/transparency-wall?group_id=${activeGroup}` : "/transparency-wall";
-            const { response, data } = await apiFetch(url);
+            setLoading(true);
+            const groupParam = isAdmin && activeGroup ? `?group_id=${activeGroup}` : "";
+            const { response, data } = await apiFetch(`/transparency-wall${groupParam}`);
             if (response.ok) {
                 setMatches(data);
             } else {
                 toast.error("Error al cargar el muro");
             }
-        } catch (error) {
+        } catch {
             toast.error("Error de conexión");
         } finally {
             setLoading(false);
         }
     };
 
+    const handleMatchPageChange = useCallback(async (matchId, newPage) => {
+        try {
+            const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
+            const url = `/transparency-wall/${matchId}/predictions?page=${newPage}&per_page=10${groupParam}`;
+            const { response, data } = await apiFetch(url);
+            if (response.ok) {
+                setMatches(prev =>
+                    prev.map(m => m.id_match === matchId
+                        ? {
+                            ...m,
+                            predictions: data.predictions,
+                            predictions_current_page: data.current_page,
+                            predictions_pages: data.pages,
+                            predictions_total: data.total,
+                        }
+                        : m
+                    )
+                );
+            }
+        } catch {
+            toast.error("Error al cambiar de página");
+        }
+    }, [isAdmin, activeGroup]);
 
-    const filteredMatches = matches.map(match => ({
-        ...match,
-        predictions: match.predictions.filter(p =>
-            p.user.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    })).filter(match => match.predictions.length > 0);
+    const filteredMatches = searchTerm.trim()
+        ? matches.filter(m => m.predictions.length > 0)
+        : matches;
 
     if (loading) return (
         <div className="d-flex justify-content-center align-items-center vh-100">
-            <div className="spinner-border text-info" role="status"></div>
+            <div className="spinner-border text-info" role="status" />
         </div>
     );
 
@@ -75,7 +157,7 @@ const TransparencyWall = () => {
                 <h2 className="fw-bold transparency-header">🛡️ Muro de Transparencia</h2>
                 <p className="text-dim small">Las predicciones se liberan 24h antes de cada partido.</p>
 
-                {store.user?.rol === "Administrador" && groups.length > 0 && (
+                {isAdmin && groups.length > 0 && (
                     <div className="group-tabs-container mt-3 mb-2">
                         {groups.map(g => (
                             <button
@@ -88,37 +170,34 @@ const TransparencyWall = () => {
                         ))}
                     </div>
                 )}
-
             </div>
 
-            {/* Buscador y Botón */}
             <div className="row justify-content-center align-items-center g-3 mb-4">
                 <div className="col-12 col-md-6">
-                    <div className="position-relative">
-                        <input
-                            type="text"
-                            className="form-control search-input-glass"
-                            placeholder="Buscar rival por nombre..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        className="form-control search-input-glass"
+                        placeholder="Buscar rival por nombre..."
+                        value={searchTerm}
+                        onChange={(e) => handleSearch(e.target.value)}
+                    />
                 </div>
-
                 <div className="col-12 text-center d-flex justify-content-between align-items-center gap-2">
                     <p className="text-dim mb-0 small">
-                        <i className="fas fa-info-circle me-1 text-info"></i>
+                        <i className="fas fa-info-circle me-1 text-info" />
                         Haz click para auditar
                     </p>
-
-                    {/* Botón PDF */}
-                    {!loading && matches.length > 0 && (
+                    {matches.length > 0 && (
                         <button
                             className="btn btn-sm btn-outline-info rounded-pill px-3 py-1"
                             style={{ fontSize: '0.75rem', borderWidth: '1px' }}
-                            onClick={() => generateTransparencyReport(filteredMatches)}
+                            onClick={handleDownloadPdf}
+                            disabled={exportingPdf}
                         >
-                            <i className="fas fa-file-pdf me-1"></i> DESCARGAR PDF
+                            {exportingPdf
+                                ? <><span className="spinner-border spinner-border-sm me-1" role="status" /> Generando...</>
+                                : <><i className="fas fa-file-pdf me-1" /> DESCARGAR PDF</>
+                            }
                         </button>
                     )}
                 </div>
@@ -127,7 +206,12 @@ const TransparencyWall = () => {
             <div className="accordion accordion-flush bg-transparent" id="transparencyWall">
                 {filteredMatches.length > 0 ? (
                     filteredMatches.map((match, index) => (
-                            <GameMatchCard key={match.id_match} match={match} index={index} />
+                        <GameMatchCard
+                            key={match.id_match}
+                            match={match}
+                            index={index}
+                            onPageChange={handleMatchPageChange}
+                        />
                     ))
                 ) : (
                     <div className="alert bg-dark text-info border-info text-center mt-5">

@@ -52,7 +52,7 @@ const MatchAdmin = () => {
             return;
         }
 
-        const isUpdate = match.home_score !== null && match.away_score !== null; // Determina si es modif.
+        const isUpdate = match.home_score !== null && match.away_score !== null; 
 
         const confirm = await Swal.fire({
             title: '¿Confirmar resultado oficial?',
@@ -141,6 +141,8 @@ const MatchAdmin = () => {
                                     <div className="col-4 d-flex justify-content-center align-items-center gap-2">
                                         <input
                                             type="number"
+                                            min="0"
+                                            max="15"
                                             className="form-control score-input text-center border-secondary"
                                             value={match.home_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'home_score', e.target.value)}
@@ -149,6 +151,8 @@ const MatchAdmin = () => {
                                         <span className="text-white fw-bold">-</span>
                                         <input
                                             type="number"
+                                            min="0"
+                                            max="15"
                                             className="form-control score-input text-center border-secondary"
                                             value={match.away_score ?? ""}
                                             onChange={(e) => handleResultChange(match.id_match, 'away_score', e.target.value)}
@@ -162,7 +166,7 @@ const MatchAdmin = () => {
                                     </div>
                                 </div>
 
-                                {/* BOTÓN DINÁMICO Y AJUSTADO */}
+                                {/* BOTÓN DINÁMICO*/}
                                 <button
                                     className={`btn mt-4 py-2 fw-bold transition-all mx-auto d-block ${hasResult ? 'btn-outline-info' : 'btn-emerald'}`}
                                     style={{ width: "75%", maxWidth: "280px" }}

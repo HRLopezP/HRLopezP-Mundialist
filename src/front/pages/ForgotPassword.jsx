@@ -22,10 +22,10 @@ const ForgotPassword = () => {
             });
 
             if (response.ok) {
-                toast.success("¡Pase enviado! Revisa tu correo.");
+                toast.success("Si el correo está registrado, recibirás un enlace en breve.");
                 setIsSent(true);
             } else {
-                toast.error(data.message || "No pudimos encontrar ese jugador en el sistema.");
+                toast.error("Error del servidor. Intenta más tarde.");
             }
         } catch (error) {
             toast.error("Error de conexión. El VAR está revisando el sistema.");

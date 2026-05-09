@@ -8,8 +8,10 @@ const GroupsAdmin = () => {
     const [groups, setGroups] = useState([]);
     const [loading, setLoading] = useState(true);
     const [newGroupName, setNewGroupName] = useState("");
+    const [newGroupFee, setNewGroupFee] = useState("");
     const [editingId, setEditingId] = useState(null);
     const [editName, setEditName] = useState("");
+    const [editFee, setEditFee] = useState("");
 
     useEffect(() => {
         getGroups();
@@ -30,14 +32,18 @@ const GroupsAdmin = () => {
         e.preventDefault();
         if (!newGroupName.trim()) return toast.warning("El nombre del grupo no puede estar vacío");
 
+        const fee = parseFloat(newGroupFee) || 0;
+        if (fee < 0) return toast.warning("La cuota no puede ser negativa");
+
         const { response, data } = await apiFetch("/groups", {
             method: "POST",
-            body: JSON.stringify({ name_group: newGroupName })
+            body: JSON.stringify({ name_group: newGroupName, entry_fee: fee })
         });
 
         if (response.ok) {
             toast.success("Grupo creado correctamente");
             setNewGroupName("");
+            setNewGroupFee("");
             getGroups();
         } else {
             toast.error(data.msg || "Error al crear el grupo");
@@ -47,18 +53,22 @@ const GroupsAdmin = () => {
     const startEdit = (group) => {
         setEditingId(group.id_group);
         setEditName(group.name_group);
+        setEditFee(group.entry_fee ?? 0);
     };
 
     const handleUpdateGroup = async (id) => {
         if (!editName.trim()) return toast.warning("El nombre no puede estar vacío");
 
+        const fee = parseFloat(editFee);
+        if (isNaN(fee) || fee < 0) return toast.warning("La cuota debe ser un número positivo");
+
         const { response, data } = await apiFetch(`/groups/${id}`, {
             method: "PUT",
-            body: JSON.stringify({ name_group: editName })
+            body: JSON.stringify({ name_group: editName, entry_fee: fee })
         });
 
         if (response.ok) {
-            toast.success("Nombre del grupo actualizado");
+            toast.success("Grupo actualizado correctamente");
             setEditingId(null);
             getGroups();
         } else {
@@ -72,11 +82,11 @@ const GroupsAdmin = () => {
             text: "Cuidado: Esto podría afectar a los usuarios asignados a este grupo.",
             icon: "warning",
             showCancelButton: true,
-            confirmButtonColor: "#28c87d", // Tu verde esmeralda
+            confirmButtonColor: "#28c87d",
             cancelButtonColor: "#303030",
             confirmButtonText: "Sí, eliminar",
             cancelButtonText: "Cancelar",
-            background: "#051426", // Tu Deep Navy
+            background: "#051426",
             color: "#fff"
         }).then(async (result) => {
             if (result.isConfirmed) {
@@ -94,7 +104,7 @@ const GroupsAdmin = () => {
     if (loading) return (
         <div className="text-center mt-5">
             <div className="spinner-border text-emerald"></div>
-            <p className="text-dim mt-2">Cargando estadios...</p>
+            <p className="text-dim mt-2">Cargando grupos...</p>
         </div>
     );
 
@@ -102,24 +112,43 @@ const GroupsAdmin = () => {
         <div className="admin-container animate__animated animate__fadeIn">
             <div className="admin-card p-4">
                 <h2 className="mb-4 text-white">
-                    <i className="fa-solid fa-people-group me-2 text-emerald"></i> 
+                    <i className="fa-solid fa-people-group me-2 text-emerald"></i>
                     Gestión de Grupos
                 </h2>
 
                 {/* Formulario para nuevo grupo */}
                 <form onSubmit={handleCreateGroup} className="mb-5">
-                    <label className="auth-label">Nombre del Nuevo Grupo</label>
-                    <div className="d-flex gap-2">
-                        <input
-                            type="text"
-                            className="form-control auth-input"
-                            placeholder="Ej: Oficina Central o Amigos FC"
-                            value={newGroupName}
-                            onChange={(e) => setNewGroupName(e.target.value)}
-                        />
-                        <button className="btn btn-emerald px-4 d-flex align-items-center" type="submit">
-                            <i className="fa-solid fa-plus me-1"></i> Crear
-                        </button>
+                    <div className="row g-2 align-items-end">
+                        <div className="col-12 col-md-6">
+                            <label className="auth-label">Nombre del Nuevo Grupo</label>
+                            <input
+                                type="text"
+                                className="form-control auth-input"
+                                placeholder="Ej: Oficina Central o Amigos FC"
+                                value={newGroupName}
+                                onChange={(e) => setNewGroupName(e.target.value)}
+                            />
+                        </div>
+                        <div className="col-12 col-md-3">
+                            <label className="auth-label">
+                                <i className="fa-solid fa-piggy-bank me-1 text-emerald"></i>
+                                Cuota por Participante ($)
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                className="form-control auth-input"
+                                placeholder="Ej: 10.00"
+                                value={newGroupFee}
+                                onChange={(e) => setNewGroupFee(e.target.value)}
+                            />
+                        </div>
+                        <div className="col-12 col-md-3">
+                            <button className="btn btn-emerald w-100" type="submit">
+                                <i className="fa-solid fa-plus me-1"></i> Crear Grupo
+                            </button>
+                        </div>
                     </div>
                 </form>
 
@@ -130,6 +159,15 @@ const GroupsAdmin = () => {
                             <tr>
                                 <th>ID</th>
                                 <th>Nombre del Grupo</th>
+                                <th>
+                                    <i className="fa-solid fa-piggy-bank me-1 text-emerald"></i>
+                                    Cuota
+                                </th>
+                                <th>Usuarios</th>
+                                <th>
+                                    <i className="fa-solid fa-trophy me-1 text-warning"></i>
+                                    Bolsa
+                                </th>
                                 <th className="text-end">Acciones</th>
                             </tr>
                         </thead>
@@ -137,6 +175,8 @@ const GroupsAdmin = () => {
                             {groups.map((group) => (
                                 <tr key={group.id_group}>
                                     <td className="small text-dim">#{group.id_group}</td>
+
+                                    {/* Nombre */}
                                     <td>
                                         {editingId === group.id_group ? (
                                             <div className="animate__animated animate__fadeIn">
@@ -145,33 +185,65 @@ const GroupsAdmin = () => {
                                                     className="form-control form-control-sm auth-input border-emerald"
                                                     value={editName}
                                                     onChange={(e) => setEditName(e.target.value)}
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleUpdateGroup(group.id_group)}
                                                     autoFocus
                                                 />
-                                                <small className="text-emerald" style={{ fontSize: '0.7rem' }}>
-                                                    Presiona Enter para guardar cambios
-                                                </small>
                                             </div>
                                         ) : (
-                                            <div className="d-flex align-items-center">
-                                                <span className="badge bg-dark-soft px-3 py-2">
-                                                    {group.name_group}
-                                                </span>
-                                            </div>
+                                            <span className="badge bg-dark-soft px-3 py-2">
+                                                {group.name_group}
+                                            </span>
                                         )}
                                     </td>
+
+                                    {/* Cuota */}
+                                    <td>
+                                        {editingId === group.id_group ? (
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                className="form-control form-control-sm auth-input border-emerald"
+                                                style={{ width: "100px" }}
+                                                value={editFee}
+                                                onChange={(e) => setEditFee(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateGroup(group.id_group)}
+                                            />
+                                        ) : (
+                                            <span className="text-emerald fw-semibold">
+                                                ${(group.entry_fee ?? 0).toFixed(2)}
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    {/* Usuarios activos */}
+                                    <td>
+                                        <span className="text-dim small">
+                                            {group.active_users ?? 0} activos / {group.total_users} total
+                                        </span>
+                                    </td>
+
+                                    {/* Bolsa acumulada */}
+                                    <td>
+                                        <span className="text-warning fw-bold">
+                                            ${(group.prize_pool ?? 0).toFixed(2)}
+                                        </span>
+                                    </td>
+
+                                    {/* Acciones */}
                                     <td className="text-end">
                                         {editingId === group.id_group ? (
                                             <div className="d-flex justify-content-end gap-2">
                                                 <button
                                                     className="btn btn-emerald btn-sm rounded-pill px-3"
                                                     onClick={() => handleUpdateGroup(group.id_group)}
+                                                    title="Guardar cambios"
                                                 >
                                                     <i className="fa-solid fa-check"></i>
                                                 </button>
                                                 <button
                                                     className="btn btn-outline-light btn-sm rounded-pill"
                                                     onClick={() => setEditingId(null)}
+                                                    title="Cancelar"
                                                 >
                                                     <i className="fa-solid fa-xmark"></i>
                                                 </button>
@@ -181,7 +253,7 @@ const GroupsAdmin = () => {
                                                 <button
                                                     className="btn btn-outline-info btn-sm rounded-pill"
                                                     onClick={() => startEdit(group)}
-                                                    title="Editar nombre"
+                                                    title="Editar grupo"
                                                 >
                                                     <i className="fa-solid fa-pen"></i>
                                                 </button>

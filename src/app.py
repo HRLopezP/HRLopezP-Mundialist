@@ -21,7 +21,11 @@ static_file_dir = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), '../dist/')
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 2 * 1024 * 1024
-CORS(app)
+# CORS(app)
+
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+CORS(app, origins=allowed_origins)
+
 setup_app_logger(app)
 app.url_map.strict_slashes = False
 

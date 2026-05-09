@@ -44,3 +44,26 @@
     padding: 15px;
   }
 }
+
+.custom-contingency-alert {
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.custom-contingency-alert:hover {
+  transform: translateY(-2px);
+}
+
+.bg-emerald {
+  background-color: #28c87d !important; 
+}
+
+.text-emerald {
+  color: #28c87d !important;
+}
+
+.italic {
+  font-style: italic;
+  font-size: 0.9rem;
+}

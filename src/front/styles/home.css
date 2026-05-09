@@ -1,149 +1,452 @@
 .home-container {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
 }
 
 .banner-wrapper {
-    width: 100%;
-    max-width: 75%; 
-    margin: 0 auto;
+  width: 100%;
+  max-width: 75%;
+  margin: 0 auto;
 }
 
 .banner-img {
-    width: 100%;
-    height: auto; 
-    display: block;
-    border-radius: 15px; 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 @media (max-width: 768px) {
-    .banner-wrapper {
-        max-width: 95%;
-    }
+  .banner-wrapper {
+    max-width: 95%;
+  }
 }
 
 .banner-container {
-    position: relative;
-    width: 100%;
-    overflow: hidden;
-    border-radius: 20px;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 20px;
 }
 
 .banner-img {
-    width: 100%;
-    height: auto;
-    display: block;
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .banner-title {
-    position: absolute;
-    top: 5%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    text-align: center;
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
 }
 
 .title-main {
-    font-size: clamp(2rem, 5vw, 4.5rem);
-    font-weight: 900;
-    color: #fff9d1;
-    text-transform: uppercase;
-    margin: 0;
-    line-height: 1;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-    font-family: 'serif'; 
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 900;
+  color: #fff9d1;
+  text-transform: uppercase;
+  margin: 0;
+  line-height: 1;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+  font-family: "serif";
 }
 
 .title-sub {
-    font-size: clamp(0.8rem, 2vw, 1.8rem);
-    color: var(--accent-gold);
-    letter-spacing: 4px;
-    margin-top: 5px;
+  font-size: clamp(0.8rem, 2vw, 1.8rem);
+  color: var(--accent-gold);
+  letter-spacing: 4px;
+  margin-top: 5px;
 }
 
 .banner-overlay-left {
-    position: absolute;
-    top: 25%;
-    left: 5%;
-    max-width: 250px;
-    text-align: left;
+  position: absolute;
+  top: 25%;
+  left: 5%;
+  max-width: 250px;
+  text-align: left;
 }
 
 .text-elite {
-    font-size: clamp(1rem, 2.5vw, 2.2rem);
-    font-weight: 800;
-    line-height: 1.1;
-    color: white;
+  font-size: clamp(1rem, 2.5vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: white;
 }
 
 .text-elite span {
-    color: var(--pitch-green);
+  color: var(--pitch-green);
 }
 
 .text-description {
-    font-size: clamp(0.7rem, 1.2vw, 1rem);
-    color: rgba(255, 255, 255, 0.8);
-    margin: 15px 0;
+  font-size: clamp(0.7rem, 1.2vw, 1rem);
+  color: rgba(255, 255, 255, 0.8);
+  margin: 15px 0;
 }
 
 .banner-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .btn-predict {
-    background: linear-gradient(90deg, #28c87d, #1a8a56);
-    border: none;
-    padding: 10px 20px;
-    border-radius: 50px;
-    color: black;
-    font-weight: 800;
-    font-size: clamp(0.6rem, 1vw, 0.9rem);
-    text-transform: uppercase;
+  background: linear-gradient(90deg, #28c87d, #1a8a56);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 50px;
+  color: black;
+  font-weight: 800;
+  font-size: clamp(0.6rem, 1vw, 0.9rem);
+  text-transform: uppercase;
 }
 
 .link-rules {
-    color: var(--neon-blue);
-    text-decoration: none;
-    font-size: 0.8rem;
-    padding-left: 10px;
+  color: var(--neon-blue);
+  text-decoration: none;
+  font-size: 0.8rem;
+  padding-left: 10px;
+}
+
+@media (max-width: 768px) {
+  .banner-container {
+    display: flex;
+    flex-direction: column;
+    border-radius: 15px;
+    background: rgba(5, 20, 38, 0.5);
+  }
+
+  .banner-overlay-left {
+    position: relative;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+    padding: 20px;
+    text-align: center;
+    display: block !important;
+  }
+
+  .banner-title {
+    top: 2%;
+  }
+
+  .banner-buttons {
+    align-items: center;
+  }
+}
+
+.reglamento-icon {
+  font-size: 1.2rem;
+  vertical-align: middle;
+  margin-right: 8px;
+  color: var(--neon-blue);
+}
+
+.group-section {
+  animation-delay: 0.3s;
+}
+
+.group-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.group-sub {
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+
+.rivals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.rival-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    box-shadow 0.4s ease,
+    border-color 0.2s ease;
+  cursor: default;
+}
+
+.rival-card:hover {
+    transform: translateY(-8px) scale(1.02) rotateX(2deg) rotateY(2deg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 15px rgba(40, 200, 125, 0.2);
+    border-color: #28c87d;
+}
+
+.rival-card--me {
+  border-color: #28c87d;
+  background: rgba(40, 200, 125, 0.07);
+  box-shadow: 0 0 16px rgba(40, 200, 125, 0.15);
+}
+
+.rival-medal {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  font-size: 1rem;
+}
+
+.rival-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 0.5rem;
+}
+
+.rival-card--me .rival-avatar {
+  border-color: #28c87d;
+}
+
+.rival-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.rival-points {
+  font-size: 0.72rem;
+  color: #28c87d;
+  margin: 0.2rem 0 0;
+  font-weight: 700;
+}
+
+.rival-card--skeleton {
+  pointer-events: none;
+}
+
+.skeleton-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #1a2a3a 25%, #243346 50%, #1a2a3a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin: 0 auto 0.5rem;
+}
+
+.skeleton-line {
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1a2a3a 25%, #243346 50%, #1a2a3a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin: 0.3rem auto;
+  width: 80%;
+}
+
+.skeleton-line--short {
+  width: 50%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+
+.prize-pool-card {
+  display: flex;
+  align-items: center;
+  justify-content: center; 
+  gap: 1.25rem;
+  background: linear-gradient(135deg, #051f36 0%, #0a2d4a 100%);
+  border: 1px solid rgba(40, 200, 125, 0.3);
+  border-radius: 18px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 24px rgba(40, 200, 125, 0.1);
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+  position: relative;
+  overflow: hidden;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.prize-pool-card--visible {
+  opacity: 1;
+  transform: translateY(0);
+  animation: shine-attention 3s infinite alternate;
+}
+
+.prize-pool-card::before {
+  content: "";
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(
+    circle,
+    rgba(40, 200, 125, 0.12) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.piggy-wrapper {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px); 
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  margin-bottom: 10px;
+}
+
+.piggy-icon {
+  font-size: 3.7rem;
+  filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6)); 
+}
+
+@keyframes piggy-bounce {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(3deg);
+  }
+}
+
+.coin {
+  position: absolute;
+  font-size: 0.85rem;
+  opacity: 0;
+  animation: coin-fall 2.4s ease-in infinite;
+}
+
+.coin--1 {
+  left: 60%;
+  animation-delay: 0s;
+}
+.coin--2 {
+  left: 75%;
+  animation-delay: 0.8s;
+}
+.coin--3 {
+  left: 45%;
+  animation-delay: 1.6s;
+}
+
+@keyframes coin-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(20px) scale(1);
+  }
+}
+
+
+.prize-pool-info {
+  min-width: 0;
+}
+
+.prize-pool-label {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #28c87d;
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+}
+
+.prize-pool-amount {
+  font-size: 2.5rem; 
+  font-weight: 800;
+  margin: 0;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffd700 0%, #fdb931 50%, #8a6e2f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(
+    0px 2px 4px rgba(0, 0, 0, 0.3)
+  ); 
+}
+
+@keyframes amount-glow {
+  0%,
+  100% {
+    text-shadow: 0 0 8px rgba(40, 200, 125, 0);
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(40, 200, 125, 0.5);
+  }
+}
+
+.prize-pool-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0.3rem 0 0;
 }
 
 
 @media (max-width: 768px) {
-    .banner-container {
-        display: flex;
-        flex-direction: column; 
-        border-radius: 15px;
-        background: rgba(5, 20, 38, 0.5); 
-    }
+  .prize-pool-card {
+    flex-direction: column;
+    text-align: center;
+    max-width: 100%;
+    margin: 10px;
+    padding: 15px;
+  }
 
-    .banner-overlay-left {
-        position: relative; 
-        top: 0;
-        left: 0;
-        max-width: 100%;
-        padding: 20px;
-        text-align: center;
-        display: block !important; 
-    }
+  .prize-pool-amount {
+    font-size: 2rem;
+  }
 
-    .banner-title {
-        top: 2%; 
-    }
-
-    .banner-buttons {
-        align-items: center;
-    }
+  .rivals-grid {
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  }
 }
 
-.reglamento-icon {
-    font-size: 1.2rem;
-    vertical-align: middle;
-    margin-right: 8px;
-    color: var(--neon-blue);
+@keyframes shine-attention {
+  from {
+    box-shadow: 0 0 10px rgba(40, 200, 125, 0.2);
+  }
+  to {
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+  } 
 }

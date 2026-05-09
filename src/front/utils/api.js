@@ -1,3 +1,5 @@
+const PUBLIC_OPTIONAL_ENDPOINTS = ["/group/my-info"];
+
 export const apiFetch = async (endpoint, options = {}) => {
   const urlBase = import.meta.env.VITE_BACKEND_URL;
   const token = localStorage.getItem("access_token");
@@ -20,8 +22,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${urlBase}${endpoint}`, config);
 
-    if (response.status === 401 && endpoint !== "/login") {
+    const isPublicOptional = PUBLIC_OPTIONAL_ENDPOINTS.some((pub) =>
+      endpoint.startsWith(pub),
+    );
+
+    if (response.status === 401 && endpoint !== "/login" && !isPublicOptional) {
       localStorage.removeItem("access_token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
       return { response, data: null };
     }

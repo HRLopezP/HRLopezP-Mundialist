@@ -3,12 +3,16 @@ import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useGlobalReducer from "../hooks/useGlobalReducer";
 import { Toaster, toast } from "sonner";
+import { getRolFromToken } from "../utils/auth"; 
 import "../styles/navbar.css";
 
 export const Navbar = () => {
     const { store, dispatch } = useGlobalReducer();
     const navigate = useNavigate();
     const navbarTogglerRef = useRef(null);
+
+    const userRol = getRolFromToken();
+    const isAdmin = userRol === "Administrador";
 
     const closeMenu = () => {
         if (window.innerWidth < 992 && navbarTogglerRef.current && !navbarTogglerRef.current.classList.contains('collapsed')) {
@@ -38,7 +42,7 @@ export const Navbar = () => {
             <div className="container">
                 <Link className="navbar-brand d-flex align-items-center me-0" to="/">
                     <i className="fa-solid fa-trophy me-2 text-emerald animate__animated animate__pulse animate__infinite"></i>
-                    {/* Ocultamos "ELITE" en pantallas muy pequeñas para ganar espacio */}
+                    {/* Ocultamos "Mundialista" */}
                     <span className="brand-text">ÉLITE <span className="text-emerald d-none d-sm-inline">MUNDIALISTA</span></span>
                 </Link>
 
@@ -70,7 +74,7 @@ export const Navbar = () => {
                 <div className="collapse navbar-collapse" id="navbarNav">
                     <ul className="navbar-nav ms-auto align-items-center gap-2">
 
-                        {/* --- RUTAS PARA TODOS LOS LOGUEADOS --- */}
+                        {/* --- RUTAS PARA TODOS --- */}
                         {store.user && (
                             <>
                                 <li className="nav-item w-100">
@@ -90,12 +94,13 @@ export const Navbar = () => {
                                 </li>
 
                                 {/* --- RUTAS DE ADMINISTRADOR --- */}
-                                {store.user?.rol === "Administrador" && (
+                                {isAdmin && (
                                     <li className="nav-item dropdown w-100">
                                         <a
                                             className="nav-link dropdown-toggle px-3 py-2 rounded-pill btn-admin-hover"
-                                            href="#"
+                                            href="/"
                                             role="button"
+                                            onClick={(e) => e.preventDefault()}
                                             data-bs-toggle="dropdown"
                                         >
                                             <i className="fa-solid fa-gears me-2 text-warning"></i> Gestión
@@ -143,7 +148,7 @@ export const Navbar = () => {
                             </div>
                         ) : (
                             <li className="nav-item dropdown ms-lg-3 w-100">
-                                <a className="nav-link d-flex align-items-center user-profile-pill px-2" href="#" role="button" data-bs-toggle="dropdown">
+                                <a className="nav-link d-flex align-items-center user-profile-pill px-2" href="/" role="button" onClick={(e) => e.preventDefault()} data-bs-toggle="dropdown">
                                     <div className="nav-avatar-wrapper me-2">
                                         <img src={store.user?.profile || defaultAvatar} alt="Perfil" className="nav-profile-img" />
                                     </div>

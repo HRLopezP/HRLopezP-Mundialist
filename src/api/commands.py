@@ -92,7 +92,44 @@ def setup_commands(app):
 
         execute_match_sync()
 
+    @app.cli.command("create-admin")
+    @click.argument("email")
+    def create_admin(email):
+        """Promueve a un usuario existente al rol de Administrador y lo activa.
+        Uso: flask create-admin correo@ejemplo.com
+        """
+        email = email.lower().strip()
+        user = User.query.filter_by(email=email).first()
+
+        if not user:
+            print(f"❌ No se encontró ningún usuario con el email: {email}")
+            print("   Asegúrate de que el usuario ya esté registrado primero.")
+            return
+
+        admin_rol = Rol.query.filter_by(name_rol="Administrador").first()
+        if not admin_rol:
+            print("❌ El rol 'Administrador' no existe en la base de datos.")
+            print("   Ejecuta primero: flask init-db")
+            return
+
+        user.rol_id = admin_rol.id_rol
+        user.is_active = True
+        user.is_blocked = False
+        user.is_root = True 
+
+        db.session.commit()
+        print(f"✅ ¡Listo! {user.name} {user.lastname} ({email}) ahora es Administrador.")
+
 
     # pipenv run flask init-db
     # flask init-db    para correr en render y trae roles y partidos
     # flask sync-matches    solo trae los datos de los juegos y no los roles.
+
+
+# 1. Primero crear los roles y sincronizar partidos (ya lo tienes)
+# flask init-db
+
+# 2. Registrarte normalmente en la app como cualquier usuario
+
+# 3. Ejecutar este comando UNA SOLA VEZ para promoverte a admin
+# flask create-admin correo@ejemplo.com

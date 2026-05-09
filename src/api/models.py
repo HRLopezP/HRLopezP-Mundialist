@@ -31,14 +31,15 @@ class User(db.Model):
     profile: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, default=None)
     profile_public_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     total_points: Mapped[float] = mapped_column(Float, default=0.0)
+    is_root: Mapped[bool] = mapped_column(Boolean(), default=False, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc), nullable=False)
     
     rol_id: Mapped[int] = mapped_column(ForeignKey('rol.id_rol'), nullable=False)
     rol: Mapped["Rol"] = relationship("Rol", back_populates="users")
-    predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user")
-    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user")
+    predictions: Mapped[List["Prediction"]] = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
+    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     group_id: Mapped[Optional[int]] = mapped_column(ForeignKey('group.id_group'), nullable=True)
     group: Mapped[Optional["Group"]] = relationship("Group", back_populates="users")
@@ -63,7 +64,8 @@ class User(db.Model):
             "rol": self.rol.name_rol if self.rol else "Sin Rol",
             "rol_id": self.rol_id,
             "group_id": self.group_id,
-            "group_name": self.group.name_group if self.group else "Sin Grupo"
+            "group_name": self.group.name_group if self.group else "Sin Grupo",
+            "is_root": self.is_root 
         }
     
     
@@ -122,7 +124,8 @@ class Prediction(db.Model):
     predicted_away_score: Mapped[int] = mapped_column(Integer, nullable=False)
     points_earned: Mapped[float] = mapped_column(Float, default=0.0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
-
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
     match_id: Mapped[int] = mapped_column(ForeignKey('match.id_match'), nullable=False)
     
@@ -136,6 +139,7 @@ class Prediction(db.Model):
             "predicted_away_score": self.predicted_away_score,
             "points_earned": self.points_earned,
             "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
             "user_id": self.user_id,
             "match_id": self.match_id,
             "match_details": f"{self.match.home_team.name} vs {self.match.away_team.name}" if self.match else None
@@ -149,9 +153,11 @@ class AuditLog(db.Model):
     details: Mapped[str] = mapped_column(String(255), nullable=False) 
     ip_address: Mapped[Optional[str]] = mapped_column(String(45), nullable=True) 
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
+    match_id: Mapped[Optional[int]] = mapped_column(ForeignKey('match.id_match'), nullable=True, index=True)
     
     user_id: Mapped[int] = mapped_column(ForeignKey('user.id_user'), nullable=False)
     user: Mapped["User"] = relationship(back_populates="audit_logs")
+    match: Mapped[Optional["Match"]] = relationship("Match") 
 
     def serialize(self):
         return {
@@ -160,7 +166,8 @@ class AuditLog(db.Model):
             "details": self.details,
             "ip_address": self.ip_address,
             "timestamp": self.timestamp.isoformat(),
-            "user_email": self.user.email if self.user else "Sistema"
+            "user_email": self.user.email if self.user else "Sistema",
+            "match_id": self.match_id
         }
 
 
@@ -168,14 +175,19 @@ class Group(db.Model):
     __tablename__ = 'group'
     id_group: Mapped[int] = mapped_column(primary_key=True)
     name_group: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    entry_fee: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     
     users: Mapped[List["User"]] = relationship("User", back_populates="group")
 
     def serialize(self):
+        active_users = [u for u in self.users if u.is_active]
         return {
             "id_group": self.id_group,
             "name_group": self.name_group,
-            "total_users": len(self.users) 
+            "entry_fee": self.entry_fee,
+            "total_users": len(self.users),
+            "active_users": len(active_users),
+            "prize_pool": round(self.entry_fee * len(active_users), 2)
         }
     
 
