@@ -45,13 +45,16 @@ const TransparencyWall = () => {
         }, 400);
     };
 
+    const matchesRef = useRef(matches);
+    useEffect(() => { matchesRef.current = matches; }, [matches]);
+
     const searchAllMatches = useCallback(async (search) => {
-        if (matches.length === 0) return;
+        if (matchesRef.current.length === 0) return; 
         try {
             const groupParam = isAdmin && activeGroup ? `&group_id=${activeGroup}` : "";
             const searchParam = search ? `&search=${encodeURIComponent(search)}` : "";
 
-            const requests = matches.map(m =>
+            const requests = matchesRef.current.map(m => 
                 apiFetch(`/transparency-wall/${m.id_match}/predictions?page=1&per_page=10${groupParam}${searchParam}`)
             );
             const responses = await Promise.all(requests);
@@ -72,7 +75,7 @@ const TransparencyWall = () => {
         } catch {
             toast.error("Error al buscar");
         }
-    }, [matches, isAdmin, activeGroup]);
+    }, [isAdmin, activeGroup]);
 
 
     useEffect(() => {

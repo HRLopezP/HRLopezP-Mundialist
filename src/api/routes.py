@@ -946,9 +946,10 @@ def get_transparency_wall():
                 User.is_active == True
             )
 
-            total = preds_query.count()
-            pages = math.ceil(total / PER_PAGE) if PER_PAGE > 0 else 1
-            preds = preds_query.limit(PER_PAGE).all() 
+            pagination = preds_query.paginate(page=1, per_page=PER_PAGE, error_out=False)
+            total = pagination.total
+            pages = pagination.pages
+            preds = pagination.items
 
             results.append({
                 "id_match":                 m.id_match,
