@@ -191,4 +191,6 @@ class Group(db.Model):
         }
     
 
+    # Cambio temporal.
+
 
