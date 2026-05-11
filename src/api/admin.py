@@ -5,7 +5,7 @@ from . import models
 from .models import db
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.theme import Bootstrap4Theme
-from flask import redirect, url_for, request, flash
+from flask import redirect, url_for, request, flash, session
 from flask_jwt_extended import decode_token
 
 
@@ -15,15 +15,21 @@ class SecureModelView(ModelView):
     #Borrar línea anterior en producción definitiva
     def is_accessible(self):
         token = request.args.get('token')
-        if not token:
+        if token:
+            session['admin_token'] = token
+            return True # Acceso concedido por venir con el token
+
+        # 3. Si no hay token en la URL, buscamos si ya lo teníamos guardado
+        stored_token = session.get('admin_token')
+        if not stored_token:
             return False
 
         try:
-            # Decodificamos el token que generaste en el Login
-            decoded = decode_token(token)
-            # Verificamos si en los claims adicionales pusimos que es administrador
+            # Validamos el token guardado
+            decoded = decode_token(stored_token)
             return decoded.get("sub") and decoded.get("is_administrator") == True
         except:
+            session.pop('admin_token', None) # Borramos token inválido
             return False
 
     def inaccessible_callback(self, name, **kwargs):
@@ -33,13 +39,21 @@ class SecureModelView(ModelView):
 
 class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
+        # Aplicamos la misma lógica de sesión para la vista principal del Admin
         token = request.args.get('token')
-        if not token:
+        if token:
+            session['admin_token'] = token
+            return True
+
+        stored_token = session.get('admin_token')
+        if not stored_token:
             return False
+            
         try:
-            decoded = decode_token(token)
+            decoded = decode_token(stored_token)
             return decoded.get("sub") and decoded.get("is_administrator") == True
         except:
+            session.pop('admin_token', None)
             return False
 
     def inaccessible_callback(self, name, **kwargs):
