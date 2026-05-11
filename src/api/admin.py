@@ -63,13 +63,7 @@ def setup_admin(app):
     admin = Admin(
         app,
         name='4Geeks Admin',
-        url='/hrlp-mundialist-9843',
-        index_view=MyAdminIndexView(url='/hrlp-mundialist-9843'),
+        url='/admin',
+        index_view=MyAdminIndexView(url='/admin'),
         theme=Bootstrap4Theme(swatch='cerulean')
     )
-
-    # Dynamically add all models to the admin interface
-    for name, obj in inspect.getmembers(models):
-        # Verify that the object is a SQLAlchemy model before adding it to the admin.
-        if inspect.isclass(obj) and issubclass(obj, db.Model):
-            admin.add_view(SecureModelView(obj, db.session))
