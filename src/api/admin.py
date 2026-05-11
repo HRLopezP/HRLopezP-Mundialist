@@ -10,36 +10,33 @@ from flask_jwt_extended import decode_token
 
 
 class SecureModelView(ModelView):
-
     form_base_class = type('Proxy', (object,), {'meta': {'csrf': False}})
-    #Borrar línea anterior en producción definitiva
-    def is_accessible(self):
+
+    # Agregamos **kwargs para que acepte cualquier argumento extra que Flask-Admin le envíe
+    def is_accessible(self, **kwargs):
         token = request.args.get('token')
+        
         if token:
             session['admin_token'] = token
-            return True # Acceso concedido por venir con el token
+            return True 
 
-        # 3. Si no hay token en la URL, buscamos si ya lo teníamos guardado
         stored_token = session.get('admin_token')
         if not stored_token:
             return False
 
         try:
-            # Validamos el token guardado
             decoded = decode_token(stored_token)
             return decoded.get("sub") and decoded.get("is_administrator") == True
         except:
-            session.pop('admin_token', None) # Borramos token inválido
+            session.pop('admin_token', None)
             return False
 
     def inaccessible_callback(self, name, **kwargs):
-        # Si no tiene el token correcto, lo mandamos al home del frontend
         return redirect("/")
 
-
 class MyAdminIndexView(AdminIndexView):
-    def is_accessible(self):
-        # Aplicamos la misma lógica de sesión para la vista principal del Admin
+    # También agregamos **kwargs aquí por seguridad
+    def is_accessible(self, **kwargs):
         token = request.args.get('token')
         if token:
             session['admin_token'] = token
@@ -58,7 +55,6 @@ class MyAdminIndexView(AdminIndexView):
 
     def inaccessible_callback(self, name, **kwargs):
         return redirect("/")
-
 
 def setup_admin(app):
     app.secret_key = os.environ.get('FLASK_APP_KEY')
