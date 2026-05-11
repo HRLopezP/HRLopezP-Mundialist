@@ -4,7 +4,7 @@ import os
 from urllib.parse import quote
 
 def send_password_reset_email(user_email, user_name, token):
-    frontend_url = os.getenv("FRONTEND_URL").rstrip('/')
+    frontend_url = os.getenv("FRONTEND_URL").strip('/')
     reset_url = f"{frontend_url}/reset-password?token={quote(token, safe='')}"
     
     msg = Message(
