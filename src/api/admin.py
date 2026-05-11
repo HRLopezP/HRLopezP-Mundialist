@@ -12,14 +12,16 @@ from flask_jwt_extended import decode_token
 class SecureModelView(ModelView):
     form_base_class = type('Proxy', (object,), {'meta': {'csrf': False}})
 
-    # Agregamos **kwargs para que acepte cualquier argumento extra que Flask-Admin le envíe
-    def is_accessible(self, **kwargs):
+    # Cambiamos la firma para aceptar args y kwargs
+    def is_accessible(self, *args, **kwargs):
+        # Primero intentamos capturar el token de la URL
         token = request.args.get('token')
         
         if token:
             session['admin_token'] = token
             return True 
 
+        # Si no está en la URL, lo buscamos en la sesión
         stored_token = session.get('admin_token')
         if not stored_token:
             return False
@@ -27,7 +29,7 @@ class SecureModelView(ModelView):
         try:
             decoded = decode_token(stored_token)
             return decoded.get("sub") and decoded.get("is_administrator") == True
-        except:
+        except Exception as e:
             session.pop('admin_token', None)
             return False
 
@@ -35,8 +37,8 @@ class SecureModelView(ModelView):
         return redirect("/")
 
 class MyAdminIndexView(AdminIndexView):
-    # También agregamos **kwargs aquí por seguridad
-    def is_accessible(self, **kwargs):
+    # Hacemos lo mismo aquí: aceptar cualquier argumento extra
+    def is_accessible(self, *args, **kwargs):
         token = request.args.get('token')
         if token:
             session['admin_token'] = token
@@ -49,7 +51,7 @@ class MyAdminIndexView(AdminIndexView):
         try:
             decoded = decode_token(stored_token)
             return decoded.get("sub") and decoded.get("is_administrator") == True
-        except:
+        except Exception as e:
             session.pop('admin_token', None)
             return False
 
