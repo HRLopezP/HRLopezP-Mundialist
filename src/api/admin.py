@@ -10,6 +10,9 @@ from flask_jwt_extended import decode_token
 
 
 class SecureModelView(ModelView):
+
+    form_base_class = type('Proxy', (object,), {'meta': {'csrf': False}})
+    #Borrar línea anterior en producción definitiva
     def is_accessible(self):
         token = request.args.get('token')
         if not token:
